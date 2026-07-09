@@ -6,7 +6,11 @@ direct test here rather than only being exercised indirectly through the CLI.
 
 from pathlib import Path
 
+import pytest
+
 from euvd_watch.sbom import load_inventory, load_inventory_with_stats
+
+pytestmark = pytest.mark.integration
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "sboms"
 

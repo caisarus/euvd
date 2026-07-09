@@ -1,7 +1,9 @@
 """Configuration loading: defaults -> YAML file -> EUVD_WATCH_* environment variables.
 
 One validated Settings object is used everywhere instead of scattered constants (see
-plans/implementation_plan.md Step 0.3).
+plans/implementation_plan.md Step 0.3). Unknown keys are rejected (extra="forbid"): this
+config gates a legal reporting trigger, so a typo silently falling back to a default is the
+exact "dangerous silence" the test plan warns about.
 """
 
 from __future__ import annotations
@@ -11,7 +13,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import yaml
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 ENV_PREFIX = "EUVD_WATCH_"
 DEFAULT_CONFIG_PATH = Path("euvd-watch.yaml")
@@ -20,22 +22,50 @@ DEFAULT_CONFIG_PATH = Path("euvd-watch.yaml")
 class OrganizationConfig(BaseModel):
     """Identity used later to prefill CRA Article 14 notification drafts (M4)."""
 
+    model_config = ConfigDict(extra="forbid")
+
     name: str | None = None
     contact_email: str | None = None
     product_name: str | None = None
 
 
+class CraTriggerConfig(BaseModel):
+    """Which signals fire the CRA reporting trigger (evaluated by M4's policy engine).
+
+    Declared now so the documented example config validates under extra="forbid"; the
+    evaluation logic arrives with M4 (plans/implementation_plan.md Step 4.1).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    euvd_exploited: bool = True
+    cisa_kev: bool = True
+    epss_over_threshold: bool = True
+
+
 class Settings(BaseModel):
     """The single validated configuration object shared across all commands."""
+
+    model_config = ConfigDict(extra="forbid")
 
     # Unverified placeholder; the real EUVD API surface is confirmed during M2
     # (plans/implementation_plan.md Step 2.2) and documented in docs/euvd-api.md.
     euvd_api_base_url: str = "https://euvd.enisa.europa.eu"
-    cache_dir: Path = Path("~/.cache/euvd-watch").expanduser()
+    # validate_default so the ~ in the default expands through the same validator user
+    # values go through (pydantic skips validators on defaults otherwise).
+    cache_dir: Path = Field(default=Path("~/.cache/euvd-watch"), validate_default=True)
     cache_ttl_hours: int = 24
     epss_threshold: float = 0.5
     min_confidence: Literal["low", "medium", "high"] = "medium"
     organization: OrganizationConfig = OrganizationConfig()
+    cra_trigger: CraTriggerConfig = CraTriggerConfig()
+
+    @field_validator("cache_dir", mode="after")
+    @classmethod
+    def _expand_user(cls, value: Path) -> Path:
+        # A user-supplied "~/..." from YAML or env must expand exactly like the default does;
+        # otherwise a literal "./~/" directory gets created the first time the cache writes.
+        return value.expanduser()
 
 
 class ConfigError(Exception):
@@ -44,9 +74,11 @@ class ConfigError(Exception):
 
 def _read_yaml(path: Path) -> dict[str, Any]:
     try:
-        raw = path.read_text()
+        raw = path.read_text(encoding="utf-8")
     except OSError as exc:
         raise ConfigError(f"Config file not found: {path}") from exc
+    except UnicodeDecodeError as exc:
+        raise ConfigError(f"Config file {path} is not valid UTF-8: {exc}") from exc
     data = yaml.safe_load(raw) or {}
     if not isinstance(data, dict):
         raise ConfigError(f"Config file {path} must contain a YAML mapping at the top level.")

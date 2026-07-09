@@ -5,3 +5,7 @@ organization:
   name: "Example S.R.L."
   contact_email: security@example.com
   product_name: "Example Product"
+cra_trigger:
+  euvd_exploited: true
+  cisa_kev: true
+  epss_over_threshold: true

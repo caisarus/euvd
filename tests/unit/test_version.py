@@ -3,7 +3,11 @@
 import tomllib
 from pathlib import Path
 
+import pytest
+
 from euvd_watch import __version__
+
+pytestmark = pytest.mark.unit
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

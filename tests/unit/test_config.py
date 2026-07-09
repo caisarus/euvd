@@ -6,7 +6,10 @@ import pytest
 
 from euvd_watch.config import ConfigError, Settings, load_settings
 
+pytestmark = pytest.mark.unit
+
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "config"
+EXAMPLE_CONFIG = Path(__file__).resolve().parents[2] / "examples" / "config" / "euvd-watch.yaml"
 
 
 def test_defaults_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -57,3 +60,31 @@ def test_implicit_default_config_missing_is_fine(
     monkeypatch.chdir(tmp_path)
     settings = load_settings(None)
     assert settings == Settings()
+
+
+def test_typoed_yaml_key_produces_config_error_naming_the_key(tmp_path: Path) -> None:
+    # A typo'd key silently reverting to a default would be "dangerous silence": this
+    # config gates the CRA reporting trigger.
+    config = tmp_path / "typo.yaml"
+    config.write_text("epss_treshold: 0.9\n", encoding="utf-8")
+    with pytest.raises(ConfigError, match="epss_treshold"):
+        load_settings(config)
+
+
+def test_tilde_in_user_supplied_cache_dir_is_expanded(tmp_path: Path) -> None:
+    config = tmp_path / "tilde.yaml"
+    config.write_text("cache_dir: ~/.cache/euvd-watch-test\n", encoding="utf-8")
+    settings = load_settings(config)
+    assert "~" not in str(settings.cache_dir)
+    assert settings.cache_dir.is_absolute()
+
+
+def test_default_cache_dir_is_expanded() -> None:
+    assert "~" not in str(Settings().cache_dir)
+
+
+def test_documented_example_config_loads() -> None:
+    # The README/example config is a public promise; extra="forbid" must not break it.
+    settings = load_settings(EXAMPLE_CONFIG)
+    assert settings.organization.name == "Example S.R.L."
+    assert settings.cra_trigger.euvd_exploited is True

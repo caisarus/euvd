@@ -2,16 +2,23 @@
 
 Purpose (plans/implementation_plan.md Step 1.3): SPDX is the second major SBOM format
 (GitHub's SBOM export, ORT, etc.); supporting it doubles the addressable input. Same
-tolerant-parse philosophy as the CycloneDX parser - unknown fields are ignored.
+tolerant-parse philosophy as the CycloneDX parser - unknown fields are ignored, and
+packages that cannot participate in matching (no name) are skipped with a warning.
 """
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
+
 from euvd_watch.models import Component, ComponentType, Inventory, SourceFormat
 from euvd_watch.sbom._load import load_json
+from euvd_watch.sbom.errors import SbomParseError
+
+logger = logging.getLogger(__name__)
 
 _UNASSERTED = {"NOASSERTION", "NONE"}
 
@@ -67,35 +74,49 @@ def _extract_tool(creation_info: dict[str, Any]) -> str | None:
     return None
 
 
+def _opt_str(value: Any) -> str | None:
+    return str(value) if value is not None else None
+
+
 def _parse_document(data: dict[str, Any], ref: str) -> Inventory:
     creation_info = data.get("creationInfo") or {}
     components: list[Component] = []
 
-    for package in data.get("packages") or []:
-        if not isinstance(package, dict):
-            continue
-        purl, cpe = _extract_refs(package)
-        purpose = str(package.get("primaryPackagePurpose", ""))
-        components.append(
-            Component(
-                name=str(package.get("name", "")),
-                version=package.get("versionInfo"),
-                purl=purl,
-                cpe=cpe,
-                licenses=_extract_licenses(package),
-                hashes=_extract_hashes(package),
-                type=_PURPOSE_MAP.get(purpose, ComponentType.LIBRARY),
-                source_format=SourceFormat.SPDX,
-                raw_ref=str(package.get("SPDXID") or f"spdx-package-{len(components) + 1}"),
+    try:
+        for index, package in enumerate(data.get("packages") or [], start=1):
+            if not isinstance(package, dict):
+                continue
+            raw_ref = str(package.get("SPDXID") or f"spdx-package-{index}")
+            name = str(package.get("name") or "").strip()
+            if not name:
+                # Same rationale as the CycloneDX parser: skip loudly rather than let empty
+                # names collide in dedup and vanish silently.
+                logger.warning("Skipping package without a name (ref=%s) in %s", raw_ref, ref)
+                continue
+            purl, cpe = _extract_refs(package)
+            purpose = str(package.get("primaryPackagePurpose", ""))
+            components.append(
+                Component(
+                    name=name,
+                    version=_opt_str(package.get("versionInfo")),
+                    purl=purl,
+                    cpe=cpe,
+                    licenses=_extract_licenses(package),
+                    hashes=_extract_hashes(package),
+                    type=_PURPOSE_MAP.get(purpose, ComponentType.LIBRARY),
+                    source_format=SourceFormat.SPDX,
+                    raw_ref=raw_ref,
+                )
             )
-        )
+    except ValidationError as exc:
+        raise SbomParseError(f"Invalid package data in {ref}: {exc}") from exc
 
     return Inventory(
         components=components,
-        document_name=data.get("name"),
+        document_name=_opt_str(data.get("name")),
         tool=_extract_tool(creation_info),
-        timestamp=creation_info.get("created"),
-        format_version=data.get("spdxVersion"),
+        timestamp=_opt_str(creation_info.get("created")),
+        format_version=_opt_str(data.get("spdxVersion")),
     )
 
 

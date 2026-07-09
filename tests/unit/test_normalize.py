@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
@@ -14,6 +15,8 @@ from euvd_watch.sbom.normalize import (
     parse_cpe,
     synthesize_purl,
 )
+
+pytestmark = pytest.mark.unit
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "sboms" / "syft-demo.cdx.json"
 
@@ -97,14 +100,16 @@ def test_parse_cpe_on_all_real_fixture_cpes() -> None:
         }
 
 
-def test_parse_cpe_handles_escaped_special_characters() -> None:
+def test_parse_cpe_decodes_escaped_special_characters() -> None:
     cpe = (
         r"cpe:2.3:a:adrian_garcia_badaracco_\<1755071\+adriangb_project:"
         r"python-annotated-types:0.7.0:*:*:*:*:*:*:*"
     )
     parsed = parse_cpe(cpe)
     assert parsed is not None
-    assert parsed["vendor"] == r"adrian_garcia_badaracco_\<1755071\+adriangb_project"
+    # Values come back decoded (literal characters), not in CPE wire encoding: the M2
+    # matcher compares vendor/product text and must not see the backslashes.
+    assert parsed["vendor"] == "adrian_garcia_badaracco_<1755071+adriangb_project"
     assert parsed["product"] == "python-annotated-types"
     assert parsed["version"] == "0.7.0"
 
@@ -154,6 +159,19 @@ def test_synthesize_purl_without_version() -> None:
 
 def test_synthesize_purl_returns_none_without_ecosystem() -> None:
     assert synthesize_purl("widget", "1.0.0", None) is None
+
+
+def test_synthesized_purls_are_always_canonical() -> None:
+    # Messy name (space, mixed case) and messy version (leading v): the result must be a
+    # valid canonical purl, i.e. a fixed point of normalize_purl.
+    purl = synthesize_purl("My Widget", "v1.0.0", "pypi")
+    assert purl == "pkg:pypi/my%20widget@1.0.0"
+    assert purl == normalize_purl(purl)
+
+
+def test_synthesize_purl_uses_cleaned_version() -> None:
+    purl = synthesize_purl("widget", "1:2.0-1", "pypi")
+    assert purl == "pkg:pypi/widget@2.0-1"  # epoch stripped, same as normalized_version
 
 
 def test_normalize_component_populates_normalized_purl() -> None:

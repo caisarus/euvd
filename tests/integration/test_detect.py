@@ -15,6 +15,8 @@ from euvd_watch.sbom._load import load_json
 from euvd_watch.sbom.detect import detect_format, parse_any
 from euvd_watch.sbom.errors import SbomParseError, UnsupportedFormatError
 
+pytestmark = pytest.mark.integration
+
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "sboms"
 
 

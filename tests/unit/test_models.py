@@ -5,6 +5,8 @@ from pydantic import ValidationError
 
 from euvd_watch.models import Component, ComponentType, Inventory, SourceFormat
 
+pytestmark = pytest.mark.unit
+
 
 def _component(**overrides: object) -> Component:
     defaults: dict[str, object] = {
@@ -62,13 +64,21 @@ def test_dedupe_key_purl_beats_name_version() -> None:
 
 def test_dedupe_key_normalized_purl_beats_raw_purl() -> None:
     c = _component(purl="pkg:pypi/Requests@2.31.0", normalized_purl="pkg:pypi/requests@2.31.0")
-    assert c.dedupe_key == "pkg:pypi/requests@2.31.0"
+    assert c.dedupe_key == "purl:pkg:pypi/requests@2.31.0"
 
 
 def test_dedupe_key_falls_back_to_case_insensitive_name_and_version() -> None:
     a = _component(name="Requests", version="2.31.0")
     b = _component(name="requests", version="2.31.0")
-    assert a.dedupe_key == b.dedupe_key == ("requests", "2.31.0")
+    assert a.dedupe_key == b.dedupe_key == "name:requests@2.31.0"
+
+
+def test_dedupe_keys_are_always_strings_and_sortable() -> None:
+    # M2 sorts findings by dedupe_key; mixed key types would make sorted() raise TypeError.
+    with_purl = _component(purl="pkg:pypi/requests@2.31.0")
+    without_purl = _component(name="zlib", version=None)
+    keys = sorted([with_purl.dedupe_key, without_purl.dedupe_key])
+    assert all(isinstance(k, str) for k in keys)
 
 
 def test_dedupe_key_same_purl_different_raw_ref_is_same_key() -> None:
@@ -87,3 +97,4 @@ def test_inventory_holds_components_and_metadata() -> None:
     )
     assert len(inv.components) == 1
     assert inv.tool == "syft"
+    assert inv.schema_version == 1  # the JSON output contract version

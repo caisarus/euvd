@@ -48,18 +48,24 @@ class Component(BaseModel):
     synthesized: bool = False
 
     @property
-    def dedupe_key(self) -> str | tuple[str, str | None]:
-        """A stable identity for deduplication: purl beats (name, version)."""
-        if self.normalized_purl:
-            return self.normalized_purl
-        if self.purl:
-            return self.purl
-        return (self.name.lower(), self.version)
+    def dedupe_key(self) -> str:
+        """A stable identity for deduplication: purl beats (name, version).
+
+        Always a string (prefix-disambiguated) so collections of keys sort without
+        TypeError - M2's deterministic findings ordering sorts by this key.
+        """
+        purl = self.normalized_purl or self.purl
+        if purl:
+            return f"purl:{purl}"
+        return f"name:{self.name.lower()}@{self.version}"
 
 
 class Inventory(BaseModel):
     """A parsed and normalized SBOM: its components plus source document metadata."""
 
+    # Version of this JSON shape as a public contract (scan --output json consumers).
+    # Bump on breaking changes to Component/Inventory serialization.
+    schema_version: int = 1
     components: list[Component]
     document_name: str | None = None
     tool: str | None = None

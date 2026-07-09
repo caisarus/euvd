@@ -1,11 +1,14 @@
 """Covers implementation_plan.md Step 1.3: SPDX format routing and semantic parity."""
 
+import json
 from pathlib import Path
 
 import pytest
 
 from euvd_watch.sbom import spdx
 from euvd_watch.sbom.errors import SbomParseError
+
+pytestmark = pytest.mark.integration
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "sboms"
 GOLDEN = (
@@ -55,3 +58,34 @@ def test_malformed_json_raises_sbom_parse_error_with_context() -> None:
 def test_missing_file_raises_sbom_parse_error() -> None:
     with pytest.raises(SbomParseError):
         spdx.parse(FIXTURES / "does-not-exist.spdx.json")
+
+
+def test_numeric_version_is_coerced_not_crashing(tmp_path: Path) -> None:
+    doc = {
+        "spdxVersion": "SPDX-2.3",
+        "SPDXID": "SPDXRef-DOCUMENT",
+        "packages": [{"SPDXID": "SPDXRef-x", "name": "x", "versionInfo": 2}],
+    }
+    path = tmp_path / "numeric.spdx.json"
+    path.write_text(json.dumps(doc))
+    inventory = spdx.parse(path)
+    assert inventory.components[0].version == "2"
+
+
+def test_nameless_package_is_skipped_with_warning(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    doc = {
+        "spdxVersion": "SPDX-2.3",
+        "SPDXID": "SPDXRef-DOCUMENT",
+        "packages": [
+            {"SPDXID": "SPDXRef-noname", "versionInfo": "1.0.0"},
+            {"SPDXID": "SPDXRef-kept", "name": "kept", "versionInfo": "1.0.0"},
+        ],
+    }
+    path = tmp_path / "nameless.spdx.json"
+    path.write_text(json.dumps(doc))
+    with caplog.at_level("WARNING"):
+        inventory = spdx.parse(path)
+    assert [c.name for c in inventory.components] == ["kept"]
+    assert any("Skipping package without a name" in r.message for r in caplog.records)

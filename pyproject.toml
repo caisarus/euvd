@@ -45,7 +45,7 @@ dev = [
 packages = ["src/euvd_watch"]
 
 [tool.pytest.ini_options]
-addopts = "--cov=euvd_watch --cov-report=term-missing --cov-fail-under=85"
+addopts = "--cov=euvd_watch --cov-report=term-missing --cov-fail-under=85 -m 'not live'"
 testpaths = ["tests"]
 markers = [
     "unit: fast, pure unit tests",

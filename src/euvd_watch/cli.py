@@ -1,4 +1,8 @@
-"""Typer CLI entry point. Commands are stubs until their owning milestone lands."""
+"""Typer CLI entry point.
+
+`version` and `scan` are implemented; `match`, `watch`, `vex generate`, and `cra check`
+remain stubs until their owning milestone (M2-M4) lands.
+"""
 
 from __future__ import annotations
 
@@ -12,6 +16,7 @@ from rich.table import Table
 
 from euvd_watch import __version__
 from euvd_watch.config import ConfigError, Settings, load_settings
+from euvd_watch.log import setup_logging
 from euvd_watch.sbom import load_inventory_with_stats
 from euvd_watch.sbom.errors import SbomParseError, UnsupportedFormatError
 
@@ -48,6 +53,7 @@ def main(
     output: OutputFormat = typer.Option(OutputFormat.TABLE, "--output", help="Output format."),
     verbose: bool = typer.Option(False, "--verbose", help="Enable verbose logging."),
 ) -> None:
+    setup_logging(verbose)
     try:
         settings = load_settings(config)
     except ConfigError as exc:
@@ -80,9 +86,10 @@ def scan(
         f"{len(inventory.components)} components "
         f"({dropped} deduplicated, {synthesized_count} with synthesized identifiers)"
     )
-    typer.echo(summary, err=True)
 
     if state.output is OutputFormat.JSON:
+        # Keep stdout pure JSON; the human-readable summary goes to stderr instead.
+        typer.echo(summary, err=True)
         typer.echo(inventory.model_dump_json())
         return
 

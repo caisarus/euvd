@@ -46,6 +46,7 @@ _ECOSYSTEM_PREFIXES = {
 }
 
 _UNESCAPED_COLON = re.compile(r"(?<!\\):")
+_CPE_ESCAPE = re.compile(r"\\(.)")
 _LEADING_V = re.compile(r"^[vV](?=\d)")
 _DEB_EPOCH = re.compile(r"^\d+:(.*)$")
 
@@ -61,6 +62,8 @@ def normalize_purl(purl: str) -> str:
 def parse_cpe(cpe: str) -> dict[str, str] | None:
     """Split a CPE 2.3 formatted string into its 11 fields, respecting backslash-escaping.
 
+    Field values are returned *decoded* (``\\<`` becomes ``<``): the M2 matcher compares
+    vendor/product text, so it needs the literal characters, not the CPE wire encoding.
     Returns None (never raises) if the string isn't a well-formed CPE 2.3 identifier.
     """
     if not cpe.startswith("cpe:2.3:"):
@@ -68,7 +71,10 @@ def parse_cpe(cpe: str) -> dict[str, str] | None:
     parts = _UNESCAPED_COLON.split(cpe)
     if len(parts) != 2 + len(_CPE_FIELDS):
         return None
-    return dict(zip(_CPE_FIELDS, parts[2:], strict=True))
+    return {
+        field: _CPE_ESCAPE.sub(r"\1", value)
+        for field, value in zip(_CPE_FIELDS, parts[2:], strict=True)
+    }
 
 
 def _infer_ecosystem(cpe_parts: dict[str, str]) -> str | None:
@@ -81,14 +87,35 @@ def _infer_ecosystem(cpe_parts: dict[str, str]) -> str | None:
 
 
 def synthesize_purl(name: str, version: str | None, ecosystem: str | None) -> str | None:
-    """Build a low-confidence purl from name/version/ecosystem. None if data is insufficient."""
-    if not ecosystem or not name:
+    """Build a low-confidence purl from name/version/ecosystem. None if data is insufficient.
+
+    Constructed through PackageURL (not string formatting) so the result is always canonical:
+    names get the ecosystem's case/encoding rules applied, and the version is cleaned the
+    same way normalized_version is. Downstream code may rely on
+    normalize_purl(synthesized) == synthesized.
+    """
+    if not ecosystem or not name or not name.strip():
         return None
-    return f"pkg:{ecosystem}/{name}@{version}" if version else f"pkg:{ecosystem}/{name}"
+    try:
+        purl = PackageURL(
+            type=ecosystem,
+            name=name.strip(),
+            version=clean_version(version) if version else None,
+        ).to_string()
+    except ValueError:
+        return None
+    # Round-trip guarantees full canonical form (encoding of characters the constructor
+    # accepts verbatim, e.g. spaces).
+    return normalize_purl(purl)
 
 
 def clean_version(version: str) -> str:
-    """Strip a leading v/V and a debian-style epoch prefix (N:) for the normalized form."""
+    """Strip a leading v/V and a debian-style epoch prefix (N:) for the normalized form.
+
+    Epoch stripping loses deb/rpm ordering information (1:1.0 sorts after 2.0): M2's version
+    comparator must evaluate deb/rpm ranges against the *raw* Component.version, never this
+    normalized form.
+    """
     cleaned = _LEADING_V.sub("", version.strip())
     match = _DEB_EPOCH.match(cleaned)
     return match.group(1) if match else cleaned

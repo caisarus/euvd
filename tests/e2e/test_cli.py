@@ -6,6 +6,8 @@ from typer.testing import CliRunner
 from euvd_watch import __version__
 from euvd_watch.cli import app
 
+pytestmark = pytest.mark.e2e
+
 runner = CliRunner()
 
 

@@ -8,6 +8,8 @@ import pytest
 from euvd_watch.sbom import cyclonedx
 from euvd_watch.sbom.errors import SbomParseError
 
+pytestmark = pytest.mark.integration
+
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "sboms"
 GOLDEN = Path(__file__).resolve().parents[1] / "fixtures" / "golden" / "syft-demo.inventory.json"
 
@@ -95,6 +97,65 @@ def test_bytes_input_is_accepted() -> None:
     raw = (FIXTURES / "minimal.cdx.json").read_bytes()
     inventory = cyclonedx.parse(raw)
     assert inventory.components[0].name == "leftpad"
+
+
+def test_numeric_version_is_coerced_not_crashing(tmp_path: Path) -> None:
+    # Real tools emit numeric versions; this used to escape as a raw pydantic traceback
+    # (exit 1), violating the exit-code contract (feedback_m0_m1.md finding 1.1).
+    doc = {
+        "bomFormat": "CycloneDX",
+        "specVersion": "1.5",
+        "components": [{"type": "library", "name": "x", "version": 1.5}],
+    }
+    path = tmp_path / "numeric-version.cdx.json"
+    path.write_text(json.dumps(doc))
+    inventory = cyclonedx.parse(path)
+    assert inventory.components[0].version == "1.5"
+
+
+def test_nameless_component_is_skipped_with_warning(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    # Empty names used to collide in dedup and vanish silently (finding 1.5).
+    doc = {
+        "bomFormat": "CycloneDX",
+        "specVersion": "1.5",
+        "components": [
+            {"type": "library", "version": "1.0.0"},
+            {"type": "library", "name": "  "},
+            {"type": "library", "name": "kept", "version": "1.0.0"},
+        ],
+    }
+    path = tmp_path / "nameless.cdx.json"
+    path.write_text(json.dumps(doc))
+    with caplog.at_level("WARNING"):
+        inventory = cyclonedx.parse(path)
+    assert [c.name for c in inventory.components] == ["kept"]
+    assert sum("Skipping component without a name" in r.message for r in caplog.records) == 2
+
+
+def test_nameless_container_still_yields_named_children(tmp_path: Path) -> None:
+    doc = {
+        "bomFormat": "CycloneDX",
+        "specVersion": "1.5",
+        "components": [
+            {
+                "type": "container",
+                "components": [{"type": "library", "name": "child", "version": "1.0.0"}],
+            }
+        ],
+    }
+    path = tmp_path / "nameless-container.cdx.json"
+    path.write_text(json.dumps(doc))
+    inventory = cyclonedx.parse(path)
+    assert [c.name for c in inventory.components] == ["child"]
+
+
+def test_non_utf8_input_raises_sbom_parse_error(tmp_path: Path) -> None:
+    path = tmp_path / "latin1.cdx.json"
+    path.write_bytes('{"bomFormat": "CycloneDX", "x": "café"}'.encode("latin-1"))
+    with pytest.raises(SbomParseError, match="UTF-8"):
+        cyclonedx.parse(path)
 
 
 def test_component_type_mapping(tmp_path: Path) -> None:

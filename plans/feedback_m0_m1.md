@@ -7,6 +7,26 @@
 > as they are addressed; several are explicitly gated "before M2" because M2 builds directly
 > on the flawed piece.
 
+## Status (updated 2026-07-09, same day — fix pass committed after the review)
+
+**Fixed & regression-tested:** all of P1 (1.1–1.6), P2 items 2.1 (addopts `-m 'not live'` +
+markers applied to every test module), 2.2 (`tests/invariants/` created with four M1
+invariants), 2.3 (`log.py` bootstrap, `--verbose` wired, parsers warn through it), 2.4
+(`tests/fixtures/README.md`), 2.6 (JSON round-trip validation test); P3 items 3.1
+(synthesized purls built via `PackageURL` + `clean_version`, canonical by construction),
+3.2 (`cpe_parts` values decoded), 3.5 (`dedupe_key` always `str`, prefix-disambiguated),
+3.6 (`Inventory.schema_version = 1`), and the 3.7 docstring/counter cleanups. Every fixed
+finding's original repro was re-run and confirmed resolved; goldens regenerated
+deliberately (schema_version + decoded cpe_parts).
+
+**Still open:**
+- **2.5 — PyPI name reservation: user action, needs the owner's PyPI account.**
+- 3.3 — constraint noted in `clean_version`'s docstring; must land in `docs/matching.md`
+  when M2 writes it, and M2's `versions.py` must evaluate deb/rpm against raw versions.
+- 3.4 — add a mis-inferred-ecosystem case to the M2 matcher truth table when it's created.
+- 3.7 (partial) — unbounded table output (revisit before M6) and the `/mnt/c` performance
+  test flake risk (act only if it actually flakes).
+
 ## How to read the priorities
 
 - **P1 — correctness bugs.** User-visible wrong behavior today. Fix before or at the start
