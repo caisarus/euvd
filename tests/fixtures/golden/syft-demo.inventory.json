@@ -1,0 +1,1190 @@
+{
+  "components": [
+    {
+      "name": "annotated-doc",
+      "version": "0.0.4",
+      "purl": "pkg:pypi/annotated-doc@0.0.4",
+      "cpe": "cpe:2.3:a:python-annotated-doc:python-annotated-doc:0.0.4:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/annotated-doc@0.0.4?package-id=996205d60a755f30",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.7.0",
+      "purl": "pkg:pypi/annotated-types@0.7.0",
+      "cpe": "cpe:2.3:a:adrian_garcia_badaracco_\\<1755071\\+adriangb_project:python-annotated-types:0.7.0:*:*:*:*:*:*:*",
+      "licenses": [],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/annotated-types@0.7.0?package-id=ab0beb295fb0d3fa",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "anyio",
+      "version": "4.14.1",
+      "purl": "pkg:pypi/anyio@4.14.1",
+      "cpe": "cpe:2.3:a:python-anyio:python-anyio:4.14.1:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/anyio@4.14.1?package-id=7336ef417015eb9e",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "ast-serialize",
+      "version": "0.6.0",
+      "purl": "pkg:pypi/ast-serialize@0.6.0",
+      "cpe": "cpe:2.3:a:jukka_lehtosalo_\\<jukka_lehtosalo_project:python-ast-serialize:0.6.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/ast-serialize@0.6.0?package-id=c6b898f5a4e29ed4",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "autocommand",
+      "version": "2.2.2",
+      "purl": "pkg:pypi/autocommand@2.2.2",
+      "cpe": "cpe:2.3:a:nathan_west_project:python-autocommand:2.2.2:*:*:*:*:*:*:*",
+      "licenses": [
+        "LGPLv3"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/autocommand@2.2.2?package-id=1d5bb88bbdd45a29",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "backports-tarfile",
+      "version": "1.2.0",
+      "purl": "pkg:pypi/backports-tarfile@1.2.0",
+      "cpe": "cpe:2.3:a:\\\"jason_r__coombs\\\"_\\<jaraco_project:python-backports-tarfile:1.2.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/backports-tarfile@1.2.0?package-id=7bb5380f6d177676",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "build",
+      "version": "1.2.1",
+      "purl": "pkg:pypi/build@1.2.1",
+      "cpe": "cpe:2.3:a:python-build:python-build:1.2.1:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/build@1.2.1?package-id=dd9e0b560ab77a5d",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "certifi",
+      "version": "2026.6.17",
+      "purl": "pkg:pypi/certifi@2026.6.17",
+      "cpe": "cpe:2.3:a:certifi:certifi:2026.6.17:*:*:*:*:python:*:*",
+      "licenses": [
+        "MPL-2.0"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/certifi@2026.6.17?package-id=eb24f659808fdc25",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "cfgv",
+      "version": "3.5.0",
+      "purl": "pkg:pypi/cfgv@3.5.0",
+      "cpe": "cpe:2.3:a:anthony_sottile_project:python-cfgv:3.5.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/cfgv@3.5.0?package-id=c9d980df4b64bde8",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "coverage",
+      "version": "7.15.0",
+      "purl": "pkg:pypi/coverage@7.15.0",
+      "cpe": "cpe:2.3:a:ned_batchelder_and_259_others_project:python-coverage:7.15.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "Apache-2.0"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/coverage@7.15.0?package-id=62e61748c7974549",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "distlib",
+      "version": "0.4.3",
+      "purl": "pkg:pypi/distlib@0.4.3",
+      "cpe": "cpe:2.3:a:vinay_sajip_project:python-distlib:0.4.3:*:*:*:*:*:*:*",
+      "licenses": [
+        "PSF-2.0"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/distlib@0.4.3?package-id=e1e9f10303d7e0e8",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "euvd-watch",
+      "version": "0.1.0",
+      "purl": "pkg:pypi/euvd-watch@0.1.0",
+      "cpe": "cpe:2.3:a:euvd_watch_contributors_project:python-euvd-watch:0.1.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "EUPL-1.2"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/euvd-watch@0.1.0?package-id=c4d5b7272cd6c309",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "filelock",
+      "version": "3.29.7",
+      "purl": "pkg:pypi/filelock@3.29.7",
+      "cpe": "cpe:2.3:a:python-filelock:python-filelock:3.29.7:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/filelock@3.29.7?package-id=4f41babed76aa87a",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "freezegun",
+      "version": "1.5.5",
+      "purl": "pkg:pypi/freezegun@1.5.5",
+      "cpe": "cpe:2.3:a:steve_pulec_project:python-freezegun:1.5.5:*:*:*:*:*:*:*",
+      "licenses": [
+        "Apache-2.0"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/freezegun@1.5.5?package-id=0a761126ebbf5f6a",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0",
+      "purl": "pkg:pypi/h11@0.16.0",
+      "cpe": "cpe:2.3:a:nathaniel_j__smith_project:python-h11:0.16.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/h11@0.16.0?package-id=d5a4ed2d793de775",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "httpcore",
+      "version": "1.0.9",
+      "purl": "pkg:pypi/httpcore@1.0.9",
+      "cpe": "cpe:2.3:a:tom_christie_\\<tom_project:python-httpcore:1.0.9:*:*:*:*:*:*:*",
+      "licenses": [
+        "BSD-3-Clause"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/httpcore@1.0.9?package-id=ba772f4b826be2c8",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "httpx",
+      "version": "0.28.1",
+      "purl": "pkg:pypi/httpx@0.28.1",
+      "cpe": "cpe:2.3:a:encode:httpx:0.28.1:*:*:*:*:python:*:*",
+      "licenses": [
+        "BSD-3-Clause"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/httpx@0.28.1?package-id=b7ba5d88b8d55134",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "identify",
+      "version": "2.6.19",
+      "purl": "pkg:pypi/identify@2.6.19",
+      "cpe": "cpe:2.3:a:chris_kuehl_project:python-identify:2.6.19:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/identify@2.6.19?package-id=9209988f4416402a",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "idna",
+      "version": "3.18",
+      "purl": "pkg:pypi/idna@3.18",
+      "cpe": "cpe:2.3:a:kim_davies_\\<kim\\+pypi_project:python-idna:3.18:*:*:*:*:*:*:*",
+      "licenses": [
+        "BSD-3-Clause"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/idna@3.18?package-id=723fc7d8ee8cce6f",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "importlib-metadata",
+      "version": "8.0.0",
+      "purl": "pkg:pypi/importlib-metadata@8.0.0",
+      "cpe": "cpe:2.3:a:\\\"jason_r__coombs\\\"_\\<jaraco_project:python-importlib-metadata:8.0.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "Apache-2.0"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/importlib-metadata@8.0.0?package-id=587e5d030197d8be",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "inflect",
+      "version": "7.3.1",
+      "purl": "pkg:pypi/inflect@7.3.1",
+      "cpe": "cpe:2.3:a:paul_dyson_\\<pwdyson_project:python-inflect:7.3.1:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/inflect@7.3.1?package-id=051eccf3da38b7a8",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "iniconfig",
+      "version": "2.3.0",
+      "purl": "pkg:pypi/iniconfig@2.3.0",
+      "cpe": "cpe:2.3:a:ronny_pfannschmidt_\\<opensource_project:python-iniconfig:2.3.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/iniconfig@2.3.0?package-id=eb7b55832938487b",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "jaraco-collections",
+      "version": "5.1.0",
+      "purl": "pkg:pypi/jaraco-collections@5.1.0",
+      "cpe": "cpe:2.3:a:\\\"jason_r__coombs\\\"_\\<jaraco_project:python-jaraco-collections:5.1.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/jaraco-collections@5.1.0?package-id=e074243c2b7dd70d",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "jaraco-context",
+      "version": "5.3.0",
+      "purl": "pkg:pypi/jaraco-context@5.3.0",
+      "cpe": "cpe:2.3:a:jason_r__coombs_project:python-jaraco-context:5.3.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/jaraco-context@5.3.0?package-id=ee2001f8be723bea",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "jaraco-functools",
+      "version": "4.0.1",
+      "purl": "pkg:pypi/jaraco-functools@4.0.1",
+      "cpe": "cpe:2.3:a:\\\"jason_r__coombs\\\"_\\<jaraco_project:python-jaraco-functools:4.0.1:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/jaraco-functools@4.0.1?package-id=f44a0053651c9204",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "jaraco-text",
+      "version": "3.12.1",
+      "purl": "pkg:pypi/jaraco-text@3.12.1",
+      "cpe": "cpe:2.3:a:\\\"jason_r__coombs\\\"_\\<jaraco_project:python-jaraco-text:3.12.1:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/jaraco-text@3.12.1?package-id=7c63fb5152a423fd",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "jinja2",
+      "version": "3.1.6",
+      "purl": "pkg:pypi/jinja2@3.1.6",
+      "cpe": "cpe:2.3:a:python-jinja2:python-jinja2:3.1.6:*:*:*:*:*:*:*",
+      "licenses": [],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/jinja2@3.1.6?package-id=635615c14ee0ad24",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "librt",
+      "version": "0.13.0",
+      "purl": "pkg:pypi/librt@0.13.0",
+      "cpe": "cpe:2.3:a:jukka_lehtosalo_\\<jukka_lehtosalo_project:python-librt:0.13.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/librt@0.13.0?package-id=bdd43790e2de7316",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "markdown-it-py",
+      "version": "4.2.0",
+      "purl": "pkg:pypi/markdown-it-py@4.2.0",
+      "cpe": "cpe:2.3:a:chris_sewell_\\<chrisj_sewell_project:python-markdown-it-py:4.2.0:*:*:*:*:*:*:*",
+      "licenses": [],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/markdown-it-py@4.2.0?package-id=8bc51aa5b9c73dd5",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "markupsafe",
+      "version": "3.0.3",
+      "purl": "pkg:pypi/markupsafe@3.0.3",
+      "cpe": "cpe:2.3:a:python-markupsafe:python-markupsafe:3.0.3:*:*:*:*:*:*:*",
+      "licenses": [
+        "BSD-3-Clause"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/markupsafe@3.0.3?package-id=980be9ce397b35c6",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "mdurl",
+      "version": "0.1.2",
+      "purl": "pkg:pypi/mdurl@0.1.2",
+      "cpe": "cpe:2.3:a:taneli_hukkinen_\\<hukkin_project:python-mdurl:0.1.2:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/mdurl@0.1.2?package-id=87d35e2ff4a086fd",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "more-itertools",
+      "version": "10.3.0",
+      "purl": "pkg:pypi/more-itertools@10.3.0",
+      "cpe": "cpe:2.3:a:erik_rose_\\<erikrose_project:python-more-itertools:10.3.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/more-itertools@10.3.0?package-id=e36b3d93f19c667c",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "my-test-package",
+      "version": "1.0",
+      "purl": "pkg:pypi/my-test-package@1.0",
+      "cpe": "cpe:2.3:a:python-my-test-package:python-my-test-package:1.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "UNKNOWN"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/my-test-package@1.0?package-id=d1218a652a8fa722",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "mypy",
+      "version": "2.2.0",
+      "purl": "pkg:pypi/mypy@2.2.0",
+      "cpe": "cpe:2.3:a:jukka_lehtosalo_\\<jukka_lehtosalo_project:python-mypy:2.2.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/mypy@2.2.0?package-id=9735796e4bab0884",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "mypy-extensions",
+      "version": "1.1.0",
+      "purl": "pkg:pypi/mypy-extensions@1.1.0",
+      "cpe": "cpe:2.3:a:mypy_developers_\\<jukka_lehtosalo_project:python-mypy-extensions:1.1.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/mypy-extensions@1.1.0?package-id=d6078b0ed7420134",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "nodeenv",
+      "version": "1.10.0",
+      "purl": "pkg:pypi/nodeenv@1.10.0",
+      "cpe": "cpe:2.3:a:eugene_kalinin_project:python-nodeenv:1.10.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "BSD"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/nodeenv@1.10.0?package-id=c9fd7996b2ad2eb9",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "packageurl-python",
+      "version": "0.17.6",
+      "purl": "pkg:pypi/packageurl-python@0.17.6",
+      "cpe": "cpe:2.3:a:python-packageurl-python:python-packageurl-python:0.17.6:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/packageurl-python@0.17.6?package-id=8502b811c97a8a08",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "packaging",
+      "version": "24.2",
+      "purl": "pkg:pypi/packaging@24.2",
+      "cpe": "cpe:2.3:a:donald_stufft_\\<donald_project:python-packaging:24.2:*:*:*:*:*:*:*",
+      "licenses": [
+        "Apache-2.0",
+        "BSD-2-Clause",
+        "sha256:cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/packaging@24.2?package-id=686009a7c6e3a48b",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "packaging",
+      "version": "26.2",
+      "purl": "pkg:pypi/packaging@26.2",
+      "cpe": "cpe:2.3:a:donald_stufft_\\<donald_project:python-packaging:26.2:*:*:*:*:*:*:*",
+      "licenses": [
+        "Apache-2.0 OR BSD-2-Clause"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/packaging@26.2?package-id=916ae56841ecb43f",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "pathspec",
+      "version": "1.1.1",
+      "purl": "pkg:pypi/pathspec@1.1.1",
+      "cpe": "cpe:2.3:a:\\\"caleb_p__burns\\\"_\\<cpburnz_project:python-pathspec:1.1.1:*:*:*:*:*:*:*",
+      "licenses": [],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/pathspec@1.1.1?package-id=1ffb9a25c68cbcca",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "pip",
+      "version": "26.1.2",
+      "purl": "pkg:pypi/pip@26.1.2",
+      "cpe": "cpe:2.3:a:pip_developers_\\<distutils_sig_project:python-pip:26.1.2:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/pip@26.1.2?package-id=c3f94f9b4eae094b",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "platformdirs",
+      "version": "4.10.0",
+      "purl": "pkg:pypi/platformdirs@4.10.0",
+      "cpe": "cpe:2.3:a:python-platformdirs:python-platformdirs:4.10.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/platformdirs@4.10.0?package-id=dc9a23469b445498",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "platformdirs",
+      "version": "4.2.2",
+      "purl": "pkg:pypi/platformdirs@4.2.2",
+      "cpe": "cpe:2.3:a:python-platformdirs:python-platformdirs:4.2.2:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/platformdirs@4.2.2?package-id=4b62779e59b20d35",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "pluggy",
+      "version": "1.6.0",
+      "purl": "pkg:pypi/pluggy@1.6.0",
+      "cpe": "cpe:2.3:a:holger_krekel_\\<holger_project:python-pluggy:1.6.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/pluggy@1.6.0?package-id=57311d6fec3efd28",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "pre-commit",
+      "version": "4.6.0",
+      "purl": "pkg:pypi/pre-commit@4.6.0",
+      "cpe": "cpe:2.3:a:anthony_sottile_project:python-pre-commit:4.6.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/pre-commit@4.6.0?package-id=8618524d0b5cf1a1",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "pydantic",
+      "version": "2.13.4",
+      "purl": "pkg:pypi/pydantic@2.13.4",
+      "cpe": "cpe:2.3:a:samuel_colvin_\\<s_project:python-pydantic:2.13.4:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/pydantic@2.13.4?package-id=30dd9467e8022b1c",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "pydantic-core",
+      "version": "2.46.4",
+      "purl": "pkg:pypi/pydantic-core@2.46.4",
+      "cpe": "cpe:2.3:a:samuel_colvin_\\<s_project:python-pydantic-core:2.46.4:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/pydantic-core@2.46.4?package-id=3e6cd9a4c58dedcc",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "pygments",
+      "version": "2.20.0",
+      "purl": "pkg:pypi/pygments@2.20.0",
+      "cpe": "cpe:2.3:a:georg_brandl_\\<georg_project:python-pygments:2.20.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "BSD-2-Clause"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/pygments@2.20.0?package-id=ae3b910f4b177738",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "pyproject-hooks",
+      "version": "1.2.0",
+      "purl": "pkg:pypi/pyproject-hooks@1.2.0",
+      "cpe": "cpe:2.3:a:thomas_kluyver_\\<thomas_project:python-pyproject-hooks:1.2.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/pyproject-hooks@1.2.0?package-id=1ee5ff6c2d6aa854",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "pytest",
+      "version": "9.1.1",
+      "purl": "pkg:pypi/pytest@9.1.1",
+      "cpe": "cpe:2.3:a:brianna_laugher\\,_bruno_oliveira\\,_floris_bruynooghe\\,_freya_bruhin\\,_holger_krekel\\,_others_\\(see_authors\\)\\,_ronny_pfannschmidt_project:python-pytest:9.1.1:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/pytest@9.1.1?package-id=24227a61647b8adf",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "pytest-cov",
+      "version": "7.1.0",
+      "purl": "pkg:pypi/pytest-cov@7.1.0",
+      "cpe": "cpe:2.3:a:marc_schlaich_\\<marc_schlaich_project:python-pytest-cov:7.1.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/pytest-cov@7.1.0?package-id=ea4ccd11b6a64122",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "python-dateutil",
+      "version": "2.9.0.post0",
+      "purl": "pkg:pypi/python-dateutil@2.9.0.post0",
+      "cpe": "cpe:2.3:a:gustavo_niemeyer_project:python-dateutil:2.9.0.post0:*:*:*:*:*:*:*",
+      "licenses": [
+        "Dual License"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/python-dateutil@2.9.0.post0?package-id=eb1f84d7b7b26e78",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "python-discovery",
+      "version": "1.4.4",
+      "purl": "pkg:pypi/python-discovery@1.4.4",
+      "cpe": "cpe:2.3:a:python-discovery:python-discovery:1.4.4:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/python-discovery@1.4.4?package-id=4bbe46a8bf6fd0a6",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "pyyaml",
+      "version": "6.0.3",
+      "purl": "pkg:pypi/pyyaml@6.0.3",
+      "cpe": "cpe:2.3:a:kirill_simonov_project:python-pyyaml:6.0.3:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/pyyaml@6.0.3?package-id=2147aa278d04d5f8",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "respx",
+      "version": "0.23.1",
+      "purl": "pkg:pypi/respx@0.23.1",
+      "cpe": "cpe:2.3:a:jonas_lundberg_project:python-respx:0.23.1:*:*:*:*:*:*:*",
+      "licenses": [
+        "BSD-3-Clause"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/respx@0.23.1?package-id=2cfe7c4c748db3f0",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "rich",
+      "version": "15.0.0",
+      "purl": "pkg:pypi/rich@15.0.0",
+      "cpe": "cpe:2.3:a:will_mcgugan_project:python-rich:15.0.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/rich@15.0.0?package-id=bf80dfb61f2fa5d9",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "ruff",
+      "version": "0.15.20",
+      "purl": "pkg:pypi/ruff@0.15.20",
+      "cpe": "cpe:2.3:a:\\\"astral_software_inc_\\\"_\\<hey_project:python-ruff:0.15.20:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/ruff@0.15.20?package-id=b8380a885bac654c",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "setuptools",
+      "version": "79.0.1",
+      "purl": "pkg:pypi/setuptools@79.0.1",
+      "cpe": "cpe:2.3:a:python:setuptools:79.0.1:*:*:*:*:*:*:*",
+      "licenses": [],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/setuptools@79.0.1?package-id=8f8f89fbb5224ccd",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "shellingham",
+      "version": "1.5.4",
+      "purl": "pkg:pypi/shellingham@1.5.4",
+      "cpe": "cpe:2.3:a:tzu_ping_chung_project:python-shellingham:1.5.4:*:*:*:*:*:*:*",
+      "licenses": [
+        "ISC License"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/shellingham@1.5.4?package-id=03611a8f8c4c0d3e",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "six",
+      "version": "1.17.0",
+      "purl": "pkg:pypi/six@1.17.0",
+      "cpe": "cpe:2.3:a:benjamin_peterson_project:python-six:1.17.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/six@1.17.0?package-id=1ab55e1d14e468ae",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "tomli",
+      "version": "2.0.1",
+      "purl": "pkg:pypi/tomli@2.0.1",
+      "cpe": "cpe:2.3:a:taneli_hukkinen_\\<hukkin_project:python-tomli:2.0.1:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/tomli@2.0.1?package-id=f04d63d7233a932e",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "typeguard",
+      "version": "4.3.0",
+      "purl": "pkg:pypi/typeguard@4.3.0",
+      "cpe": "cpe:2.3:a:python-typeguard:python-typeguard:4.3.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/typeguard@4.3.0?package-id=090eeb1c4c8a4108",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "typer",
+      "version": "0.26.8",
+      "purl": "pkg:pypi/typer@0.26.8",
+      "cpe": "cpe:2.3:a:python-typer:python-typer:0.26.8:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/typer@0.26.8?package-id=b66b84749261d534",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "types-pyyaml",
+      "version": "6.0.12.20260518",
+      "purl": "pkg:pypi/types-pyyaml@6.0.12.20260518",
+      "cpe": "cpe:2.3:a:python-types-pyyaml:python-types-pyyaml:6.0.12.20260518:*:*:*:*:*:*:*",
+      "licenses": [
+        "Apache-2.0"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/types-pyyaml@6.0.12.20260518?package-id=78ac245de28bd0e9",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.12.2",
+      "purl": "pkg:pypi/typing-extensions@4.12.2",
+      "cpe": "cpe:2.3:a:python-typing-extensions:python-typing-extensions:4.12.2:*:*:*:*:*:*:*",
+      "licenses": [
+        "sha256:3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/typing-extensions@4.12.2?package-id=35e335623e007cd8",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.16.0",
+      "purl": "pkg:pypi/typing-extensions@4.16.0",
+      "cpe": "cpe:2.3:a:python-typing-extensions:python-typing-extensions:4.16.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "PSF-2.0"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/typing-extensions@4.16.0?package-id=f58127e07d93dc11",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.2",
+      "purl": "pkg:pypi/typing-inspection@0.4.2",
+      "cpe": "cpe:2.3:a:victorien_plot_\\<contact_project:python-typing-inspection:0.4.2:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/typing-inspection@0.4.2?package-id=4f88cc83392ba30c",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "virtualenv",
+      "version": "21.6.0",
+      "purl": "pkg:pypi/virtualenv@21.6.0",
+      "cpe": "cpe:2.3:a:python-virtualenv:python-virtualenv:21.6.0:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/virtualenv@21.6.0?package-id=2b561cbbfdc8a8b5",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "wheel",
+      "version": "0.45.1",
+      "purl": "pkg:pypi/wheel@0.45.1",
+      "cpe": "cpe:2.3:a:daniel_holth_\\<dholth_project:python-wheel:0.45.1:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/wheel@0.45.1?package-id=ce76d6e61bd8dde0",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    },
+    {
+      "name": "zipp",
+      "version": "3.19.2",
+      "purl": "pkg:pypi/zipp@3.19.2",
+      "cpe": "cpe:2.3:a:\\\"jason_r__coombs\\\"_\\<jaraco_project:python-zipp:3.19.2:*:*:*:*:*:*:*",
+      "licenses": [
+        "MIT"
+      ],
+      "hashes": {},
+      "type": "library",
+      "source_format": "cyclonedx",
+      "raw_ref": "pkg:pypi/zipp@3.19.2?package-id=08219ba3ee20c318",
+      "normalized_purl": null,
+      "normalized_version": null,
+      "cpe_parts": null,
+      "synthesized": false
+    }
+  ],
+  "document_name": "euvd-watch",
+  "tool": "syft/1.46.0",
+  "timestamp": "2026-07-09T14:10:47Z",
+  "format_version": "1.5"
+}

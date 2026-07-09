@@ -1,0 +1,4 @@
+{
+  "hello": "world",
+  "this": "is valid JSON but not an SBOM of any kind"
+}

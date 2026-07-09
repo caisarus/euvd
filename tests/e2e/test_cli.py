@@ -18,7 +18,6 @@ def test_version_prints_version_and_exits_zero() -> None:
 @pytest.mark.parametrize(
     "args",
     [
-        ["scan", "sbom.json"],
         ["match", "sbom.json"],
         ["watch", "sbom.json"],
         ["vex", "generate", "sbom.json"],

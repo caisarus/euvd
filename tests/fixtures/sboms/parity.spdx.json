@@ -1,0 +1,31 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "parity-doc",
+  "creationInfo": {
+    "created": "2026-01-01T00:00:00Z",
+    "creators": ["Tool: example-tool-1.0.0"]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-widget",
+      "name": "widget",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "licenseConcluded": "MIT",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/widget@1.0.0"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:widget-vendor:widget:1.0.0:*:*:*:*:*:*:*"
+        }
+      ],
+      "checksums": [{ "algorithm": "SHA-256", "checksumValue": "abc123" }]
+    }
+  ]
+}

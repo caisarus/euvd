@@ -1,0 +1,44 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-01-01T00:00:00Z",
+    "component": { "type": "application", "name": "demo-app", "version": "1.0.0" },
+    "tools": { "components": [{ "type": "application", "name": "cdxgen", "version": "10.0.0" }] }
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:pypi/outer@1.0.0",
+      "type": "library",
+      "name": "outer",
+      "version": "1.0.0",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "components": [
+        {
+          "bom-ref": "pkg:pypi/inner-a@2.0.0",
+          "type": "library",
+          "name": "inner-a",
+          "version": "2.0.0",
+          "licenses": [{ "license": { "name": "Custom Proprietary License" } }]
+        },
+        {
+          "bom-ref": "pkg:pypi/inner-b@3.0.0",
+          "type": "library",
+          "name": "inner-b",
+          "version": "3.0.0",
+          "licenses": [{ "expression": "MIT OR Apache-2.0" }],
+          "components": [
+            {
+              "bom-ref": "pkg:pypi/innermost@0.1.0",
+              "type": "library",
+              "name": "innermost",
+              "version": "0.1.0",
+              "licenses": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "minimal-doc",
+  "documentNamespace": "https://example.com/spdxdocs/minimal",
+  "creationInfo": {
+    "created": "2026-01-01T00:00:00Z",
+    "creators": ["Tool: example-tool-1.0.0"]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-leftpad",
+      "name": "leftpad",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION"
+    }
+  ]
+}

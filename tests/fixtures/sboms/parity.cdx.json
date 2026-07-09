@@ -1,0 +1,16 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "components": [
+    {
+      "bom-ref": "widget-ref",
+      "type": "library",
+      "name": "widget",
+      "version": "1.0.0",
+      "purl": "pkg:pypi/widget@1.0.0",
+      "cpe": "cpe:2.3:a:widget-vendor:widget:1.0.0:*:*:*:*:*:*:*",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "hashes": [{ "alg": "SHA-256", "content": "abc123" }]
+    }
+  ]
+}

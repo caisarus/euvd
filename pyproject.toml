@@ -34,6 +34,7 @@ dev = [
     "pytest-cov>=5",
     "respx>=0.21",
     "freezegun>=1.5",
+    "hypothesis>=6.100",
     "mypy>=1.10",
     "ruff>=0.5",
     "pre-commit>=3.7",
