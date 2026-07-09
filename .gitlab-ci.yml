@@ -1,0 +1,41 @@
+stages:
+  - lint
+  - typecheck
+  - test
+  - build
+
+.setup: &setup
+  before_script:
+    - pip install -e ".[dev]"
+
+lint:
+  stage: lint
+  image: python:3.11-slim
+  <<: *setup
+  script:
+    - ruff check .
+
+typecheck:
+  stage: typecheck
+  image: python:3.11-slim
+  <<: *setup
+  script:
+    - mypy src
+
+test:
+  stage: test
+  parallel:
+    matrix:
+      - PYTHON_IMAGE: ["python:3.11-slim", "python:3.12-slim"]
+  image: $PYTHON_IMAGE
+  <<: *setup
+  script:
+    - pytest
+
+build:
+  stage: build
+  image: python:3.11-slim
+  needs: [lint, typecheck, test]
+  script:
+    - pip install build
+    - python -m build

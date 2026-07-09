@@ -1,0 +1,7 @@
+cache_dir: ~/.cache/euvd-watch
+epss_threshold: 0.5
+min_confidence: medium
+organization:
+  name: "Example S.R.L."
+  contact_email: security@example.com
+  product_name: "Example Product"

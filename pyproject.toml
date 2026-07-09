@@ -1,0 +1,80 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "euvd-watch"
+version = "0.1.0"
+description = "EUVD-native software supply-chain vulnerability watch + EU Cyber Resilience Act (CRA) reporting toolkit"
+readme = "readme/readme.md"
+requires-python = ">=3.11"
+license = "EUPL-1.2"
+authors = [{ name = "euvd-watch contributors" }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "typer>=0.12",
+    "pydantic>=2",
+    "httpx>=0.27",
+    "packageurl-python>=0.15",
+    "pyyaml>=6",
+    "jinja2>=3.1",
+    "rich>=13",
+]
+
+[project.scripts]
+euvd-watch = "euvd_watch.cli:app"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "respx>=0.21",
+    "freezegun>=1.5",
+    "mypy>=1.10",
+    "ruff>=0.5",
+    "pre-commit>=3.7",
+    "types-PyYAML",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/euvd_watch"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=euvd_watch --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+markers = [
+    "unit: fast, pure unit tests",
+    "integration: multi-module flows with mocked APIs",
+    "e2e: CLI end-to-end tests",
+    "invariant: executable must-never-happen checks",
+    "live: hits real network services, excluded by default",
+    "slow: slow-running tests",
+]
+
+[tool.coverage.run]
+source = ["src/euvd_watch"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+# typer.Option()/typer.Argument() as parameter defaults is the required Typer idiom.
+"src/euvd_watch/cli.py" = ["B008"]
+
+[tool.mypy]
+strict = true
+python_version = "3.11"
+mypy_path = "src"
+files = ["src"]
+
+[[tool.mypy.overrides]]
+module = ["packageurl.*"]
+ignore_missing_imports = true

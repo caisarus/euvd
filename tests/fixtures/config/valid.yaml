@@ -1,0 +1,8 @@
+cache_dir: /tmp/euvd-watch-cache
+cache_ttl_hours: 12
+epss_threshold: 0.7
+min_confidence: high
+organization:
+  name: "Example S.R.L."
+  contact_email: security@example.com
+  product_name: "Example Product"
