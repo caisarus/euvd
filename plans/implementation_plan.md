@@ -3,6 +3,7 @@
 > **Audience:** an AI coding agent (or a developer) implementing the project step by step.
 > **How to use this document:** implement the steps **strictly in order**. Do not start a step until the previous step's *Acceptance criteria* all pass. Every step defines: **Purpose** (why it exists), **What to implement**, **How to implement**, **How to test**, and **Acceptance criteria**.
 > **Language/stack:** Python 3.11+, packaged with `pyproject.toml`. License: EUPL-1.2.
+> **Living amendments:** after M0/M1 shipped, a verified-findings review (`plans/feedback_m0_m1.md`) surfaced defect classes the original rules didn't prevent. The *Hardening rules* and *Post-milestone review gate* subsections below, plus inline notes marked "M0/M1 review item N.N" in later steps, were added from that experience and are as binding as the original text.
 
 ---
 
@@ -37,7 +38,58 @@
 - Every public function has a docstring stating what it does and why it exists.
 - Conventional Commits for every commit (`feat(sbom): ...`, `test(euvd): ...`).
 
-### Repository layout (target state)
+#### Hardening rules (added after the M0/M1 review — see `plans/feedback_m0_m1.md`)
+
+Each of these encodes a defect class that actually shipped in M0/M1 and was caught only by
+a post-milestone review. They are binding for every subsequent step.
+
+- **No unhandled exception may escape a CLI command.** Third-party exceptions (pydantic
+  `ValidationError`, `UnicodeDecodeError`, library errors) are wrapped into the owning
+  module's typed error at the module boundary; commands exit only 0/1/2. *(M1 shipped a
+  pydantic traceback with exit 1 for an SBOM with a numeric version field.)*
+- **All text file I/O uses explicit `encoding="utf-8"`** — read and write, including cache
+  files, state stores, YAML, JSONL audit logs, and rendered templates. Never rely on the
+  platform locale. *(M1's own fixture failed to decode under a cp1252 locale.)*
+- **Config models are `extra="forbid"`.** A typo'd key must fail loudly and name itself,
+  never silently fall back to a default — this config gates a legal reporting trigger. When
+  a step adds config fields, update `examples/config/euvd-watch.yaml` and the config tests
+  *in the same step*.
+- **Validate identity/key fields at every ingest boundary.** Anything that gets deduped,
+  keyed, or persisted (components, EUVD records by `euvd_id`, state-store rows by
+  `(purl, euvd_id)`, audit entries) must have its key fields checked on ingest; entities
+  with missing/empty keys are skipped **with a logged warning**, never allowed to collide.
+  *(M1 let nameless components collapse to one `("", version)` key and vanish silently —
+  the exact "silently missed finding" failure mode this project exists to prevent.)*
+- **Structured identifiers are constructed by their libraries, never by string
+  formatting.** Purls via `PackageURL(...)`, not f-strings; canonical form is a tested
+  fixed point (`normalize(x) == x`). The same applies to any query strings or VEX product
+  identifiers built later.
+- **Every machine-readable output carries a `schema_version`.** Not just the findings
+  artifact (Step 2.5) — inventories, drafts, webhook payloads: anything a third party or a
+  later pipeline stage parses.
+- **Every milestone adds its "must never happen" rules to `tests/invariants/`** (test plan
+  §6) in the step that introduces the rule, not retroactively. M2's confidence caps are the
+  next entries.
+- **Any new third-party import must be added to the mypy hook's `additional_dependencies`
+  in `.pre-commit-config.yaml` in the same commit** — the hook runs in an isolated env and
+  fails with misleading "untyped" errors otherwise. Pin hook revs to the versions actually
+  installed by `pip install -e ".[dev]"`, not to remembered version numbers.
+- **Logging goes through `logging.getLogger(__name__)` on top of the existing
+  `src/euvd_watch/log.py` bootstrap** (wired to `--verbose`); log output is stderr-only.
+  Stdout is reserved exclusively for command output — `--output json` stdout purity is a
+  contract, tested.
+
+### Post-milestone review gate (added after the M0/M1 review)
+
+A milestone is not finished when its acceptance criteria pass. Before starting the next
+milestone: run a critical review of everything the milestone shipped against this plan and
+TEST_PLAN.md, **empirically reproducing every suspected defect before reporting it** (write
+a repro script per claim; only verified claims go in the review). Record findings in
+`plans/feedback_<milestone>.md` with severity tiers (P1 correctness / P2 plan-compliance /
+P3 future traps naming the milestone they'll bite), fix at least all P1s and the P2s the
+next milestone builds on, and re-run the original repros — not just new unit tests — to
+confirm the fixes. The M0/M1 review caught six user-visible correctness bugs this way that
+97% line coverage had not.
 
 ```
 euvd-watch/
@@ -174,7 +226,7 @@ euvd-watch/
 ### Step 2.1 — Shared HTTP layer
 
 - **Purpose:** the EUVD API is beta and rate limits are unknown/changeable; a single disciplined HTTP layer (retry, backoff, caching) protects both the user and ENISA's service, and makes everything testable.
-- **What to implement:** `http.py`: an `ApiClient` wrapping `httpx.Client` with: exponential backoff + jitter on 429/5xx (max 5 retries), timeout defaults (10 s connect / 30 s read), a persistent on-disk cache (SQLite, keyed by URL+params, TTL from config, honoring ETag/If-None-Match when the server supports it), a `User-Agent` of `euvd-watch/<version> (+repo URL)`, and structured logging of every request (URL, status, cache hit/miss, duration).
+- **What to implement:** `http.py`: an `ApiClient` wrapping `httpx.Client` with: exponential backoff + jitter on 429/5xx (max 5 retries), timeout defaults (10 s connect / 30 s read), a persistent on-disk cache (SQLite, keyed by URL+params, TTL from config, honoring ETag/If-None-Match when the server supports it), a `User-Agent` of `euvd-watch/<version> (+repo URL)`, and structured logging of every request (URL, status, cache hit/miss, duration) — built on the existing `src/euvd_watch/log.py` bootstrap (M0/M1 review item 2.3), not a new logging setup.
 - **How to implement:** cache as a small `Cache` class (get/set/purge, `cachedir/euvd-cache.sqlite`); do not use third-party caching libs. All other modules receive an `ApiClient` instance — never construct their own.
 - **How to test:** unit tests with `respx`: retry behavior on 429 then success; TTL expiry (freezegun); cache hit avoids network; corrupted cache file self-heals (drops and recreates).
 - **Acceptance criteria:** zero direct `httpx` usage outside `http.py` (enforce with a ruff banned-import rule or a grep test).
@@ -183,7 +235,7 @@ euvd-watch/
 
 - **Purpose:** turn ENISA's EUVD API responses into stable, typed records the matcher can consume, insulating the rest of the code from beta-API churn.
 - **What to implement:** `euvd/client.py` + `euvd/models.py`. First, **discover and document the current API surface** (the API is beta — verify endpoints at implementation time at `https://euvd.enisa.europa.eu/` and encode findings in `docs/euvd-api.md`). **Important reality check for the implementer:** EUVD records describe affected software as *vendor / product / version-range text strings* (CVE-style), **not** as purls — do not expect or invent purl fields in API data. Implement these access patterns: (a) retrieval of the full **exploited-vulnerabilities feed** (small enough to sync wholesale each run), (b) retrieval of the **latest/recent vulnerabilities feed**, (c) **keyword search** by vendor and/or product name, (d) **lookup by EUVD ID or CVE alias**, all with pagination handling. `EuvdRecord` model: `euvd_id`, `aliases` (CVE IDs), `description`, `affected_products` (list of `{vendor, product, version_range}` as published), `exploited: bool`, `epss: float | None`, `cvss`, `references`, `dates`.
-- **How to implement:** every parse of an API response must tolerate missing/extra fields (beta!). Record fixtures: capture 5–10 real API responses into `tests/fixtures/euvd/` (a small script `scripts/capture_fixtures.py` does this once, manually run — fixtures are committed, tests never hit the network).
+- **How to implement:** every parse of an API response must tolerate missing/extra fields (beta!) — but per the hardening rules, a record with a missing/empty `euvd_id` (its identity key) is skipped **with a logged warning**, never stored or matched: empty keys colliding silently was M1's worst bug class. Record fixtures: capture 5–10 real API responses into `tests/fixtures/euvd/` (a small script `scripts/capture_fixtures.py` does this once, manually run — fixtures are committed, tests never hit the network).
 - **How to test:** `respx`-mocked tests over the committed fixtures: pagination, empty results, malformed record (skipped with warning, not crash), exploited-list retrieval.
 - **Acceptance criteria:** `docs/euvd-api.md` documents every endpoint used; all client methods typed and fixture-tested.
 
@@ -195,10 +247,10 @@ euvd-watch/
   2. **Partial structured match** — (vendor, product) equality but the version range is open-ended/ambiguous; **or** product-name equality with unknown/mismatched vendor while the version is in range → confidence `medium`.
   3. **Fuzzy name heuristic** — normalized token similarity between component name and affected product, without a reliable version evaluation on either side → confidence `low` (exists to surface candidates for human review, never for automated downstream decisions).
   - **Confidence caps (hard invariants):** a component whose identifier was `synthesized` in Step 1.4 can never exceed `medium`; a version comparison done by the fallback comparator can never support `high`.
-  - Version-range evaluation: implement a small `versions.py` supporting semver and PEP 440, falling back to tokenwise comparison; the comparator must report *which* scheme it used so the caps above are enforceable.
+  - Version-range evaluation: implement a small `versions.py` supporting semver and PEP 440, falling back to tokenwise comparison; the comparator must report *which* scheme it used so the caps above are enforceable. **deb/rpm caution (M0/M1 review item 3.3):** `Component.normalized_version` strips debian epochs (`1:1.0` → `1.0`), which destroys deb ordering (`1:1.0` sorts *after* `2.0`) — the comparator must evaluate deb/rpm schemes against the **raw** `Component.version`, never the normalized form. Document this in `docs/matching.md`.
   - Output model `Finding`: `component`, `record`, `confidence: high|medium|low`, `strategy`, `explanation: str` (one human-readable sentence: *why* this matched — mandatory, this feeds VEX/CRA auditability).
 - **How to implement:** pure functions over `Inventory` + iterable of `EuvdRecord`; no I/O. Deterministic ordering of findings (by component dedupe_key, then euvd_id).
-- **How to test:** a curated truth table in `tests/fixtures/matching/cases.yaml`: ≥ 25 cases of known true positives, known false positives (e.g., same product name, different vendor), edge versions (boundary of a range), and expected confidence. This file is the regression suite for all future matcher changes.
+- **How to test:** a curated truth table in `tests/fixtures/matching/cases.yaml`: ≥ 25 cases of known true positives, known false positives (e.g., same product name, different vendor), edge versions (boundary of a range), and expected confidence. Include at least one **mis-inferred-ecosystem case** (M0/M1 review item 3.4): a component whose synthesized purl guessed the wrong ecosystem from a CPE prefix (e.g. a pypi package whose CPE product starts with `go-`) — asserting the synthesized-purl confidence cap actually contains the damage. Note that `Component.cpe_parts` values arrive **decoded** (backslash escapes already removed by `sbom/normalize.py`) — do not unescape again. This file is the regression suite for all future matcher changes.
 - **Acceptance criteria:** truth table passes 100%; every `Finding.explanation` is non-empty; no `high` confidence ever produced from the fallback version comparator (asserted in tests).
 
 ### Step 2.4 — Enrichment: EPSS & CISA KEV
@@ -355,7 +407,7 @@ euvd-watch/
 ### Step 6.2 — Web application
 
 - **Purpose:** visibility for the humans in the loop — reviewers of low-confidence matches, owners of CRA clocks.
-- **What to implement:** FastAPI + server-rendered Jinja2 (no SPA, no JS build chain): pages: Overview (counts, open CRA clocks with countdown), Findings (filter by confidence/exploited/status), Finding detail (explanation, EUVD data, VEX status, decision shortcut instructions), CRA events, Audit log viewer (+ verify button). Read-mostly; the only writes are `cra mark` and VEX-decision hints, both requiring the auth below.
+- **What to implement:** FastAPI + server-rendered Jinja2 (no SPA, no JS build chain): pages: Overview (counts, open CRA clocks with countdown), Findings (filter by confidence/exploited/status, **paginated** — M1's CLI table renders unbounded rows, which is tolerable in a terminal but not in a page; while here, give the CLI table a "… and N more" cap too, M0/M1 review item 3.7), Finding detail (explanation, EUVD data, VEX status, decision shortcut instructions), CRA events, Audit log viewer (+ verify button). Read-mostly; the only writes are `cra mark` and VEX-decision hints, both requiring the auth below.
 - **How to implement:** `euvd-watch web serve [--host 127.0.0.1 --port 8642]`; basic auth from config (hashed password) — document clearly it's designed to sit behind a reverse proxy; bind to localhost by default.
 - **How to test:** FastAPI TestClient route tests; auth tests (401 without credentials); HTML contains no inline event handlers (CSP-friendly).
 - **Acceptance criteria:** dashboard renders real data from the demo scenario end-to-end.
@@ -406,7 +458,7 @@ Assumptions: one developer, part-time (~8–10 h/week), AI-assisted implementati
 
 **Total: ~15 weeks part-time (~3.5 months); ~7 weeks full-time.**
 
-Suggested public checkpoints: publish to PyPI as `0.1.0` **immediately after M2** (scan+match alone is already useful) — this first release is done **manually** (`python -m build && twine upload`, using a project name reserved on PyPI as early as M0); Step 5.1 then *automates* what was manual, it is not the first release. Then `0.2.0` after M3, `0.3.0` after M4, `1.0.0-rc` after M6.
+Suggested public checkpoints: publish to PyPI as `0.1.0` **immediately after M2** (scan+match alone is already useful) — this first release is done **manually** (`python -m build && twine upload`, using a project name reserved on PyPI as early as M0 — **status: still not reserved as of the post-M1 review; outstanding owner action, and a real squatting risk the longer it waits**); Step 5.1 then *automates* what was manual, it is not the first release. Then `0.2.0` after M3, `0.3.0` after M4, `1.0.0-rc` after M6.
 
 ---
 
