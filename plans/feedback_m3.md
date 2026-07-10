@@ -6,6 +6,13 @@
 > running repro before being written down. P1 = correctness bugs to fix before M4;
 > P2 = spec-conformance debt; P3 = consistency/forward-compat improvements.
 
+## Status: all findings fixed (commit `24a8929`)
+
+Both P1s, the P2, and both P3s are fixed and regression-tested; every original repro was
+re-run to confirm before writing tests. 311 tests (was 306), live smoke tests and a live
+`vex generate` run against the real EUVD both still pass. Nothing outstanding from this
+review blocks M4.
+
 ## P1 — correctness bugs
 
 ### 1.1 Decision matching doesn't normalize the human-entered purl **[verified]**
