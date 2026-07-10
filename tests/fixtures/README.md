@@ -60,6 +60,15 @@ Note the `{"sbom": {...}}` envelope that must be unwrapped. GitHub's export neve
 `cpe23Type` refs — that's why `cpe-ref.spdx.json` exists. Regenerating changes package
 counts/versions (the upstream repo moves), so the same caution as above applies.
 
+### `euvd/*.json`
+
+Real EUVD API responses captured by `scripts/capture_fixtures.py` (manual run;
+politeness-delayed; re-serialized with `indent=2, sort_keys=True` for reviewable diffs).
+Endpoint quirks they encode (204 misses, newline-joined aliases, 0–100 epss scale, the dead
+CVE endpoint) are documented in `docs/euvd-api.md`. Several client tests assert exact item
+counts from these files — regenerating refreshes live data and **will change counts and
+record contents**; treat a regeneration like a fixture migration, not a refresh.
+
 ## Handcrafted fixtures (edit deliberately, keep minimal)
 
 | Fixture | Exercises |

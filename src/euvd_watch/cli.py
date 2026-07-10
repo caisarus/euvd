@@ -6,7 +6,10 @@ remain stubs until their owning milestone (M2-M4) lands.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 
@@ -16,7 +19,19 @@ from rich.table import Table
 
 from euvd_watch import __version__
 from euvd_watch.config import ConfigError, Settings, load_settings
+from euvd_watch.enrich import enrich
+from euvd_watch.euvd.client import EuvdClient
+from euvd_watch.euvd.match import (
+    Confidence,
+    Finding,
+    confidence_at_least,
+    derive_candidates,
+    match_inventory,
+)
+from euvd_watch.euvd.models import EuvdRecord
+from euvd_watch.http import ApiClient, ApiError
 from euvd_watch.log import setup_logging
+from euvd_watch.models import Inventory
 from euvd_watch.sbom import load_inventory_with_stats
 from euvd_watch.sbom.errors import SbomParseError, UnsupportedFormatError
 
@@ -111,10 +126,159 @@ def scan(
     typer.echo(summary)
 
 
+class FailOn(StrEnum):
+    NONE = "none"
+    ANY = "any"
+    EXPLOITED = "exploited"
+
+
+def _inventory_digest(inventory: Inventory) -> str:
+    return "sha256:" + hashlib.sha256(inventory.model_dump_json().encode("utf-8")).hexdigest()
+
+
+def _findings_artifact(
+    findings: list[Finding], inventory: Inventory, data_freshness: str | None
+) -> dict[str, object]:
+    """The versioned findings artifact consumed later by `vex generate` and `cra check`."""
+    return {
+        "schema_version": 1,
+        "generated_at": datetime.now(UTC).isoformat(),
+        "inventory_digest": _inventory_digest(inventory),
+        "data_freshness": data_freshness,
+        "findings": [f.model_dump(mode="json") for f in findings],
+    }
+
+
+def _fetch_records(
+    client: EuvdClient, inventory: Inventory, *, exploited_only: bool
+) -> list[EuvdRecord]:
+    """Two-tier query strategy (docs/matching.md).
+
+    Tier 1 always syncs the full exploited catalog. Tier 2 adds per-candidate product
+    searches, deduplicated across components and served from the HTTP cache. Note the
+    cache-first client means "EUVD unreachable but cache fresh" is served transparently;
+    an ApiError here means both the network and the cache have nothing usable.
+    """
+    records: dict[str, EuvdRecord] = {}
+    for record in client.fetch_exploited():
+        records[record.euvd_id] = record
+
+    if not exploited_only:
+        products = {
+            candidate.product.lower()
+            for component in inventory.components
+            for candidate in derive_candidates(component)
+        }
+        for product in sorted(products):
+            for record in client.search_product(product):
+                records.setdefault(record.euvd_id, record)
+
+    return list(records.values())
+
+
+def _render_findings_table(findings: list[Finding], title: str) -> None:
+    table = Table(title=title)
+    table.add_column("Component")
+    table.add_column("EUVD ID")
+    table.add_column("Confidence")
+    table.add_column("Exploited")
+    table.add_column("EPSS")
+    table.add_column("KEV")
+    table.add_column("Why")
+    colors = {Confidence.HIGH: "red", Confidence.MEDIUM: "yellow", Confidence.LOW: "cyan"}
+    for f in findings:
+        table.add_row(
+            f"{f.component.name} {f.component.version or ''}".strip(),
+            f.record.euvd_id,
+            f"[{colors[f.confidence]}]{f.confidence.value}[/{colors[f.confidence]}]",
+            "yes" if f.record.exploited else "",
+            f"{f.epss_score:.3f}" if f.epss_score is not None else "",
+            {True: "yes", False: "no", None: "?"}[f.in_kev],
+            f.explanation,
+        )
+    Console().print(table)
+
+
 @app.command()
-def match(sbom: str = typer.Argument(..., help="Path to a CycloneDX/SPDX SBOM file.")) -> None:
-    """Match SBOM components against the EUVD."""
-    _not_implemented("match")
+def match(
+    ctx: typer.Context,
+    sbom: str = typer.Argument(..., help="Path to a CycloneDX/SPDX SBOM file."),
+    exploited_only: bool = typer.Option(
+        False, "--exploited-only", help="Only match against actively exploited vulnerabilities."
+    ),
+    min_confidence: Confidence | None = typer.Option(
+        None, "--min-confidence", help="Drop findings below this confidence (default: config)."
+    ),
+    no_enrich: bool = typer.Option(
+        False, "--no-enrich", help="Skip EPSS/KEV enrichment (offline mode)."
+    ),
+    fail_on: FailOn = typer.Option(
+        FailOn.ANY, "--fail-on", help="What makes the exit code 1 (CI gate)."
+    ),
+    save_findings: Path | None = typer.Option(
+        None, "--save-findings", help="Also write the findings artifact to this path."
+    ),
+) -> None:
+    """Match SBOM components against the EUVD, with confidence scoring."""
+    state: GlobalState = ctx.obj
+    settings = state.settings
+
+    try:
+        inventory, _dropped = load_inventory_with_stats(sbom)
+    except (SbomParseError, UnsupportedFormatError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    api = ApiClient(settings.cache_dir, settings.cache_ttl_hours)
+    try:
+        client = EuvdClient(api, settings.euvd_api_base_url)
+        try:
+            records = _fetch_records(client, inventory, exploited_only=exploited_only)
+        except ApiError as exc:
+            typer.echo(
+                f"EUVD is unreachable and the local cache has no usable data: {exc}\n"
+                f"Refusing to report 'no findings' on missing data.",
+                err=True,
+            )
+            raise typer.Exit(code=2) from exc
+
+        newest = api.cache.newest_stored_at()
+        data_freshness = (
+            datetime.fromtimestamp(newest, UTC).isoformat() if newest is not None else None
+        )
+
+        findings = match_inventory(inventory, records)
+        if not no_enrich:
+            findings = enrich(findings, api, settings.epss_api_base_url, settings.kev_feed_url)
+    finally:
+        api.close()
+
+    floor = min_confidence or Confidence(settings.min_confidence)
+    findings = [f for f in findings if confidence_at_least(f.confidence, floor)]
+    if exploited_only:
+        findings = [f for f in findings if f.record.exploited]
+
+    exploited_count = sum(1 for f in findings if f.record.exploited)
+    summary = (
+        f"{len(findings)} findings ({exploited_count} exploited) across "
+        f"{len(inventory.components)} components; min confidence: {floor.value}"
+    )
+
+    artifact = _findings_artifact(findings, inventory, data_freshness)
+    if save_findings is not None:
+        save_findings.write_text(json.dumps(artifact, indent=2) + "\n", encoding="utf-8")
+
+    if state.output is OutputFormat.JSON:
+        typer.echo(summary, err=True)
+        typer.echo(json.dumps(artifact))
+    else:
+        _render_findings_table(findings, title=str(sbom))
+        typer.echo(summary)
+
+    if fail_on is FailOn.ANY and findings:
+        raise typer.Exit(code=1)
+    if fail_on is FailOn.EXPLOITED and exploited_count:
+        raise typer.Exit(code=1)
 
 
 @app.command()

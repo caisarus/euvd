@@ -1,0 +1,94 @@
+{
+  "aliases": "CVE-2026-48908\nGHSA-8fwr-8fxr-8v2p\n",
+  "assigner": "Joomla",
+  "baseScore": 10.0,
+  "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H/E:A/AU:Y/U:Red",
+  "baseScoreVersion": "4.0",
+  "datePublished": "Jun 20, 2026, 11:57:00 AM",
+  "dateUpdated": "Jul 8, 2026, 9:55:16 AM",
+  "description": "A vulnerability in SP Page Builder for Joomla allows unauthenticated users to upload arbitrary files, ultimately resulting in the upload and execution of PHP code.",
+  "enisaIdAdvisory": [],
+  "enisaIdProduct": [
+    {
+      "id": "690f5766-bb0a-37d2-a121-3a5a84c54d68",
+      "product": {
+        "name": "SP Page Builder extension for Joomla",
+        "vendor": {
+          "name": "joomshaper.net"
+        }
+      },
+      "product_version": "1.0.0-6.6.1"
+    }
+  ],
+  "enisaIdVendor": [
+    {
+      "id": "e2cc5221-1347-3296-a954-5302212c8493",
+      "vendor": {
+        "name": "joomshaper.net"
+      }
+    }
+  ],
+  "enisaIdVulnerability": [
+    {
+      "id": "59386762-d105-3ac7-b4de-9e3b9a869e47",
+      "vulnerability": {
+        "aliases": "CVE-2026-48908\nGHSA-8fwr-8fxr-8v2p\n",
+        "baseScore": 0.0,
+        "dataProcessed": "Jul 6, 2026, 7:02:47 AM",
+        "datePublished": "Jun 20, 2026, 3:32:23 PM",
+        "dateUpdated": "Jun 30, 2026, 9:31:37 PM",
+        "description": "A vulnerability in the SP Page Builder for Joomla allows the upload of arbitrary files for unauthenticated users, ultimately resulting in PHP code upload and execution.",
+        "enisa_id": "EUVD-2026-38110\n",
+        "epss": 0.0,
+        "id": "GHSA-8fwr-8fxr-8v2p",
+        "references": "https://nvd.nist.gov/vuln/detail/CVE-2026-48908\nhttps://mysites.guru/blog/sp-page-builder-zero-day-uploadcustomicon-rce\nhttps://www.joomshaper.com/forum/question/45152\nhttps://www.joomshaper.com/page-builder\n",
+        "vulnerabilityProduct": [],
+        "vulnerabilityVendor": []
+      }
+    },
+    {
+      "id": "e3882b8a-57db-38ec-8fa5-bc9dbe53928c",
+      "vulnerability": {
+        "assigner": "Joomla",
+        "baseScore": 10.0,
+        "baseScoreVector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H/E:A/AU:Y/U:Red",
+        "baseScoreVersion": "4.0",
+        "dataProcessed": "Jul 10, 2026, 7:12:19 AM",
+        "datePublished": "Jun 20, 2026, 11:57:00 AM",
+        "dateUpdated": "Jul 8, 2026, 9:55:16 AM",
+        "description": "A vulnerability in SP Page Builder for Joomla allows unauthenticated users to upload arbitrary files, ultimately resulting in the upload and execution of PHP code.",
+        "enisa_id": "EUVD-2026-38110\n",
+        "epss": 1.57,
+        "exploitedSince": "Jul 6, 2026, 12:00:00 AM",
+        "id": "CVE-2026-48908",
+        "references": "https://www.joomshaper.com/page-builder\n",
+        "status": "PUBLISHED",
+        "vulnerabilityProduct": [
+          {
+            "id": "b32cb5f3-d5d1-3cba-bf40-c4f2d99aebdd",
+            "product": {
+              "name": "SP Page Builder extension for Joomla",
+              "vendor": {
+                "name": "joomshaper.net"
+              }
+            },
+            "product_version": "1.0.0-6.6.1"
+          }
+        ],
+        "vulnerabilityVendor": [
+          {
+            "id": "89a3f009-fb40-3220-a7c7-c5ad03f3a259",
+            "vendor": {
+              "name": "joomshaper.net"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "enisaUuid": "7816f01d-e40b-3a71-ba5a-95c4e358b68e",
+  "epss": 1.57,
+  "exploitedSince": "Jul 6, 2026, 12:00:00 AM",
+  "id": "EUVD-2026-38110",
+  "references": "https://www.joomshaper.com/page-builder\n"
+}

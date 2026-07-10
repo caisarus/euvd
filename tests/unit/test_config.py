@@ -83,6 +83,15 @@ def test_default_cache_dir_is_expanded() -> None:
     assert "~" not in str(Settings().cache_dir)
 
 
+def test_api_base_urls_have_verified_defaults() -> None:
+    # euvd_api_base_url must point at the verified API host (docs/euvd-api.md), not the
+    # website; epss/kev URLs exist so deployments can pin or proxy them.
+    s = Settings()
+    assert s.euvd_api_base_url == "https://euvdservices.enisa.europa.eu/api"
+    assert s.epss_api_base_url.startswith("https://api.first.org/")
+    assert s.kev_feed_url.endswith(".json")
+
+
 def test_documented_example_config_loads() -> None:
     # The README/example config is a public promise; extra="forbid" must not break it.
     settings = load_settings(EXAMPLE_CONFIG)

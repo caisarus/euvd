@@ -48,9 +48,12 @@ class Settings(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    # Unverified placeholder; the real EUVD API surface is confirmed during M2
-    # (plans/implementation_plan.md Step 2.2) and documented in docs/euvd-api.md.
-    euvd_api_base_url: str = "https://euvd.enisa.europa.eu"
+    # Verified live 2026-07-10; endpoints documented in docs/euvd-api.md.
+    euvd_api_base_url: str = "https://euvdservices.enisa.europa.eu/api"
+    epss_api_base_url: str = "https://api.first.org/data/v1/epss"
+    kev_feed_url: str = (
+        "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+    )
     # validate_default so the ~ in the default expands through the same validator user
     # values go through (pydantic skips validators on defaults otherwise).
     cache_dir: Path = Field(default=Path("~/.cache/euvd-watch"), validate_default=True)

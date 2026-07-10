@@ -1,0 +1,49 @@
+{
+  "items": [
+    {
+      "aliases": "GHSA-g3rq-g295-4j3m\nPYSEC-2021-66\nCVE-2020-28493\n",
+      "assigner": "snyk",
+      "baseScore": 5.3,
+      "baseScoreVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L/E:P",
+      "baseScoreVersion": "3.1",
+      "datePublished": "Feb 1, 2021, 7:30:16 PM",
+      "dateUpdated": "Sep 16, 2024, 5:24:01 PM",
+      "description": "This affects the package jinja2 from 0.0.0 and before 2.11.3. The ReDoS vulnerability is mainly due to the `_punctuation_re regex` operator and its use of multiple wildcards. The last wildcard is the most exploitable as it searches for trailing punctuation. This issue can be mitigated by Markdown to format user content instead of the urlize filter, or by implementing request timeouts and limiting process memory.",
+      "enisaIdProduct": [
+        {
+          "id": "28017a11-b2ea-3cc6-bb2f-c50949785f67",
+          "product": {
+            "name": "jinja2",
+            "vendor": {
+              "name": "n/a"
+            }
+          },
+          "product_version": "unspecified <2.11.3"
+        },
+        {
+          "id": "7ae8adf9-6e54-3304-816f-320c0504ccc2",
+          "product": {
+            "name": "jinja2",
+            "vendor": {
+              "name": "n/a"
+            }
+          },
+          "product_version": "0.0.0 <unspecified"
+        }
+      ],
+      "enisaIdVendor": [
+        {
+          "id": "64d394b7-43dd-3dc8-ad1a-24ea49f09fc1",
+          "vendor": {
+            "name": "n/a"
+          }
+        }
+      ],
+      "enisaUuid": "dea0110c-6f49-3c16-8129-5a91f25c5da4",
+      "epss": 3.55,
+      "id": "EUVD-2021-0103",
+      "references": "https://snyk.io/vuln/SNYK-PYTHON-JINJA2-1012994\nhttps://github.com/pallets/jinja/blob/ab81fd9c277900c85da0c322a2ff9d68a235b2e6/src/jinja2/utils.py%23L20\nhttps://github.com/pallets/jinja/pull/1343\nhttps://lists.fedoraproject.org/archives/list/package-announce%40lists.fedoraproject.org/message/PVAKCOO7VBVUBM3Q6CBBTPBFNP5NDXF4/\nhttps://security.gentoo.org/glsa/202107-19\n"
+    }
+  ],
+  "total": 1
+}

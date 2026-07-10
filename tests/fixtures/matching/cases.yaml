@@ -1,0 +1,144 @@
+# Matcher truth table (implementation_plan.md Step 2.3).
+# THE regression suite for all future matcher changes: every bug found in the wild becomes
+# a new row here BEFORE its fix is merged (test_plan.md principle 4).
+#
+# Each case: a component (run through normalize_component by the driver), one EUVD record's
+# affected-product entries, and the expected outcome. `expect.matched: false` means no
+# finding at all for that record.
+
+- id: high-structured-hyphen-range
+  component: {name: openssl, version: "3.0.2", cpe: "cpe:2.3:a:openssl:openssl:3.0.2:*:*:*:*:*:*:*", purl: "pkg:generic/openssl@3.0.2"}
+  affected: [{vendor: openssl, product: openssl, version_range: "1.0.0-3.0.7"}]
+  expect: {matched: true, confidence: high, strategy: structured}
+
+- id: high-structured-lt-bound
+  component: {name: openssl, version: "3.0.2", cpe: "cpe:2.3:a:openssl:openssl:3.0.2:*:*:*:*:*:*:*", purl: "pkg:generic/openssl@3.0.2"}
+  affected: [{vendor: openssl, product: openssl, version_range: "<3.0.8"}]
+  expect: {matched: true, confidence: high, strategy: structured}
+
+- id: high-structured-compound-range
+  component: {name: widget, version: "1.5.0", cpe: "cpe:2.3:a:acme:widget:1.5.0:*:*:*:*:*:*:*", purl: "pkg:generic/widget@1.5.0"}
+  affected: [{vendor: acme, product: widget, version_range: ">=1.0 <2.0"}]
+  expect: {matched: true, confidence: high, strategy: structured}
+
+- id: boundary-low-edge-inclusive
+  component: {name: widget, version: "1.0.0", cpe: "cpe:2.3:a:acme:widget:1.0.0:*:*:*:*:*:*:*", purl: "pkg:generic/widget@1.0.0"}
+  affected: [{vendor: acme, product: widget, version_range: "1.0.0-2.0.0"}]
+  expect: {matched: true, confidence: high, strategy: structured}
+
+- id: boundary-high-edge-inclusive
+  component: {name: widget, version: "2.0.0", cpe: "cpe:2.3:a:acme:widget:2.0.0:*:*:*:*:*:*:*", purl: "pkg:generic/widget@2.0.0"}
+  affected: [{vendor: acme, product: widget, version_range: "1.0.0-2.0.0"}]
+  expect: {matched: true, confidence: high, strategy: structured}
+
+- id: boundary-just-outside-high-edge
+  component: {name: widget, version: "2.0.1", cpe: "cpe:2.3:a:acme:widget:2.0.1:*:*:*:*:*:*:*", purl: "pkg:generic/widget@2.0.1"}
+  affected: [{vendor: acme, product: widget, version_range: "1.0.0-2.0.0"}]
+  expect: {matched: false}
+
+- id: provably-outside-lt-bound
+  component: {name: openssl, version: "3.0.8", cpe: "cpe:2.3:a:openssl:openssl:3.0.8:*:*:*:*:*:*:*", purl: "pkg:generic/openssl@3.0.8"}
+  affected: [{vendor: openssl, product: openssl, version_range: "<3.0.8"}]
+  expect: {matched: false}
+
+- id: exact-version-equal
+  component: {name: widget, version: "1.2.3", cpe: "cpe:2.3:a:acme:widget:1.2.3:*:*:*:*:*:*:*", purl: "pkg:generic/widget@1.2.3"}
+  affected: [{vendor: acme, product: widget, version_range: "1.2.3"}]
+  expect: {matched: true, confidence: high, strategy: structured}
+
+- id: exact-version-different
+  component: {name: widget, version: "1.2.4", cpe: "cpe:2.3:a:acme:widget:1.2.4:*:*:*:*:*:*:*", purl: "pkg:generic/widget@1.2.4"}
+  affected: [{vendor: acme, product: widget, version_range: "1.2.3"}]
+  expect: {matched: false}
+
+- id: ambiguous-free-text-range-capped-medium
+  component: {name: openssl, version: "3.0.2", cpe: "cpe:2.3:a:openssl:openssl:3.0.2:*:*:*:*:*:*:*", purl: "pkg:generic/openssl@3.0.2"}
+  affected: [{vendor: openssl, product: openssl, version_range: "all versions before the fix"}]
+  expect: {matched: true, confidence: medium, strategy: partial}
+
+- id: missing-range-capped-medium
+  component: {name: openssl, version: "3.0.2", cpe: "cpe:2.3:a:openssl:openssl:3.0.2:*:*:*:*:*:*:*", purl: "pkg:generic/openssl@3.0.2"}
+  affected: [{vendor: openssl, product: openssl, version_range: null}]
+  expect: {matched: true, confidence: medium, strategy: partial}
+
+- id: product-only-vendor-unknown-in-range
+  component: {name: widget, version: "1.5.0"}
+  affected: [{vendor: acme, product: widget, version_range: "<2.0.0"}]
+  expect: {matched: true, confidence: medium, strategy: partial}
+
+- id: product-equal-vendor-mismatch-in-range
+  component: {name: widget, version: "1.5.0", cpe: "cpe:2.3:a:evilcorp:widget:1.5.0:*:*:*:*:*:*:*", purl: "pkg:generic/widget@1.5.0"}
+  affected: [{vendor: acme, product: widget, version_range: "<2.0.0"}]
+  expect: {matched: true, confidence: medium, strategy: partial}
+
+- id: product-equal-vendor-mismatch-outside-range
+  component: {name: widget, version: "3.0.0", cpe: "cpe:2.3:a:evilcorp:widget:3.0.0:*:*:*:*:*:*:*", purl: "pkg:generic/widget@3.0.0"}
+  affected: [{vendor: acme, product: widget, version_range: "<2.0.0"}]
+  expect: {matched: false}
+
+- id: product-equal-vendor-mismatch-ambiguous-range
+  component: {name: widget, version: "3.0.0", cpe: "cpe:2.3:a:evilcorp:widget:3.0.0:*:*:*:*:*:*:*", purl: "pkg:generic/widget@3.0.0"}
+  affected: [{vendor: acme, product: widget, version_range: "unspecified"}]
+  expect: {matched: false}
+
+- id: fuzzy-similar-name-low
+  component: {name: page builder, version: "1.0.0"}
+  affected: [{vendor: joomshaper, product: Page Builder CK, version_range: "unspecified"}]
+  expect: {matched: true, confidence: low, strategy: fuzzy}
+
+- id: fuzzy-below-threshold-no-match
+  component: {name: netty, version: "4.1.0"}
+  affected: [{vendor: joomshaper, product: Page Builder CK, version_range: "unspecified"}]
+  expect: {matched: false}
+
+- id: fuzzy-suppressed-when-provably-outside
+  component: {name: page builder, version: "9.0.0"}
+  affected: [{vendor: joomshaper, product: Page Builder CK, version_range: "<2.0.0"}]
+  expect: {matched: false}
+
+- id: synthesized-identifier-capped-medium
+  component: {name: widget, version: "1.0.0", cpe: "cpe:2.3:a:python-widget:widget:1.0.0:*:*:*:*:*:*:*"}
+  affected: [{vendor: python-widget, product: widget, version_range: "<2.0.0"}]
+  expect: {matched: true, confidence: medium, strategy: structured}
+
+- id: mis-inferred-ecosystem-still-capped-medium
+  # M0/M1 review item 3.4: the CPE vendor prefix 'go-' wrongly suggests a golang purl for
+  # what is actually a pypi package; the synthesized-identifier cap must contain the damage.
+  component: {name: widget, version: "1.0.0", cpe: "cpe:2.3:a:go-widget:widget:1.0.0:*:*:*:*:*:*:*"}
+  affected: [{vendor: go-widget, product: widget, version_range: "<2.0.0"}]
+  expect: {matched: true, confidence: medium, strategy: structured}
+
+- id: tokenwise-comparator-capped-medium
+  component: {name: widget, version: "zebra-1", cpe: "cpe:2.3:a:acme:widget:zebra-1:*:*:*:*:*:*:*", purl: "pkg:generic/widget@zebra-1"}
+  affected: [{vendor: acme, product: widget, version_range: "<zzz"}]
+  expect: {matched: true, confidence: medium, strategy: structured}
+
+- id: alias-table-bridges-pypi-naming
+  component: {name: pillow, version: "9.0.0", purl: "pkg:pypi/pillow@9.0.0"}
+  affected: [{vendor: python-pillow, product: pillow, version_range: "<10.0.0"}]
+  expect: {matched: true, confidence: high, strategy: structured}
+
+- id: purl-namespace-used-as-vendor
+  component: {name: gin, version: "v1.9.0", purl: "pkg:golang/github.com/gin-gonic/gin@v1.9.0"}
+  affected: [{vendor: gin-gonic, product: gin, version_range: "<1.9.1"}]
+  expect: {matched: true, confidence: high, strategy: structured}
+
+- id: punctuation-insensitive-equality
+  component: {name: Spring-Framework, version: "5.3.0", cpe: "cpe:2.3:a:vmware:Spring-Framework:5.3.0:*:*:*:*:*:*:*", purl: "pkg:generic/spring-framework@5.3.0"}
+  affected: [{vendor: VMware, product: "spring framework", version_range: "<6.0.0"}]
+  expect: {matched: true, confidence: high, strategy: structured}
+
+- id: component-without-version-capped-medium
+  component: {name: widget, cpe: "cpe:2.3:a:acme:widget:*:*:*:*:*:*:*:*", purl: "pkg:generic/widget"}
+  affected: [{vendor: acme, product: widget, version_range: "<2.0.0"}]
+  expect: {matched: true, confidence: medium, strategy: partial}
+
+- id: cpe-candidate-beats-unrelated-name
+  component: {name: totally-different-label, version: "1.0.0", cpe: "cpe:2.3:a:acme:widget:1.0.0:*:*:*:*:*:*:*", purl: "pkg:generic/whatever@1.0.0"}
+  affected: [{vendor: acme, product: widget, version_range: "<2.0.0"}]
+  expect: {matched: true, confidence: high, strategy: structured}
+
+- id: record-without-products-never-matches
+  component: {name: widget, version: "1.0.0", cpe: "cpe:2.3:a:acme:widget:1.0.0:*:*:*:*:*:*:*", purl: "pkg:generic/widget@1.0.0"}
+  affected: []
+  expect: {matched: false}

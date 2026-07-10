@@ -1,0 +1,29 @@
+# Curated purl -> EUVD (vendor, product) aliases (Step 2.3).
+#
+# The SBOM side speaks purl; EUVD speaks (vendor, product) text derived from CVE data.
+# This table bridges known naming mismatches. Keys are canonical versionless purls;
+# values are the vendor/product names as EUVD/CVE actually publishes them.
+# Keep entries honest: only add a mapping after seeing the EUVD side's naming in real
+# records. Users will be able to extend this via config in a later milestone.
+
+pkg:pypi/pillow:
+  vendor: python-pillow
+  product: pillow
+pkg:pypi/requests:
+  vendor: python-requests
+  product: requests
+pkg:pypi/django:
+  vendor: djangoproject
+  product: django
+pkg:pypi/pyyaml:
+  vendor: pyyaml
+  product: pyyaml
+pkg:pypi/cryptography:
+  vendor: pyca
+  product: cryptography
+pkg:npm/lodash:
+  vendor: lodash
+  product: lodash
+pkg:golang/github.com/gin-gonic/gin:
+  vendor: gin-gonic
+  product: gin
