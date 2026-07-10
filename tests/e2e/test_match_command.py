@@ -161,6 +161,52 @@ def test_euvd_down_with_no_cache_exits_two_loudly(tmp_path: Path) -> None:
 
 
 @respx.mock
+def test_euvd_403_with_json_body_exits_two_not_zero_findings(tmp_path: Path) -> None:
+    # feedback_m2.md finding 1.1: a JSON error body must not be read as "zero results".
+    # This is live-plausible - ENISA already auth-gates the /vulnerability endpoint.
+    respx.get(f"{BASE}/search").mock(return_value=httpx.Response(403, json={"error": "forbidden"}))
+    result = _invoke(tmp_path, "--exploited-only")
+    assert result.exit_code == 2
+    assert "0 findings" not in result.output
+    assert "Refusing to report 'no findings'" in result.output
+
+
+def test_save_findings_to_unwritable_path_exits_two_not_one(tmp_path: Path) -> None:
+    # feedback_m2.md finding 1.2: used to raise FileNotFoundError uncaught (exit 1,
+    # traceback). Network isn't reached before the write, so no respx mock needed... but
+    # the match pipeline runs first, so mock it anyway to isolate this from EUVD behavior.
+    with respx.mock:
+        respx.get(f"{BASE}/search").mock(
+            return_value=httpx.Response(200, json={"items": [], "total": 0})
+        )
+        result = _invoke(
+            tmp_path,
+            "--exploited-only",
+            "--no-enrich",
+            "--save-findings",
+            "/no/such/dir/findings.json",
+        )
+    assert result.exit_code == 2
+    assert result.exception is None or isinstance(result.exception, SystemExit)
+    assert "I/O error" in result.output
+
+
+def test_uncreatable_cache_dir_exits_two_not_one() -> None:
+    # feedback_m2.md finding 1.3: Cache.__init__'s mkdir used to raise uncaught.
+    with respx.mock:
+        respx.get(f"{BASE}/search").mock(
+            return_value=httpx.Response(200, json={"items": [], "total": 0})
+        )
+        result = runner.invoke(
+            app,
+            ["match", str(DEMO), "--exploited-only", "--no-enrich"],
+            env={"EUVD_WATCH_CACHE_DIR": "/proc/definitely-unwritable/cache"},
+        )
+    assert result.exit_code == 2
+    assert result.exception is None or isinstance(result.exception, SystemExit)
+
+
+@respx.mock
 def test_euvd_down_but_fresh_cache_proceeds(tmp_path: Path) -> None:
     # First run populates the cache; second run's network 503s but cache is TTL-fresh.
     _mock_euvd([JINJA_RECORD])

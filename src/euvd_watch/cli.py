@@ -6,12 +6,15 @@ remain stubs until their owning milestone (M2-M4) lands.
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
+from typing import ParamSpec
 
 import typer
 from rich.console import Console
@@ -59,6 +62,33 @@ def _not_implemented(command: str) -> None:
     raise typer.Exit(code=2)
 
 
+_P = ParamSpec("_P")
+
+
+def cli_command(func: Callable[_P, None]) -> Callable[_P, None]:
+    """Mechanical exit-code boundary applied to every command uniformly.
+
+    Any escaping OSError (unwritable --save-findings path, uncreatable cache_dir, etc.)
+    becomes a clean stderr message + exit 2 instead of a traceback with exit 1. This is
+    deliberately a decorator applied to every command rather than a per-command try/except:
+    feedback_m2.md findings 1.2/1.3 were both a *recurrence* of the M1 "no unhandled
+    exception escapes a CLI command" rule in new code - per-command memory demonstrably
+    isn't enough, so new commands get this for free instead of needing to remember it.
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args: _P.args, **kwargs: _P.kwargs) -> None:
+        try:
+            func(*args, **kwargs)
+        except typer.Exit:
+            raise
+        except OSError as exc:
+            typer.echo(f"Unexpected I/O error: {exc}", err=True)
+            raise typer.Exit(code=2) from exc
+
+    return wrapper
+
+
 @app.callback()
 def main(
     ctx: typer.Context,
@@ -78,12 +108,14 @@ def main(
 
 
 @app.command()
+@cli_command
 def version() -> None:
     """Print the euvd-watch version."""
     typer.echo(__version__)
 
 
 @app.command()
+@cli_command
 def scan(
     ctx: typer.Context,
     sbom: str = typer.Argument(..., help="Path to a CycloneDX/SPDX SBOM file."),
@@ -200,6 +232,7 @@ def _render_findings_table(findings: list[Finding], title: str) -> None:
 
 
 @app.command()
+@cli_command
 def match(
     ctx: typer.Context,
     sbom: str = typer.Argument(..., help="Path to a CycloneDX/SPDX SBOM file."),
@@ -282,12 +315,14 @@ def match(
 
 
 @app.command()
+@cli_command
 def watch(sbom: str = typer.Argument(..., help="Path to a CycloneDX/SPDX SBOM file.")) -> None:
     """Re-match an SBOM on a schedule, reporting only new/changed findings."""
     _not_implemented("watch")
 
 
 @vex_app.command("generate")
+@cli_command
 def vex_generate(
     sbom: str = typer.Argument(..., help="Path to a CycloneDX/SPDX SBOM file."),
 ) -> None:
@@ -296,6 +331,7 @@ def vex_generate(
 
 
 @cra_app.command("check")
+@cli_command
 def cra_check(sbom: str = typer.Argument(..., help="Path to a CycloneDX/SPDX SBOM file.")) -> None:
     """Evaluate the CRA reporting trigger against an SBOM's findings."""
     _not_implemented("cra check")

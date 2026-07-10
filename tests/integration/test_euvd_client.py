@@ -8,7 +8,7 @@ import respx
 
 from euvd_watch.euvd.client import EuvdClient
 from euvd_watch.euvd.models import parse_record, parse_records
-from euvd_watch.http import ApiClient
+from euvd_watch.http import ApiClient, ApiError
 
 pytestmark = pytest.mark.integration
 
@@ -70,6 +70,16 @@ def test_non_exploited_record_has_exploited_false() -> None:
 
 
 # --- client behavior over mocked transport ---
+
+
+@respx.mock
+def test_fetch_exploited_raises_on_4xx_instead_of_returning_empty(api_client: ApiClient) -> None:
+    # feedback_m2.md finding 1.1: a JSON error body (e.g. an auth-gated endpoint, like the
+    # already-observed /vulnerability 403) must never be silently read as "zero results" -
+    # that produces a clean "0 findings" run instead of a loud failure.
+    respx.get(f"{BASE}/search").mock(return_value=httpx.Response(403, json={"error": "forbidden"}))
+    with pytest.raises(ApiError, match="HTTP 403"):
+        _client(api_client).fetch_exploited()
 
 
 @respx.mock

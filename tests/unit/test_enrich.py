@@ -9,7 +9,7 @@ from euvd_watch.enrich.epss import fetch_epss_scores
 from euvd_watch.enrich.kev import fetch_kev_cves
 from euvd_watch.euvd.match import Confidence, Finding, Strategy
 from euvd_watch.euvd.models import EuvdRecord
-from euvd_watch.http import ApiClient
+from euvd_watch.http import ApiClient, ApiError
 from euvd_watch.models import Component, SourceFormat
 
 pytestmark = pytest.mark.unit
@@ -64,6 +64,27 @@ def test_kev_membership_set(api_client: ApiClient) -> None:
         )
     )
     assert fetch_kev_cves(api_client, KEV_URL) == {"CVE-1", "CVE-2"}
+
+
+@respx.mock
+def test_kev_malformed_feed_raises_instead_of_empty_set(api_client: ApiClient) -> None:
+    # feedback_m2.md finding 2.1: a body without a `vulnerabilities` list must not be read
+    # as "an empty catalog" (which would make every CVE look provably not-in-KEV).
+    respx.get(KEV_URL).mock(
+        return_value=httpx.Response(200, json={"error": "service temporarily degraded"})
+    )
+    with pytest.raises(ApiError, match="not shaped like a catalog"):
+        fetch_kev_cves(api_client, KEV_URL)
+
+
+@respx.mock
+def test_enrich_malformed_kev_feed_yields_unknown_not_false(api_client: ApiClient) -> None:
+    respx.get(EPSS_URL).mock(return_value=httpx.Response(200, json={"data": []}))
+    respx.get(KEV_URL).mock(
+        return_value=httpx.Response(200, json={"error": "service temporarily degraded"})
+    )
+    findings = enrich([_finding(["CVE-1"])], api_client, EPSS_URL, KEV_URL)
+    assert findings[0].in_kev is None  # unknown, never a false "provably not in KEV"
 
 
 @respx.mock

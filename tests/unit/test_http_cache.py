@@ -79,9 +79,23 @@ def test_non_retryable_4xx_is_returned_not_retried(tmp_path: Path) -> None:
         return httpx.Response(403, text="forbidden")
 
     client = _client_with(handler, tmp_path)
-    with pytest.raises(ApiError, match="Non-JSON"):
+    with pytest.raises(ApiError, match="HTTP 403"):
         client.get_json("https://api.example/x")
     assert len(attempts) == 1
+
+
+def test_4xx_with_valid_json_body_still_raises(tmp_path: Path) -> None:
+    # A JSON error body must never be mistaken for real data (feedback_m2.md finding 1.1):
+    # this used to silently return {"error": "forbidden"} as if it were a real payload.
+    client = _client_with(lambda r: httpx.Response(403, json={"error": "forbidden"}), tmp_path)
+    with pytest.raises(ApiError, match="HTTP 403"):
+        client.get_json("https://api.example/x")
+
+
+def test_404_with_json_body_raises(tmp_path: Path) -> None:
+    client = _client_with(lambda r: httpx.Response(404, json={"message": "not found"}), tmp_path)
+    with pytest.raises(ApiError, match="HTTP 404"):
+        client.get_json("https://api.example/x")
 
 
 def test_http_204_returns_none(tmp_path: Path) -> None:

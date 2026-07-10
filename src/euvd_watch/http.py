@@ -170,6 +170,11 @@ class ApiClient:
             return json.loads(body)
         if response.status_code == 204:
             return None
+        if response.status_code >= 400:
+            # Any error status (including non-retryable 4xx like 403) must fail loudly,
+            # even when the body happens to be valid JSON - a {"error": "forbidden"} body
+            # must never be mistaken for real data (feedback_m2.md finding 1.1).
+            raise ApiError(f"HTTP {response.status_code} from {url}: {response.text[:200]!r}")
 
         text = response.text
         try:
