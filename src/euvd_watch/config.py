@@ -91,6 +91,11 @@ class Settings(BaseModel):
     # EPSS signal unable to ever fire (audit 2026-07-10, finding SEC-002).
     epss_threshold: float = Field(default=0.5, ge=0.0, le=1.0)
     min_confidence: Literal["low", "medium", "high"] = "medium"
+    # Tier 2 of the match query strategy sends per-component product names (derived from
+    # your SBOM) as search terms to the EUVD API. Default ON: turning it off silently
+    # reduces coverage to the exploited catalog only. Set false for confidential
+    # inventories; `match --exploited-only` also skips tier 2 (docs/matching.md).
+    tier2_product_search: bool = True
     organization: OrganizationConfig = OrganizationConfig()
     cra_trigger: CraTriggerConfig = CraTriggerConfig()
     cra_stages: list[CraStageConfig] = Field(default_factory=lambda: list(DEFAULT_CRA_STAGES))

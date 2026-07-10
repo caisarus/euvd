@@ -227,12 +227,14 @@ def _findings_artifact(
 
 
 def _fetch_records(
-    client: EuvdClient, inventory: Inventory, *, exploited_only: bool
+    client: EuvdClient, inventory: Inventory, *, exploited_only: bool, tier2_enabled: bool = True
 ) -> list[EuvdRecord]:
     """Two-tier query strategy (docs/matching.md).
 
     Tier 1 always syncs the full exploited catalog. Tier 2 adds per-candidate product
-    searches, deduplicated across components and served from the HTTP cache. Note the
+    searches, deduplicated across components and served from the HTTP cache — it sends
+    SBOM-derived product names to the EUVD API, so `tier2_product_search: false` lets
+    confidential deployments opt out (privacy note in docs/matching.md). Note the
     cache-first client means "EUVD unreachable but cache fresh" is served transparently;
     an ApiError here means both the network and the cache have nothing usable.
     """
@@ -240,7 +242,7 @@ def _fetch_records(
     for record in client.fetch_exploited():
         records[record.euvd_id] = record
 
-    if not exploited_only:
+    if not exploited_only and tier2_enabled:
         products = {
             candidate.product.lower()
             for component in inventory.components
@@ -317,7 +319,12 @@ def match(
     try:
         client = EuvdClient(api, settings.euvd_api_base_url)
         try:
-            records = _fetch_records(client, inventory, exploited_only=exploited_only)
+            records = _fetch_records(
+                client,
+                inventory,
+                exploited_only=exploited_only,
+                tier2_enabled=settings.tier2_product_search,
+            )
         except ApiError as exc:
             typer.echo(
                 f"EUVD is unreachable and the local cache has no usable data: {exc}\n"
@@ -417,7 +424,12 @@ def _evaluations_for(
     try:
         client = EuvdClient(api, settings.euvd_api_base_url)
         try:
-            records = _fetch_records(client, inventory, exploited_only=False)
+            records = _fetch_records(
+                client,
+                inventory,
+                exploited_only=False,
+                tier2_enabled=settings.tier2_product_search,
+            )
         except ApiError as exc:
             typer.echo(
                 f"EUVD is unreachable and the local cache has no usable data: {exc}\n"

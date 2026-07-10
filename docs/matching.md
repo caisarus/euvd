@@ -103,6 +103,13 @@ the same. (M0/M1 review item 3.3.)
 - **Tier 2 — unless `--exploited-only`:** per-component keyword searches
   (`search?product=<candidate>`), deduplicated across components and served from the cache.
 
+**Privacy note (audit finding SEC-004):** tier 2 sends product names derived from *your
+SBOM's components* as query strings to the EUVD API — a data-sharing decision you should
+make knowingly for confidential inventories. `tier2_product_search: false` in the config
+disables tier 2 entirely (coverage then drops to the exploited catalog, tier 1, which
+never sends component-derived terms). Default is **on**: silently reduced coverage is the
+more dangerous failure mode for everyone else.
+
 If EUVD is unreachable: proceed on cache within TTL with a loud warning and a
 `data_freshness` stamp in every output; with no usable cache, exit 2. Never silently report
 "no findings" on missing data.

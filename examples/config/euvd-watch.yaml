@@ -1,6 +1,9 @@
 cache_dir: ~/.cache/euvd-watch
 epss_threshold: 0.5
 min_confidence: medium
+# Tier-2 matching sends SBOM-derived product names to the EUVD API as search terms.
+# Set false for confidential inventories (coverage drops to the exploited catalog only).
+tier2_product_search: true
 organization:
   name: "Example S.R.L."
   contact_email: security@example.com

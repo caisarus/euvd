@@ -257,3 +257,30 @@ def test_tier2_product_searches_run_without_exploited_only(tmp_path: Path) -> No
     assert result.exit_code == 0
     assert "jinja2" in product_queries  # per-candidate searches actually happened
     assert len(product_queries) == len(set(product_queries))  # deduplicated
+
+
+@respx.mock
+def test_tier2_disabled_by_config_sends_no_product_searches(tmp_path: Path) -> None:
+    # Privacy toggle (audit finding SEC-004): tier2_product_search=false must mean zero
+    # SBOM-derived terms leave the machine - only the tier-1 exploited sync runs.
+    product_queries: list[str] = []
+
+    def route(request: httpx.Request) -> httpx.Response:
+        if request.url.params.get("exploited") == "true":
+            return httpx.Response(200, json={"items": [], "total": 0})
+        product_queries.append(request.url.params.get("product", ""))
+        return httpx.Response(200, json={"items": [], "total": 0})
+
+    respx.get(f"{BASE}/search").mock(side_effect=route)
+    _mock_enrichment()
+    result = runner.invoke(
+        app,
+        ["match", str(DEMO), "--fail-on", "none"],
+        env={
+            "EUVD_WATCH_CACHE_DIR": str(tmp_path),
+            "EUVD_WATCH_TIER2_PRODUCT_SEARCH": "false",
+            "COLUMNS": "300",
+        },
+    )
+    assert result.exit_code == 0
+    assert product_queries == []
