@@ -1,0 +1,67 @@
+{
+  "awareness_basis": [
+    "ENISA's EUVD marks this vulnerability as actively exploited (exploitedSince: Jan 1, 2026, 12:00:00 AM).",
+    "The vulnerability is listed in the CISA Known Exploited Vulnerabilities (KEV) catalog.",
+    "The EPSS score (0.870) was at or above the threshold configured at fire time (0.5) - note: EPSS is a probability signal, NOT direct evidence of active exploitation."
+  ],
+  "component": {
+    "name": "jinja2",
+    "purl": "pkg:pypi/jinja2@3.1.6",
+    "version": "3.1.6"
+  },
+  "disclaimer": "This is a machine-prepared DRAFT to support your own CRA Article 14 process. It is not legal advice, it has not been submitted anywhere, and euvd-watch never submits anything. A human must verify every field against current ENISA/CSIRT guidance and file the notification through the official channel.",
+  "event": {
+    "event_id": "purl:pkg:pypi/jinja2@3.1.6|EUVD-2026-0001",
+    "fired_rules": [
+      "euvd_exploited",
+      "cisa_kev",
+      "epss_over_threshold"
+    ],
+    "first_seen": "2026-01-01T00:00:00+00:00"
+  },
+  "generated_at": "2026-01-02T09:00:00+00:00",
+  "kind": "cra_early_warning_draft",
+  "match_confidence": "high",
+  "match_explanation": "Vendor 'pallets' and product 'jinja2' match exactly and version 3.1.6 is inside affected range '<3.1.7' (pep440).",
+  "organization": {
+    "contact_email": "securitate@exemplu.ro",
+    "name": "Exemplu Țesătorie S.R.L.",
+    "product_name": "Produsul Înțelept"
+  },
+  "schema_version": 1,
+  "timeline": [
+    {
+      "deadline": "2026-01-02T00:00:00+00:00",
+      "hours": 24.0,
+      "stage": "early_warning",
+      "state": "pending"
+    },
+    {
+      "deadline": "2026-01-04T00:00:00+00:00",
+      "hours": 72.0,
+      "stage": "vulnerability_notification",
+      "state": "pending"
+    },
+    {
+      "deadline": null,
+      "hours": 336.0,
+      "stage": "final_report",
+      "state": "awaiting_anchor"
+    }
+  ],
+  "vulnerability": {
+    "cves": [
+      "CVE-2099-0001"
+    ],
+    "cvss_score": 8.8,
+    "description": "Sandbox escape in the template engine.",
+    "epss_score": 0.87,
+    "euvd_id": "EUVD-2026-0001",
+    "exploited_since": "Jan 1, 2026, 12:00:00 AM",
+    "in_kev": true,
+    "references": [
+      "https://example.org/advisory-1",
+      "https://example.org/advisory-2"
+    ]
+  }
+}

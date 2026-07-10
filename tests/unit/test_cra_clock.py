@@ -37,6 +37,7 @@ def _event(**overrides: object) -> Event:
         "fired_rules": ["euvd_exploited"],
         "first_seen": FIRST_SEEN,
         "policy_snapshot": CraTriggerConfig(),
+        "epss_threshold": 0.5,
     }
     defaults.update(overrides)
     return Event.model_validate(defaults)

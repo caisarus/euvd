@@ -63,6 +63,8 @@ class Event(BaseModel):
     fired_rules: list[str]  # the first-fire awareness basis; immutable
     first_seen: datetime  # UTC; set once, never changed by later evaluations
     policy_snapshot: CraTriggerConfig  # the exact policy that fired; immutable
+    # Settings.epss_threshold at fire time (not part of CraTriggerConfig); immutable.
+    epss_threshold: float
     latest_finding: Finding | None = None  # refreshed by later evaluations
     remediation_available_at: datetime | None = None
     stage_completions: dict[str, StageCompletion] = {}
@@ -147,6 +149,7 @@ class EventStore:
         finding: Finding,
         fired_rules: list[str],
         policy_snapshot: CraTriggerConfig,
+        epss_threshold: float,
         now: datetime,
     ) -> tuple[Event, bool]:
         """Return (event, was_newly_created).
@@ -169,6 +172,7 @@ class EventStore:
             fired_rules=fired_rules,
             first_seen=now,
             policy_snapshot=policy_snapshot,
+            epss_threshold=epss_threshold,
         )
         self._save(event)
         return event, True

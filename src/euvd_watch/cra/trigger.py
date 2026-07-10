@@ -24,6 +24,9 @@ class TriggerResult(BaseModel):
     finding: Finding
     fired_rules: list[str]
     policy_snapshot: CraTriggerConfig
+    # The EPSS threshold lives on Settings, not inside CraTriggerConfig - captured here so
+    # the fire-time policy is reconstructible verbatim even after the config changes.
+    epss_threshold: float
 
 
 def _fired_signals(finding: Finding, config: CraTriggerConfig, epss_threshold: float) -> list[str]:
@@ -64,7 +67,12 @@ def evaluate_trigger(finding: Finding, settings: Settings) -> TriggerResult | No
         if set(fired) != enabled:
             return None
 
-    return TriggerResult(finding=finding, fired_rules=fired, policy_snapshot=config)
+    return TriggerResult(
+        finding=finding,
+        fired_rules=fired,
+        policy_snapshot=config,
+        epss_threshold=settings.epss_threshold,
+    )
 
 
 def evaluate_all(findings: list[Finding], settings: Settings) -> list[TriggerResult]:

@@ -11,7 +11,7 @@ repos:
       - id: mypy
         files: ^src/
         additional_dependencies:
-          [pydantic>=2, types-PyYAML, typer, packageurl-python, rich, httpx, packaging]
+          [pydantic>=2, types-PyYAML, typer, packageurl-python, rich, httpx, packaging, jinja2]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:

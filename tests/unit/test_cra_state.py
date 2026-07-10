@@ -42,7 +42,9 @@ def test_event_id_is_component_and_euvd_id() -> None:
 def test_get_or_create_first_call_creates(tmp_path: Path) -> None:
     store = EventStore(tmp_path / "cra-state.sqlite")
     now = datetime(2026, 1, 1, tzinfo=UTC)
-    event, created = store.get_or_create(_finding(), ["euvd_exploited"], CraTriggerConfig(), now)
+    event, created = store.get_or_create(
+        _finding(), ["euvd_exploited"], CraTriggerConfig(), 0.5, now
+    )
     assert created is True
     assert event.first_seen == now
     store.close()
@@ -54,10 +56,10 @@ def test_get_or_create_second_call_does_not_duplicate_or_reset_first_seen(tmp_pa
     later = first_seen + timedelta(hours=5)
 
     event1, created1 = store.get_or_create(
-        _finding(), ["euvd_exploited"], CraTriggerConfig(), first_seen
+        _finding(), ["euvd_exploited"], CraTriggerConfig(), 0.5, first_seen
     )
     event2, created2 = store.get_or_create(
-        _finding(), ["euvd_exploited", "cisa_kev"], CraTriggerConfig(), later
+        _finding(), ["euvd_exploited", "cisa_kev"], CraTriggerConfig(), 0.5, later
     )
 
     assert created1 is True
@@ -75,8 +77,8 @@ def test_get_or_create_never_overwrites_the_first_fire_record(tmp_path: Path) ->
     original_policy = CraTriggerConfig(min_confidence="medium")
     changed_policy = CraTriggerConfig(min_confidence="low", require_all=True)
 
-    store.get_or_create(_finding(), ["euvd_exploited"], original_policy, now)
-    store.get_or_create(_finding(), ["euvd_exploited", "cisa_kev"], changed_policy, now)
+    store.get_or_create(_finding(), ["euvd_exploited"], original_policy, 0.5, now)
+    store.get_or_create(_finding(), ["euvd_exploited", "cisa_kev"], changed_policy, 0.9, now)
 
     event = store.get(Event.make_id(_finding().component.dedupe_key, "EUVD-1"))
     assert event is not None
@@ -91,8 +93,8 @@ def test_get_or_create_refreshes_latest_finding_only(tmp_path: Path) -> None:
     first = _finding()
     updated = first.model_copy(update={"epss_score": 0.99, "in_kev": True})
 
-    store.get_or_create(first, ["euvd_exploited"], CraTriggerConfig(), now)
-    store.get_or_create(updated, ["euvd_exploited", "cisa_kev"], CraTriggerConfig(), now)
+    store.get_or_create(first, ["euvd_exploited"], CraTriggerConfig(), 0.5, now)
+    store.get_or_create(updated, ["euvd_exploited", "cisa_kev"], CraTriggerConfig(), 0.5, now)
 
     event = store.get(Event.make_id(first.component.dedupe_key, "EUVD-1"))
     assert event is not None
@@ -105,7 +107,7 @@ def test_get_or_create_refreshes_latest_finding_only(tmp_path: Path) -> None:
 def test_set_remediation_available(tmp_path: Path) -> None:
     store = EventStore(tmp_path / "cra-state.sqlite")
     now = datetime(2026, 1, 1, tzinfo=UTC)
-    event, _ = store.get_or_create(_finding(), ["euvd_exploited"], CraTriggerConfig(), now)
+    event, _ = store.get_or_create(_finding(), ["euvd_exploited"], CraTriggerConfig(), 0.5, now)
     assert event.remediation_available_at is None
 
     remediated_at = now + timedelta(days=5)
@@ -125,7 +127,7 @@ def test_set_remediation_available_unknown_event_raises(tmp_path: Path) -> None:
 def test_mark_stage_completed(tmp_path: Path) -> None:
     store = EventStore(tmp_path / "cra-state.sqlite")
     now = datetime(2026, 1, 1, tzinfo=UTC)
-    event, _ = store.get_or_create(_finding(), ["euvd_exploited"], CraTriggerConfig(), now)
+    event, _ = store.get_or_create(_finding(), ["euvd_exploited"], CraTriggerConfig(), 0.5, now)
 
     completed_at = now + timedelta(hours=10)
     updated = store.mark_stage_completed(
@@ -139,8 +141,8 @@ def test_mark_stage_completed(tmp_path: Path) -> None:
 def test_list_all_returns_every_event_sorted(tmp_path: Path) -> None:
     store = EventStore(tmp_path / "cra-state.sqlite")
     now = datetime(2026, 1, 1, tzinfo=UTC)
-    store.get_or_create(_finding("EUVD-2"), ["euvd_exploited"], CraTriggerConfig(), now)
-    store.get_or_create(_finding("EUVD-1"), ["euvd_exploited"], CraTriggerConfig(), now)
+    store.get_or_create(_finding("EUVD-2"), ["euvd_exploited"], CraTriggerConfig(), 0.5, now)
+    store.get_or_create(_finding("EUVD-1"), ["euvd_exploited"], CraTriggerConfig(), 0.5, now)
     events = store.list_all()
     assert [e.finding.record.euvd_id for e in events] == ["EUVD-1", "EUVD-2"]
     store.close()
@@ -155,7 +157,9 @@ def test_corrupted_store_is_quarantined_never_deleted(tmp_path: Path) -> None:
 
     store = EventStore(path)
     now = datetime(2026, 1, 1, tzinfo=UTC)
-    event, created = store.get_or_create(_finding(), ["euvd_exploited"], CraTriggerConfig(), now)
+    event, created = store.get_or_create(
+        _finding(), ["euvd_exploited"], CraTriggerConfig(), 0.5, now
+    )
     assert created is True  # a fresh store works after quarantine
 
     quarantined = list(tmp_path.glob("cra-state.sqlite.corrupt-*"))
@@ -192,11 +196,11 @@ def test_events_persist_across_store_instances(tmp_path: Path) -> None:
     path = tmp_path / "cra-state.sqlite"
     now = datetime(2026, 1, 1, tzinfo=UTC)
     store1 = EventStore(path)
-    store1.get_or_create(_finding(), ["euvd_exploited"], CraTriggerConfig(), now)
+    store1.get_or_create(_finding(), ["euvd_exploited"], CraTriggerConfig(), 0.5, now)
     store1.close()
 
     store2 = EventStore(path)
     assert len(store2.list_all()) == 1
-    _, created = store2.get_or_create(_finding(), ["euvd_exploited"], CraTriggerConfig(), now)
+    _, created = store2.get_or_create(_finding(), ["euvd_exploited"], CraTriggerConfig(), 0.5, now)
     assert created is False  # still recognized as existing
     store2.close()
