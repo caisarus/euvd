@@ -6,6 +6,20 @@
 > with a running repro before being written down. P1 = correctness bugs to fix before M3;
 > P2 = defensibility/compliance debt; P3 = improvement opportunities with a named payoff.
 
+## Status (updated 2026-07-10, commit `041e346`)
+
+**Fixed:** all P1 (1.1–1.3) and P2 2.1, each confirmed by re-running the original repro
+before writing regression tests. `get_json` now raises `ApiError` on any status ≥ 400
+(never returns a JSON error body as data); every CLI command is wrapped in a `cli_command`
+decorator that turns escaping `OSError` into a clean exit 2; `fetch_kev_cves` raises on a
+malformed feed instead of returning an empty set. 234 tests (was 226), live smoke tests and
+a live `match` run both still pass. See commit `041e346` for detail.
+
+**Still open:** P2 2.2 (`data_freshness` overstate) and 2.3 (nightly live CI job — ride
+with M5), and all of P3 (3.1 comma ranges, 3.2 client-level duplicate records, 3.3
+scoped-npm vendor loss, 3.4 cache growth/page caps) — none block M3, scheduled per the
+sequencing section below.
+
 ## P1 — correctness bugs
 
 ### 1.1 Non-retryable HTTP errors with JSON bodies become "no findings" **[verified]**
