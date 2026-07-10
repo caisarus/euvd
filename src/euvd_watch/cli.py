@@ -23,6 +23,12 @@ from rich.table import Table
 
 from euvd_watch import __version__
 from euvd_watch.config import ConfigError, Settings, load_settings
+from euvd_watch.cra.audit import AuditError, AuditLog
+from euvd_watch.cra.audit import verify as verify_audit_log
+from euvd_watch.cra.clock import ClockState, compute_all, is_event_open
+from euvd_watch.cra.report import DraftError, render_json, render_markdown
+from euvd_watch.cra.state import Event, EventStore, StateError
+from euvd_watch.cra.trigger import evaluate_all
 from euvd_watch.enrich import enrich
 from euvd_watch.euvd.client import EuvdClient
 from euvd_watch.euvd.match import (
@@ -614,11 +620,372 @@ def vex_init_decisions(
     typer.echo(f"Wrote {len(entries)} decision stub(s) to {out}", err=True)
 
 
+def _event_store(settings: Settings) -> EventStore:
+    return EventStore(settings.state_dir / "cra-events.sqlite")
+
+
+def _audit_log(settings: Settings) -> AuditLog:
+    return AuditLog(settings.state_dir / "cra-audit.jsonl")
+
+
+def _compute_findings_for_cra(
+    settings: Settings, sbom: str, *, no_enrich: bool, findings_path: Path | None
+) -> list[Finding]:
+    """The findings the trigger evaluates: a saved artifact, or live match + enrichment."""
+    if findings_path is not None:
+        return _load_findings_artifact(findings_path)
+
+    try:
+        inventory, _dropped = load_inventory_with_stats(sbom)
+    except (SbomParseError, UnsupportedFormatError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    api = ApiClient(settings.cache_dir, settings.cache_ttl_hours)
+    try:
+        client = EuvdClient(api, settings.euvd_api_base_url)
+        try:
+            records = _fetch_records(
+                client,
+                inventory,
+                exploited_only=False,
+                tier2_enabled=settings.tier2_product_search,
+            )
+        except ApiError as exc:
+            typer.echo(
+                f"EUVD is unreachable and the local cache has no usable data: {exc}\n"
+                f"Refusing to evaluate the CRA trigger on missing data.",
+                err=True,
+            )
+            raise typer.Exit(code=2) from exc
+        findings = match_inventory(inventory, records)
+        if not no_enrich:
+            findings = enrich(findings, api, settings.epss_api_base_url, settings.kev_feed_url)
+    finally:
+        api.close()
+    return findings
+
+
+def _event_as_json(event: Event, settings: Settings, now: datetime) -> dict[str, object]:
+    stages = compute_all(event, settings.cra_stages, now)
+    return {
+        "event_id": event.event_id,
+        "component": event.finding.component.dedupe_key,
+        "euvd_id": event.finding.record.euvd_id,
+        "fired_rules": list(event.fired_rules),
+        "first_seen": event.first_seen.isoformat(),
+        "open": is_event_open(event, settings.cra_stages),
+        "stages": [
+            {
+                "name": status.stage.name,
+                "state": status.state.value,
+                "deadline": status.deadline.isoformat() if status.deadline else None,
+            }
+            for status in stages
+        ],
+    }
+
+
+def _remaining_text(deadline: datetime | None, now: datetime) -> str:
+    if deadline is None:
+        return "-"
+    remaining = deadline - now
+    seconds = int(remaining.total_seconds())
+    sign = "-" if seconds < 0 else ""
+    seconds = abs(seconds)
+    return f"{sign}{seconds // 3600}h {(seconds % 3600) // 60:02d}m"
+
+
 @cra_app.command("check")
 @cli_command
-def cra_check(sbom: str = typer.Argument(..., help="Path to a CycloneDX/SPDX SBOM file.")) -> None:
-    """Evaluate the CRA reporting trigger against an SBOM's findings."""
-    _not_implemented("cra check")
+def cra_check(
+    ctx: typer.Context,
+    sbom: str = typer.Argument(..., help="Path to a CycloneDX/SPDX SBOM file."),
+    findings: Path | None = typer.Option(
+        None, "--findings", help="Reuse a saved findings artifact instead of live matching."
+    ),
+    no_enrich: bool = typer.Option(
+        False, "--no-enrich", help="Skip EPSS/KEV enrichment (their trigger signals stay unknown)."
+    ),
+) -> None:
+    """Evaluate the CRA reporting trigger; persist events; exit 1 when NEW events opened."""
+    state: GlobalState = ctx.obj
+    settings = state.settings
+    found = _compute_findings_for_cra(settings, sbom, no_enrich=no_enrich, findings_path=findings)
+    results = evaluate_all(found, settings)
+
+    now = datetime.now(UTC)
+    store = _event_store(settings)
+    log = _audit_log(settings)
+    events: list[tuple[Event, bool]] = []
+    try:
+        for result in results:
+            event, created = store.get_or_create(
+                result.finding,
+                result.fired_rules,
+                result.policy_snapshot,
+                result.epss_threshold,
+                now,
+            )
+            if created:
+                log.append(
+                    "trigger_event_created",
+                    {
+                        "event_id": event.event_id,
+                        "euvd_id": event.finding.record.euvd_id,
+                        "component": event.finding.component.dedupe_key,
+                        "fired_rules": list(event.fired_rules),
+                        "first_seen": event.first_seen.isoformat(),
+                        "policy_snapshot": event.policy_snapshot.model_dump(mode="json"),
+                        "epss_threshold": event.epss_threshold,
+                    },
+                )
+            events.append((event, created))
+    except (StateError, AuditError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    finally:
+        store.close()
+
+    new_count = sum(1 for _, created in events if created)
+    summary = (
+        f"{len(events)} trigger event(s) ({new_count} new) from {len(found)} findings; "
+        f"state: {settings.state_dir}"
+    )
+
+    if state.output is OutputFormat.JSON:
+        typer.echo(summary, err=True)
+        payload = {
+            "schema_version": 1,
+            "new_events": new_count,
+            "events": [
+                {**_event_as_json(e, settings, now), "new": created} for e, created in events
+            ],
+        }
+        typer.echo(json.dumps(payload))
+    else:
+        table = Table(title="CRA trigger events")
+        table.add_column("Event id")
+        table.add_column("EUVD ID")
+        table.add_column("Fired rules")
+        table.add_column("First seen (UTC)")
+        table.add_column("New")
+        for event, created in events:
+            table.add_row(
+                event.event_id,
+                event.finding.record.euvd_id,
+                ", ".join(event.fired_rules),
+                event.first_seen.isoformat(),
+                "yes" if created else "",
+            )
+        Console().print(table)
+        typer.echo(summary)
+
+    if new_count:
+        raise typer.Exit(code=1)
+
+
+@cra_app.command("status")
+@cli_command
+def cra_status(ctx: typer.Context) -> None:
+    """Show open CRA events with one countdown per configured stage."""
+    state: GlobalState = ctx.obj
+    settings = state.settings
+    now = datetime.now(UTC)
+    store = _event_store(settings)
+    try:
+        events = store.list_all()
+    except StateError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    finally:
+        store.close()
+
+    open_events = [e for e in events if is_event_open(e, settings.cra_stages)]
+    summary = f"{len(open_events)} open event(s) of {len(events)} total; times are UTC"
+
+    if state.output is OutputFormat.JSON:
+        typer.echo(summary, err=True)
+        payload = {
+            "schema_version": 1,
+            "generated_at": now.isoformat(),
+            "events": [_event_as_json(e, settings, now) for e in open_events],
+        }
+        typer.echo(json.dumps(payload))
+        return
+
+    table = Table(title="Open CRA events (all times UTC)")
+    table.add_column("Event id")
+    table.add_column("EUVD ID")
+    table.add_column("Stage")
+    table.add_column("State")
+    table.add_column("Deadline (UTC)")
+    table.add_column("Remaining")
+    state_colors = {
+        ClockState.PENDING: "green",
+        ClockState.DUE_SOON: "yellow",
+        ClockState.OVERDUE: "red",
+        ClockState.COMPLETED: "cyan",
+        ClockState.AWAITING_ANCHOR: "white",
+    }
+    for event in open_events:
+        for status in compute_all(event, settings.cra_stages, now):
+            color = state_colors[status.state]
+            table.add_row(
+                event.event_id,
+                event.finding.record.euvd_id,
+                status.stage.name,
+                f"[{color}]{status.state.value}[/{color}]",
+                status.deadline.isoformat() if status.deadline else "awaiting anchor",
+                _remaining_text(status.deadline, now),
+            )
+    Console().print(table)
+    typer.echo(summary)
+
+
+@cra_app.command("draft")
+@cli_command
+def cra_draft(
+    ctx: typer.Context,
+    event_id: str = typer.Argument(..., help="Event id from 'cra check' / 'cra status'."),
+    out: Path | None = typer.Option(
+        None, "--out", "-o", help="Write the draft to this path instead of stdout."
+    ),
+    timestamp: str | None = typer.Option(
+        None, "--timestamp", help="Pin the draft's generated_at (ISO 8601); default: now."
+    ),
+) -> None:
+    """Render a prefilled notification draft (Markdown; JSON with --output json).
+
+    Drafting only: complete every TODO-HUMAN field and file through the official channel.
+    euvd-watch never submits anything.
+    """
+    state: GlobalState = ctx.obj
+    settings = state.settings
+    store = _event_store(settings)
+    try:
+        event = store.get(event_id)
+    except StateError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    finally:
+        store.close()
+    if event is None:
+        typer.echo(f"No CRA event with id {event_id!r}. See 'euvd-watch cra status'.", err=True)
+        raise typer.Exit(code=2)
+
+    generated_at = timestamp or datetime.now(UTC).isoformat()
+    try:
+        if state.output is OutputFormat.JSON:
+            text = render_json(event, settings, generated_at)
+        else:
+            text = render_markdown(event, settings, generated_at)
+    except DraftError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    try:
+        _audit_log(settings).append(
+            "draft_rendered",
+            {
+                "event_id": event_id,
+                "format": state.output.value,
+                "generated_at": generated_at,
+            },
+        )
+    except AuditError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    if out is not None:
+        out.write_text(text, encoding="utf-8")
+        typer.echo(f"Wrote {out}", err=True)
+    else:
+        typer.echo(text, nl=False)
+
+
+@cra_app.command("mark")
+@cli_command
+def cra_mark(
+    ctx: typer.Context,
+    event_id: str = typer.Argument(..., help="Event id from 'cra check' / 'cra status'."),
+    stage: str | None = typer.Option(
+        None, "--stage", help="Mark this configured stage as completed by a human."
+    ),
+    note: str | None = typer.Option(None, "--note", help="Free-text note (e.g. filing reference)."),
+    remediation_available: bool = typer.Option(
+        False,
+        "--remediation-available",
+        help="Record that a remediation is available (anchors remediation-based stages).",
+    ),
+) -> None:
+    """Record a human action on an event: stage completion and/or remediation availability."""
+    state: GlobalState = ctx.obj
+    settings = state.settings
+    if stage is None and not remediation_available:
+        typer.echo("Nothing to record: pass --stage NAME and/or --remediation-available.", err=True)
+        raise typer.Exit(code=2)
+
+    valid_stages = [s.name for s in settings.cra_stages]
+    if stage is not None and stage not in valid_stages:
+        typer.echo(
+            f"Unknown stage {stage!r}. Configured stages: {', '.join(valid_stages)}", err=True
+        )
+        raise typer.Exit(code=2)
+
+    now = datetime.now(UTC)
+    store = _event_store(settings)
+    log = _audit_log(settings)
+    try:
+        if remediation_available:
+            store.set_remediation_available(event_id, now)
+            log.append(
+                "remediation_marked",
+                {"event_id": event_id, "at": now.isoformat(), "note": note},
+                actor="human",
+            )
+            typer.echo(f"Recorded remediation availability for {event_id} at {now.isoformat()}.")
+        if stage is not None:
+            store.mark_stage_completed(event_id, stage, now, note)
+            log.append(
+                "stage_marked",
+                {"event_id": event_id, "stage": stage, "at": now.isoformat(), "note": note},
+                actor="human",
+            )
+            typer.echo(f"Marked stage '{stage}' completed for {event_id} at {now.isoformat()}.")
+    except KeyError as exc:
+        typer.echo(f"No CRA event with id {event_id!r}. See 'euvd-watch cra status'.", err=True)
+        raise typer.Exit(code=2) from exc
+    except (StateError, AuditError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    finally:
+        store.close()
+
+
+@cra_app.command("verify-log")
+@cli_command
+def cra_verify_log(ctx: typer.Context) -> None:
+    """Verify the hash-chained audit log; exit 1 naming the first broken entry if any."""
+    state: GlobalState = ctx.obj
+    result = verify_audit_log(state.settings.state_dir / "cra-audit.jsonl")
+    if state.output is OutputFormat.JSON:
+        typer.echo(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "ok": result.ok,
+                    "entries": result.entries,
+                    "bad_line": result.bad_line,
+                    "reason": result.reason,
+                    "truncated_tail": result.truncated_tail,
+                }
+            )
+        )
+    else:
+        typer.echo(result.describe())
+    if not result.ok:
+        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":

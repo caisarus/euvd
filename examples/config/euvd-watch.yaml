@@ -1,4 +1,6 @@
 cache_dir: ~/.cache/euvd-watch
+# Durable records (CRA events, audit log) - safe from cache wipes; back this up.
+state_dir: ~/.local/share/euvd-watch
 epss_threshold: 0.5
 min_confidence: medium
 # Tier-2 matching sends SBOM-derived product names to the EUVD API as search terms.

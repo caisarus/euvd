@@ -84,6 +84,9 @@ class Settings(BaseModel):
     # validate_default so the ~ in the default expands through the same validator user
     # values go through (pydantic skips validators on defaults otherwise).
     cache_dir: Path = Field(default=Path("~/.cache/euvd-watch"), validate_default=True)
+    # Durable records (CRA events, audit log) - deliberately NOT under cache_dir: the
+    # cache is purgeable at will, these are legal records that must survive a cache wipe.
+    state_dir: Path = Field(default=Path("~/.local/share/euvd-watch"), validate_default=True)
     cache_ttl_hours: int = Field(default=24, ge=0)
     # EPSS is a probability on FIRST.org's 0-1 scale (EUVD's 0-100 wire scale is
     # normalized on ingest). Bounded here because this value gates the CRA reporting
@@ -100,7 +103,7 @@ class Settings(BaseModel):
     cra_trigger: CraTriggerConfig = CraTriggerConfig()
     cra_stages: list[CraStageConfig] = Field(default_factory=lambda: list(DEFAULT_CRA_STAGES))
 
-    @field_validator("cache_dir", mode="after")
+    @field_validator("cache_dir", "state_dir", mode="after")
     @classmethod
     def _expand_user(cls, value: Path) -> Path:
         # A user-supplied "~/..." from YAML or env must expand exactly like the default does;
