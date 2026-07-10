@@ -9,3 +9,16 @@ cra_trigger:
   euvd_exploited: true
   cisa_kev: true
   epss_over_threshold: true
+  min_confidence: medium
+  require_all: false
+# Defaults shown; override only if CRA guidance changes (see docs/cra.md).
+cra_stages:
+  - name: early_warning
+    hours: 24
+    anchor: first_seen
+  - name: vulnerability_notification
+    hours: 72
+    anchor: first_seen
+  - name: final_report
+    hours: 336
+    anchor: remediation_available

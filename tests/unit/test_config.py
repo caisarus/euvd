@@ -97,3 +97,49 @@ def test_documented_example_config_loads() -> None:
     settings = load_settings(EXAMPLE_CONFIG)
     assert settings.organization.name == "Example S.R.L."
     assert settings.cra_trigger.euvd_exploited is True
+
+
+# --- bounds on trigger-gating values (audit 2026-07-10, finding SEC-002) ---
+# These values gate a legal reporting trigger; semantically impossible values must fail
+# loudly naming the field, never be accepted and silently deaden a signal.
+
+
+def _expect_config_error(yaml_text: str, tmp_path: Path, field_fragment: str) -> None:
+    config = tmp_path / "bad.yaml"
+    config.write_text(yaml_text, encoding="utf-8")
+    with pytest.raises(ConfigError, match=field_fragment):
+        load_settings(config)
+
+
+def test_epss_threshold_above_one_is_rejected(tmp_path: Path) -> None:
+    # The classic 0-100-scale confusion (EUVD's wire scale) would make the EPSS signal
+    # unable to ever fire; it must error, not load.
+    _expect_config_error("epss_threshold: 50\n", tmp_path, "epss_threshold")
+
+
+def test_epss_threshold_negative_is_rejected(tmp_path: Path) -> None:
+    _expect_config_error("epss_threshold: -0.1\n", tmp_path, "epss_threshold")
+
+
+def test_negative_cache_ttl_is_rejected(tmp_path: Path) -> None:
+    _expect_config_error("cache_ttl_hours: -5\n", tmp_path, "cache_ttl_hours")
+
+
+def test_cra_stage_with_nonpositive_hours_is_rejected(tmp_path: Path) -> None:
+    _expect_config_error(
+        "cra_stages:\n  - {name: x, hours: -4, anchor: first_seen}\n", tmp_path, "hours"
+    )
+
+
+def test_duplicate_cra_stage_names_are_rejected(tmp_path: Path) -> None:
+    _expect_config_error(
+        "cra_stages:\n"
+        "  - {name: x, hours: 24, anchor: first_seen}\n"
+        "  - {name: x, hours: 72, anchor: first_seen}\n",
+        tmp_path,
+        "cra_stages",
+    )
+
+
+def test_empty_cra_stage_list_is_rejected(tmp_path: Path) -> None:
+    _expect_config_error("cra_stages: []\n", tmp_path, "cra_stages")

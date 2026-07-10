@@ -1,0 +1,96 @@
+# CRA trigger policy truth table (implementation_plan.md Step 4.1).
+# finding: {confidence, exploited, in_kev, epss_score}
+# config: {euvd_exploited, cisa_kev, epss_over_threshold, min_confidence, require_all}
+# settings_epss_threshold: the global epss_threshold used for the epss_over_threshold check
+# expect: {fires: bool, fired_rules: [...]}  (fired_rules omitted when fires: false)
+
+- id: exploited-alone-fires
+  finding: {confidence: high, exploited: true, in_kev: false, epss_score: null}
+  config: {euvd_exploited: true, cisa_kev: true, epss_over_threshold: true, min_confidence: medium, require_all: false}
+  settings_epss_threshold: 0.5
+  expect: {fires: true, fired_rules: [euvd_exploited]}
+
+- id: kev_alone_fires
+  finding: {confidence: high, exploited: false, in_kev: true, epss_score: null}
+  config: {euvd_exploited: true, cisa_kev: true, epss_over_threshold: true, min_confidence: medium, require_all: false}
+  settings_epss_threshold: 0.5
+  expect: {fires: true, fired_rules: [cisa_kev]}
+
+- id: epss_over_threshold_alone_fires
+  finding: {confidence: high, exploited: false, in_kev: false, epss_score: 0.7}
+  config: {euvd_exploited: true, cisa_kev: true, epss_over_threshold: true, min_confidence: medium, require_all: false}
+  settings_epss_threshold: 0.5
+  expect: {fires: true, fired_rules: [epss_over_threshold]}
+
+- id: epss_exactly_at_threshold_fires
+  finding: {confidence: high, exploited: false, in_kev: false, epss_score: 0.5}
+  config: {euvd_exploited: true, cisa_kev: true, epss_over_threshold: true, min_confidence: medium, require_all: false}
+  settings_epss_threshold: 0.5
+  expect: {fires: true, fired_rules: [epss_over_threshold]}
+
+- id: epss_below_threshold_does_not_fire
+  finding: {confidence: high, exploited: false, in_kev: false, epss_score: 0.49}
+  config: {euvd_exploited: true, cisa_kev: true, epss_over_threshold: true, min_confidence: medium, require_all: false}
+  settings_epss_threshold: 0.5
+  expect: {fires: false}
+
+- id: nothing_fires
+  finding: {confidence: high, exploited: false, in_kev: false, epss_score: null}
+  config: {euvd_exploited: true, cisa_kev: true, epss_over_threshold: true, min_confidence: medium, require_all: false}
+  settings_epss_threshold: 0.5
+  expect: {fires: false}
+
+- id: disabled_signal_does_not_fire_even_if_true
+  finding: {confidence: high, exploited: true, in_kev: false, epss_score: null}
+  config: {euvd_exploited: false, cisa_kev: true, epss_over_threshold: true, min_confidence: medium, require_all: false}
+  settings_epss_threshold: 0.5
+  expect: {fires: false}
+
+- id: disjunction_two_signals_fire_both_listed
+  finding: {confidence: high, exploited: true, in_kev: true, epss_score: null}
+  config: {euvd_exploited: true, cisa_kev: true, epss_over_threshold: true, min_confidence: medium, require_all: false}
+  settings_epss_threshold: 0.5
+  expect: {fires: true, fired_rules: [euvd_exploited, cisa_kev]}
+
+- id: conjunction_all_enabled_signals_present_fires
+  finding: {confidence: high, exploited: true, in_kev: true, epss_score: 0.9}
+  config: {euvd_exploited: true, cisa_kev: true, epss_over_threshold: true, min_confidence: medium, require_all: true}
+  settings_epss_threshold: 0.5
+  expect: {fires: true, fired_rules: [euvd_exploited, cisa_kev, epss_over_threshold]}
+
+- id: conjunction_missing_one_enabled_signal_does_not_fire
+  finding: {confidence: high, exploited: true, in_kev: true, epss_score: 0.1}
+  config: {euvd_exploited: true, cisa_kev: true, epss_over_threshold: true, min_confidence: medium, require_all: true}
+  settings_epss_threshold: 0.5
+  expect: {fires: false}
+
+- id: conjunction_only_considers_enabled_signals
+  # epss_over_threshold disabled -> conjunction only needs euvd_exploited + cisa_kev.
+  finding: {confidence: high, exploited: true, in_kev: true, epss_score: null}
+  config: {euvd_exploited: true, cisa_kev: true, epss_over_threshold: false, min_confidence: medium, require_all: true}
+  settings_epss_threshold: 0.5
+  expect: {fires: true, fired_rules: [euvd_exploited, cisa_kev]}
+
+- id: confidence_gate_blocks_low
+  finding: {confidence: low, exploited: true, in_kev: false, epss_score: null}
+  config: {euvd_exploited: true, cisa_kev: true, epss_over_threshold: true, min_confidence: medium, require_all: false}
+  settings_epss_threshold: 0.5
+  expect: {fires: false}
+
+- id: confidence_gate_allows_exact_floor
+  finding: {confidence: medium, exploited: true, in_kev: false, epss_score: null}
+  config: {euvd_exploited: true, cisa_kev: true, epss_over_threshold: true, min_confidence: medium, require_all: false}
+  settings_epss_threshold: 0.5
+  expect: {fires: true, fired_rules: [euvd_exploited]}
+
+- id: confidence_gate_lowered_to_low_allows_low
+  finding: {confidence: low, exploited: true, in_kev: false, epss_score: null}
+  config: {euvd_exploited: true, cisa_kev: true, epss_over_threshold: true, min_confidence: low, require_all: false}
+  settings_epss_threshold: 0.5
+  expect: {fires: true, fired_rules: [euvd_exploited]}
+
+- id: all_signals_disabled_never_fires
+  finding: {confidence: high, exploited: true, in_kev: true, epss_score: 0.99}
+  config: {euvd_exploited: false, cisa_kev: false, epss_over_threshold: false, min_confidence: medium, require_all: false}
+  settings_epss_threshold: 0.5
+  expect: {fires: false}

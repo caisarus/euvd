@@ -30,17 +30,44 @@ class OrganizationConfig(BaseModel):
 
 
 class CraTriggerConfig(BaseModel):
-    """Which signals fire the CRA reporting trigger (evaluated by M4's policy engine).
-
-    Declared now so the documented example config validates under extra="forbid"; the
-    evaluation logic arrives with M4 (plans/implementation_plan.md Step 4.1).
-    """
+    """Which signals fire the CRA reporting trigger, and how they combine (Step 4.1)."""
 
     model_config = ConfigDict(extra="forbid")
 
     euvd_exploited: bool = True
     cisa_kev: bool = True
     epss_over_threshold: bool = True
+    # Below this confidence, a Finding never fires the trigger even if a signal matches -
+    # low-confidence matches exist for human review, not automated legal-clock starts.
+    min_confidence: Literal["low", "medium", "high"] = "medium"
+    # False (default): any one enabled signal firing is enough (disjunction). True: every
+    # enabled signal must fire (conjunction).
+    require_all: bool = False
+
+
+class CraStageConfig(BaseModel):
+    """One CRA notification deadline stage. The stage list is config, not code, because a
+    legal-text change (durations, anchors, or an added/removed stage) must never require a
+    code change (plans/implementation_plan.md Step 4.2)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1)
+    hours: float = Field(gt=0)
+    # What timestamp the deadline counts from. "first_seen" exists the moment the trigger
+    # fires; "remediation_available" only exists once a human marks it (docs/cra.md) - a
+    # stage anchored on it has no deadline at all until then.
+    anchor: Literal["first_seen", "remediation_available"]
+
+
+# Defaults verified against the real Article 14 text (Regulation (EU) 2024/2847),
+# 2026-07-10 - see docs/cra.md for the verbatim source. Overridable in config so a future
+# legal amendment never requires a code change.
+DEFAULT_CRA_STAGES = [
+    CraStageConfig(name="early_warning", hours=24, anchor="first_seen"),
+    CraStageConfig(name="vulnerability_notification", hours=72, anchor="first_seen"),
+    CraStageConfig(name="final_report", hours=14 * 24, anchor="remediation_available"),
+]
 
 
 class Settings(BaseModel):
@@ -57,11 +84,16 @@ class Settings(BaseModel):
     # validate_default so the ~ in the default expands through the same validator user
     # values go through (pydantic skips validators on defaults otherwise).
     cache_dir: Path = Field(default=Path("~/.cache/euvd-watch"), validate_default=True)
-    cache_ttl_hours: int = 24
-    epss_threshold: float = 0.5
+    cache_ttl_hours: int = Field(default=24, ge=0)
+    # EPSS is a probability on FIRST.org's 0-1 scale (EUVD's 0-100 wire scale is
+    # normalized on ingest). Bounded here because this value gates the CRA reporting
+    # trigger: a user typing 50 (the 0-100 confusion) would otherwise silently make the
+    # EPSS signal unable to ever fire (audit 2026-07-10, finding SEC-002).
+    epss_threshold: float = Field(default=0.5, ge=0.0, le=1.0)
     min_confidence: Literal["low", "medium", "high"] = "medium"
     organization: OrganizationConfig = OrganizationConfig()
     cra_trigger: CraTriggerConfig = CraTriggerConfig()
+    cra_stages: list[CraStageConfig] = Field(default_factory=lambda: list(DEFAULT_CRA_STAGES))
 
     @field_validator("cache_dir", mode="after")
     @classmethod
@@ -69,6 +101,20 @@ class Settings(BaseModel):
         # A user-supplied "~/..." from YAML or env must expand exactly like the default does;
         # otherwise a literal "./~/" directory gets created the first time the cache writes.
         return value.expanduser()
+
+    @field_validator("cra_stages", mode="after")
+    @classmethod
+    def _stages_are_usable(cls, value: list[CraStageConfig]) -> list[CraStageConfig]:
+        # Duplicate names would collide in Event.stage_completions (one dict key), and an
+        # empty stage list would make every event trivially "closed" - both silently
+        # neuter the CRA workflow (audit finding SEC-002).
+        if not value:
+            raise ValueError("cra_stages must contain at least one stage.")
+        names = [stage.name for stage in value]
+        duplicates = sorted({n for n in names if names.count(n) > 1})
+        if duplicates:
+            raise ValueError(f"cra_stages names must be unique; duplicated: {duplicates}")
+        return value
 
 
 class ConfigError(Exception):
