@@ -21,7 +21,6 @@ def test_version_prints_version_and_exits_zero() -> None:
     "args",
     [
         ["watch", "sbom.json"],
-        ["vex", "generate", "sbom.json"],
         ["cra", "check", "sbom.json"],
     ],
 )

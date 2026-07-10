@@ -1,0 +1,46 @@
+# VEX rules truth table (implementation_plan.md Step 3.2).
+# Each case: a component + one record's affected_products entries, run through
+# evaluate_component -> decide(). `expect.no_evaluation: true` means the matcher produces
+# no evaluation at all for this pair (nothing to draft a statement about).
+
+- id: provably-outside-vendor-and-product-exact
+  component: {name: openssl, version: "3.0.8", cpe: "cpe:2.3:a:openssl:openssl:3.0.8:*:*:*:*:*:*:*", purl: "pkg:generic/openssl@3.0.8"}
+  affected: [{vendor: openssl, product: openssl, version_range: "<3.0.8"}]
+  expect: {status: not_affected, justification: vulnerable_code_not_present}
+
+- id: provably-outside-vendor-unknown
+  component: {name: widget, version: "1.5.0"}
+  affected: [{vendor: acme, product: widget, version_range: "<1.0.0"}]
+  expect: {status: not_affected, justification: vulnerable_code_not_present}
+
+- id: real-match-inside-range-stays-under-investigation
+  component: {name: openssl, version: "3.0.2", cpe: "cpe:2.3:a:openssl:openssl:3.0.2:*:*:*:*:*:*:*", purl: "pkg:generic/openssl@3.0.2"}
+  affected: [{vendor: openssl, product: openssl, version_range: "<3.0.8"}]
+  expect: {status: under_investigation}
+
+# --- adversarial: findings engineered to look dismissible but lacking proof ---
+
+- id: adversarial-right-name-wrong-vendor-at-medium
+  component: {name: widget, version: "1.5.0", cpe: "cpe:2.3:a:evilcorp:widget:1.5.0:*:*:*:*:*:*:*", purl: "pkg:generic/widget@1.5.0"}
+  affected: [{vendor: acme, product: widget, version_range: "<2.0.0"}]
+  expect: {status: under_investigation}
+
+- id: adversarial-outside-via-fallback-comparator
+  component: {name: widget, version: "zebra-1", cpe: "cpe:2.3:a:acme:widget:zebra-1:*:*:*:*:*:*:*", purl: "pkg:generic/widget@zebra-1"}
+  affected: [{vendor: acme, product: widget, version_range: "<aaa"}]
+  expect: {status: under_investigation}
+
+- id: adversarial-outside-but-synthesized-purl-no-evaluation
+  component: {name: widget, version: "1.0.0", cpe: "cpe:2.3:a:python-widget:widget:1.0.0:*:*:*:*:*:*:*"}
+  affected: [{vendor: python-widget, product: widget, version_range: "<0.5.0"}]
+  expect: {no_evaluation: true}
+
+- id: adversarial-vendor-mismatch-outside-no-evaluation
+  component: {name: widget, version: "3.0.0", cpe: "cpe:2.3:a:evilcorp:widget:3.0.0:*:*:*:*:*:*:*", purl: "pkg:generic/widget@3.0.0"}
+  affected: [{vendor: acme, product: widget, version_range: "<2.0.0"}]
+  expect: {no_evaluation: true}
+
+- id: adversarial-fuzzy-only-outside-no-evaluation
+  component: {name: page builder, version: "9.0.0"}
+  affected: [{vendor: joomshaper, product: "Page Builder CK", version_range: "<2.0.0"}]
+  expect: {no_evaluation: true}

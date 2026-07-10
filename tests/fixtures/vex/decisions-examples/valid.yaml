@@ -1,0 +1,14 @@
+decisions:
+  - euvd_id: EUVD-TEST-1
+    purl: pkg:pypi/openssl@3.0.2
+    status: not_affected
+    justification: vulnerable_code_not_present
+    statement: "We don't ship the vulnerable code path in our build configuration."
+    author: security@example.com
+    date: "2026-01-01"
+  - cve: CVE-2026-99999
+    purl: pkg:pypi/widget
+    status: affected
+    statement: "Confirmed exploitable in our deployment; patching in progress."
+    author: security@example.com
+    date: "2026-01-02"

@@ -1,0 +1,43 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "urn:euvd-watch:vex:test-digest",
+  "author": "euvd-watch",
+  "statements": [
+    {
+      "impact_statement": "Version 79.0.1 is outside affected range '<83.0.0'.",
+      "justification": "vulnerable_code_not_present",
+      "products": [
+        {
+          "identifiers": {
+            "purl": "pkg:pypi/setuptools@79.0.1"
+          }
+        }
+      ],
+      "status": "not_affected",
+      "vulnerability": {
+        "aliases": [
+          "EUVD-2026-42323"
+        ],
+        "name": "CVE-2026-59890"
+      }
+    },
+    {
+      "products": [
+        {
+          "identifiers": {
+            "purl": "pkg:pypi/wheel@0.45.1"
+          }
+        }
+      ],
+      "status": "under_investigation",
+      "vulnerability": {
+        "aliases": [
+          "EUVD-2026-4133"
+        ],
+        "name": "CVE-2026-24049"
+      }
+    }
+  ],
+  "timestamp": "2026-01-01T00:00:00Z",
+  "version": 1
+}

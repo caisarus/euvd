@@ -1,0 +1,7 @@
+decisions:
+  - euvd_id: EUVD-TEST-1
+    purl: pkg:pypi/openssl@3.0.2
+    staus: not_affected
+    statement: "Typo'd 'status' key should be rejected, not silently ignored."
+    author: security@example.com
+    date: "2026-01-01"

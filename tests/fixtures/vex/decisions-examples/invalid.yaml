@@ -1,0 +1,6 @@
+decisions:
+  - purl: pkg:pypi/widget@1.0.0
+    status: not_affected
+    statement: "Missing both euvd_id and cve - should be rejected."
+    author: security@example.com
+    date: "2026-01-01"

@@ -23,6 +23,10 @@ open('tests/fixtures/golden/scan-demo.inventory.json', 'w').write(inv.model_dump
 EOF
 ```
 
+`golden/sample.openvex.json` (M3) is similarly coupled to `tests/unit/test_vex_model.py`'s
+`_sample_document()` and to `vex/model.py`/`vex/write.py` — regenerate via
+`render(_sample_document())`, same deliberate-step caution.
+
 ## Real fixtures (captured from real tools — do not edit by hand)
 
 ### `sboms/syft-demo.cdx.json` (also copied to `examples/sboms/demo.cdx.json`)
@@ -69,6 +73,14 @@ CVE endpoint) are documented in `docs/euvd-api.md`. Several client tests assert 
 counts from these files — regenerating refreshes live data and **will change counts and
 record contents**; treat a regeneration like a fixture migration, not a refresh.
 
+### `openvex/schema.json`
+
+The real OpenVEX JSON Schema, vendored verbatim from
+`https://raw.githubusercontent.com/openvex/spec/main/openvex_json_schema.json`
+(schema id `openvex_json_schema_0.2.0.json`). Used by every VEX test via the shared
+`validate_openvex` fixture (`tests/conftest.py`). Only re-fetch if the spec itself
+publishes a new version — check `docs/matching.md`'s design notes still hold first.
+
 ## Handcrafted fixtures (edit deliberately, keep minimal)
 
 | Fixture | Exercises |
@@ -81,3 +93,6 @@ record contents**; treat a regeneration like a fixture migration, not a refresh.
 | `sboms/duplicates.cdx.json` | Dedup by normalized purl, first-occurrence-wins |
 | `sboms/garbage.json`, `empty.json`, `valid-json-not-sbom.json` | Format-detection failure matrix |
 | `config/*.yaml` | Config precedence/validation cases (Step 0.3) |
+| `matching/cases.yaml` | Matcher truth table (Step 2.3) — append-mostly, every matcher bug found in the wild adds a row here first |
+| `vex/rules-cases.yaml` | VEX rules truth table (Step 3.2), incl. the adversarial "looks dismissible but isn't" set |
+| `vex/decisions-examples/*.yaml` | Decisions-file validation cases (Step 3.3): valid, missing-identifier, typo'd key |

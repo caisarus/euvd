@@ -16,6 +16,18 @@ Hard caps (enforced here, re-asserted in tests/invariants/): a synthesized ident
 never exceed medium; a tokenwise version comparison can never support high. Every Finding
 carries a mandatory human-readable explanation — this feeds VEX/CRA auditability.
 
+Every (component, record) pair is evaluated to one of two outcomes, not just "matched":
+MATCH (an actionable finding) or NOT_AFFECTED (the version is provably outside the
+affected range, with identity evidence at least as strong as what earns a real match -
+product equal, vendor equal or unknown but never contradicted, a trustworthy version
+scheme, a non-synthesized identifier). M2's public surface (`match_component`,
+`match_inventory`, `Finding`) only ever surfaces MATCH outcomes - unchanged from before this
+module gained NOT_AFFECTED awareness. M3's VEX rule engine (`vex/rules.py`) is the first
+consumer of `evaluate_component`/`evaluate_inventory`, which expose both outcomes: it needs
+the NOT_AFFECTED evidence to auto-draft OpenVEX `not_affected` statements
+(plans/implementation_plan.md Step 3.2; design rationale in plans/feedback_m2.md's
+carried-forward note and the M3 plan).
+
 Pure functions over Inventory + records; no I/O except reading the packaged aliases table.
 """
 
@@ -53,8 +65,19 @@ class Strategy(StrEnum):
     FUZZY = "fuzzy"
 
 
+class Outcome(StrEnum):
+    MATCH = "match"
+    NOT_AFFECTED = "not_affected"
+
+
+_OUTCOME_RANK = {Outcome.NOT_AFFECTED: 0, Outcome.MATCH: 1}
+
+
 class Finding(BaseModel):
-    """One (component, record) match with an honest confidence and a mandatory why."""
+    """One (component, record) MATCH with an honest confidence and a mandatory why.
+
+    This is M2's public contract: only Outcome.MATCH evaluations ever become a Finding.
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -65,6 +88,20 @@ class Finding(BaseModel):
     explanation: str
     epss_score: float | None = None  # filled by enrichment (FIRST.org, authoritative)
     in_kev: bool | None = None  # filled by enrichment (CISA KEV membership)
+
+
+class Evaluation(BaseModel):
+    """One (component, record) evaluation of either outcome - the superset Finding draws
+    from. VEX rules (M3) are the reason NOT_AFFECTED evaluations are exposed at all."""
+
+    model_config = ConfigDict(frozen=True)
+
+    component: Component
+    record: EuvdRecord
+    outcome: Outcome
+    confidence: Confidence
+    strategy: Strategy
+    explanation: str
 
 
 class Candidate(BaseModel):
@@ -152,15 +189,21 @@ def _fuzzy_similarity(a: str, b: str) -> float:
 class _Evaluation(BaseModel):
     model_config = ConfigDict(frozen=True)
 
+    outcome: Outcome = Outcome.MATCH
     confidence: Confidence
     strategy: Strategy
     explanation: str
 
 
+def _rank(evaluation: _Evaluation) -> tuple[int, int]:
+    """MATCH always outranks NOT_AFFECTED regardless of confidence; ties break on confidence."""
+    return (_OUTCOME_RANK[evaluation.outcome], _CONFIDENCE_RANK[evaluation.confidence])
+
+
 def _evaluate_pair(
     component: Component, candidate: Candidate, affected: AffectedProduct
 ) -> _Evaluation | None:
-    """Evaluate one candidate against one affected-product entry. None = no match."""
+    """Evaluate one candidate against one affected-product entry. None = no signal."""
     product_equal = normalize_text(candidate.product) == normalize_text(affected.product)
     vendor_known = bool(candidate.vendor) and bool(affected.vendor)
     vendor_equal = vendor_known and normalize_text(candidate.vendor or "") == normalize_text(
@@ -174,10 +217,22 @@ def _evaluate_pair(
         range_result, scheme = RangeResult.AMBIGUOUS, Scheme.TOKENWISE
 
     range_text = affected.version_range or "(none published)"
+    provably_outside = range_result is RangeResult.OUTSIDE and scheme is not Scheme.TOKENWISE
 
     if product_equal and vendor_equal:
-        if range_result is RangeResult.OUTSIDE and scheme is not Scheme.TOKENWISE:
-            return None  # provably outside the affected range
+        if provably_outside:
+            if component.synthesized:
+                return None  # not_affected also requires a non-synthesized identifier
+            return _Evaluation(
+                outcome=Outcome.NOT_AFFECTED,
+                confidence=Confidence.HIGH,
+                strategy=Strategy.STRUCTURED,
+                explanation=(
+                    f"Vendor '{affected.vendor}' and product '{affected.product}' match "
+                    f"exactly and version {component.version} is outside affected range "
+                    f"'{range_text}' ({scheme})."
+                ),
+            )
         if range_result is RangeResult.INSIDE:
             if scheme is Scheme.TOKENWISE:
                 return _Evaluation(
@@ -223,7 +278,9 @@ def _evaluate_pair(
     if product_equal:
         if vendor_known and not vendor_equal:
             # Same product name, different vendor: classic false-positive shape unless the
-            # version is in range — and even then, only medium.
+            # version is in range — and even then, only medium. Never a not_affected
+            # candidate: a contradicted vendor is too weak an identity signal to auto-assert
+            # safety on, even with a provably-outside version.
             if range_result is RangeResult.INSIDE:
                 return _Evaluation(
                     confidence=Confidence.MEDIUM,
@@ -235,8 +292,19 @@ def _evaluate_pair(
                     ),
                 )
             return None
-        if range_result is RangeResult.OUTSIDE and scheme is not Scheme.TOKENWISE:
-            return None
+        # vendor is unknown here (not contradicted - the mismatched case returned above).
+        if provably_outside:
+            if component.synthesized:
+                return None
+            return _Evaluation(
+                outcome=Outcome.NOT_AFFECTED,
+                confidence=Confidence.MEDIUM,
+                strategy=Strategy.PARTIAL,
+                explanation=(
+                    f"Product '{affected.product}' matches (vendor unknown on one side) "
+                    f"and version {component.version} is outside range '{range_text}'."
+                ),
+            )
         if range_result is RangeResult.INSIDE:
             return _Evaluation(
                 confidence=Confidence.MEDIUM,
@@ -257,8 +325,8 @@ def _evaluate_pair(
 
     similarity = _fuzzy_similarity(candidate.product, affected.product)
     if similarity >= _FUZZY_THRESHOLD:
-        if range_result is RangeResult.OUTSIDE and scheme is not Scheme.TOKENWISE:
-            return None
+        if provably_outside:
+            return None  # fuzzy identity evidence is too weak for a not_affected claim
         return _Evaluation(
             confidence=Confidence.LOW,
             strategy=Strategy.FUZZY,
@@ -278,7 +346,7 @@ def _evaluate_affected(
 
     If any candidate *knows* its vendor and its product equals the affected product, only
     those candidates decide the outcome: a vendor-less fallback (e.g. the bare component
-    name) must not resurrect a match that the known vendor already contradicted.
+    name) must not resurrect a match the known vendor already contradicted.
     """
     informed = [
         c
@@ -291,46 +359,86 @@ def _evaluate_affected(
         evaluation = _evaluate_pair(component, candidate, affected)
         if evaluation is None:
             continue
-        if (
-            best is None
-            or _CONFIDENCE_RANK[evaluation.confidence] > _CONFIDENCE_RANK[best.confidence]
-        ):
+        if best is None or _rank(evaluation) > _rank(best):
             best = evaluation
     return best
 
 
-def match_component(component: Component, records: list[EuvdRecord]) -> list[Finding]:
-    """Match one component against records, keeping the best evaluation per record."""
+def evaluate_component(component: Component, records: list[EuvdRecord]) -> list[Evaluation]:
+    """Every (component, record) evaluation - MATCH and NOT_AFFECTED alike.
+
+    `match_component` below is the M2-public filter to MATCH-only Findings.
+    """
     candidates = derive_candidates(component)
-    findings: list[Finding] = []
+    evaluations: list[Evaluation] = []
     for record in records:
         best: _Evaluation | None = None
         for affected in record.affected_products:
             evaluation = _evaluate_affected(component, candidates, affected)
             if evaluation is None:
                 continue
-            if (
-                best is None
-                or _CONFIDENCE_RANK[evaluation.confidence] > _CONFIDENCE_RANK[best.confidence]
-            ):
+            if best is None or _rank(evaluation) > _rank(best):
                 best = evaluation
         if best is not None:
-            findings.append(
-                Finding(
+            evaluations.append(
+                Evaluation(
                     component=component,
                     record=record,
+                    outcome=best.outcome,
                     confidence=best.confidence,
                     strategy=best.strategy,
                     explanation=best.explanation,
                 )
             )
-    return findings
+    return evaluations
+
+
+def evaluate_inventory(inventory: Inventory, records: list[EuvdRecord]) -> list[Evaluation]:
+    """Every component's evaluations; deterministic ordering by (dedupe_key, euvd_id)."""
+    evaluations: list[Evaluation] = []
+    for component in inventory.components:
+        evaluations.extend(evaluate_component(component, records))
+    evaluations.sort(key=lambda e: (e.component.dedupe_key, e.record.euvd_id))
+    return evaluations
+
+
+def _as_finding(evaluation: Evaluation) -> Finding:
+    return Finding(
+        component=evaluation.component,
+        record=evaluation.record,
+        confidence=evaluation.confidence,
+        strategy=evaluation.strategy,
+        explanation=evaluation.explanation,
+    )
+
+
+def match_component(component: Component, records: list[EuvdRecord]) -> list[Finding]:
+    """Match one component against records, keeping only actionable MATCH outcomes."""
+    return [
+        _as_finding(e) for e in evaluate_component(component, records) if e.outcome is Outcome.MATCH
+    ]
 
 
 def match_inventory(inventory: Inventory, records: list[EuvdRecord]) -> list[Finding]:
     """Match every component; deterministic ordering by (dedupe_key, euvd_id)."""
-    findings: list[Finding] = []
-    for component in inventory.components:
-        findings.extend(match_component(component, records))
-    findings.sort(key=lambda f: (f.component.dedupe_key, f.record.euvd_id))
-    return findings
+    return [
+        _as_finding(e) for e in evaluate_inventory(inventory, records) if e.outcome is Outcome.MATCH
+    ]
+
+
+def finding_to_evaluation(finding: Finding) -> Evaluation:
+    """Reinterpret a saved M2 Finding as an Outcome.MATCH Evaluation.
+
+    For consumers that only have a saved findings artifact (e.g. `vex generate
+    --findings`) rather than live match results: that artifact never carries
+    NOT_AFFECTED evidence (schema_version 1 only ever stored MATCH outcomes), so this
+    conversion is exact - there is no information to reconstruct, only to relabel.
+    """
+    return Evaluation(
+        component=finding.component,
+        record=finding.record,
+        outcome=Outcome.MATCH,
+        confidence=finding.confidence,
+        strategy=finding.strategy,
+        explanation=finding.explanation,
+    )

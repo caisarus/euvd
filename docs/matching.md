@@ -36,9 +36,27 @@ vendor already contradicted.
 | 2 | vendor+product equal but range ambiguous/missing/unevaluable; or product equal with vendor unknown on one side + version in range; or product equal with **mismatched** vendor + version in range | **medium** |
 | 3 | fuzzy token-set similarity ≥ 0.6 between component name and affected product, no reliable version signal | **low** — surfaces candidates for human review, never feeds automated decisions |
 
-No finding at all when: version is provably **outside** the range with a trustworthy
-scheme; product names equal but vendors mismatch and the version is not provably in range;
-fuzzy similarity below threshold; or fuzzy similarity with a provably-outside version.
+No finding at all when: product names equal but vendors mismatch and the version is not
+provably in range; fuzzy similarity below threshold; or fuzzy similarity with a
+provably-outside version.
+
+**Provably outside is not silently discarded** (M3): when the version is provably outside
+the range with a trustworthy scheme, on identity evidence at least as strong as a real
+match (product equal, vendor equal or unknown but never *contradicted*, non-synthesized),
+the matcher records `Outcome.NOT_AFFECTED` instead of nothing — `high` confidence when
+vendor+product both matched, `medium` when the vendor side was simply unknown. `match`'s
+public `Finding`s (M2) only ever see `Outcome.MATCH`; `evaluate_component`/
+`evaluate_inventory` expose both outcomes to `vex/rules.py`, which is the only M3 consumer:
+its one real rule (`ProvablyOutsideRule`) turns `NOT_AFFECTED` straight into an OpenVEX
+`not_affected` statement with justification `vulnerable_code_not_present`. See `vex/*.py`
+and `plans/feedback_m2.md`'s carried-forward design note for why this exists.
+
+**`vex generate --findings <path>` is auto-`not_affected`-blind by construction:** a saved
+findings artifact (schema_version 1) only ever stores `MATCH` outcomes, so replaying it has
+no `NOT_AFFECTED` evidence to draft from — everything defaults to `under_investigation`
+unless a human decision (`vex-decisions.yaml`) overrides it. This is itself conservative
+(less certainty available → the safer default), not a limitation to work around. Only the
+full pipeline (`vex generate <sbom>`, live-matching) can auto-draft `not_affected`.
 
 ### Hard caps (invariants, enforced in `tests/invariants/`)
 
@@ -80,3 +98,18 @@ the same. (M0/M1 review item 3.3.)
 If EUVD is unreachable: proceed on cache within TTL with a loud warning and a
 `data_freshness` stamp in every output; with no usable cache, exit 2. Never silently report
 "no findings" on missing data.
+
+## Third-party OpenVEX consumption check (Step 3.4 acceptance criterion)
+
+Verified 2026-07-10: `euvd-watch vex generate examples/sboms/demo.cdx.json` (live EUVD, 70
+components, 20 statements — 6 `not_affected`, 14 `under_investigation`) was fed to
+`vexctl merge` (the reference OpenVEX tool, `ghcr.io/openvex/vexctl:v0.2.6` via Docker —
+`ghcr.io/openvex/vexctl:latest` doesn't exist, pin a real tag):
+
+```bash
+docker run --rm -v /path/to/dir:/data ghcr.io/openvex/vexctl:v0.2.6 merge /data/demo.openvex.json
+```
+
+`vexctl` parsed the document without error and re-emitted all 20 statements with full
+fidelity: vulnerability names/aliases, product purls, statuses, and both `justification`
+and `impact_statement` on every `not_affected` statement survived the round-trip exactly.

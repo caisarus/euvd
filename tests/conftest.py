@@ -6,11 +6,13 @@ import json
 from pathlib import Path
 from typing import Any
 
+import jsonschema
 import pytest
 
 from euvd_watch.http import ApiClient
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
+_OPENVEX_SCHEMA = json.loads((FIXTURES / "openvex" / "schema.json").read_text(encoding="utf-8"))
 
 
 @pytest.fixture
@@ -29,3 +31,15 @@ def euvd_fixture() -> Any:
         return json.loads((FIXTURES / "euvd" / f"{name}.json").read_text(encoding="utf-8"))
 
     return load
+
+
+@pytest.fixture
+def validate_openvex() -> Any:
+    """Assert a JSON string or dict is a valid OpenVEX document (implementation_plan.md
+    Step 3.1: schema validation wired into every later VEX test via this shared helper)."""
+
+    def check(document: str | dict[str, Any]) -> None:
+        data = json.loads(document) if isinstance(document, str) else document
+        jsonschema.validate(data, _OPENVEX_SCHEMA)
+
+    return check

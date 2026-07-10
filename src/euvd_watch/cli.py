@@ -1,7 +1,7 @@
 """Typer CLI entry point.
 
-`version` and `scan` are implemented; `match`, `watch`, `vex generate`, and `cra check`
-remain stubs until their owning milestone (M2-M4) lands.
+`version`, `scan`, `match`, and `vex generate`/`vex init-decisions` are implemented;
+`watch` and `cra check` remain stubs until their owning milestone (M4-M5) lands.
 """
 
 from __future__ import annotations
@@ -11,12 +11,13 @@ import hashlib
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import ParamSpec
 
 import typer
+import yaml
 from rich.console import Console
 from rich.table import Table
 
@@ -26,9 +27,12 @@ from euvd_watch.enrich import enrich
 from euvd_watch.euvd.client import EuvdClient
 from euvd_watch.euvd.match import (
     Confidence,
+    Evaluation,
     Finding,
     confidence_at_least,
     derive_candidates,
+    evaluate_inventory,
+    finding_to_evaluation,
     match_inventory,
 )
 from euvd_watch.euvd.models import EuvdRecord
@@ -37,6 +41,11 @@ from euvd_watch.log import setup_logging
 from euvd_watch.models import Inventory
 from euvd_watch.sbom import load_inventory_with_stats
 from euvd_watch.sbom.errors import SbomParseError, UnsupportedFormatError
+from euvd_watch.vex.build import build_document
+from euvd_watch.vex.decisions import DecisionEntry, DecisionsError, DecisionsFile, load_decisions
+from euvd_watch.vex.merge import ResolvedDecision, merge
+from euvd_watch.vex.model import Status
+from euvd_watch.vex.write import render
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 vex_app = typer.Typer(no_args_is_help=True)
@@ -321,13 +330,215 @@ def watch(sbom: str = typer.Argument(..., help="Path to a CycloneDX/SPDX SBOM fi
     _not_implemented("watch")
 
 
+class FindingsArtifactError(Exception):
+    """Raised when a saved findings artifact (--findings) can't be loaded."""
+
+
+def _load_findings_artifact(path: Path) -> list[Finding]:
+    raw = path.read_text(encoding="utf-8")  # OSError -> caught by the cli_command boundary
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise FindingsArtifactError(f"{path} is not valid JSON: {exc}") from exc
+    if not isinstance(data, dict) or "findings" not in data:
+        raise FindingsArtifactError(
+            f"{path} does not look like a findings artifact (missing 'findings')."
+        )
+    try:
+        return [Finding.model_validate(f) for f in data["findings"]]
+    except Exception as exc:  # pydantic.ValidationError, kept generic to avoid a new import
+        raise FindingsArtifactError(f"{path} contains invalid finding data: {exc}") from exc
+
+
+def _evaluations_for(
+    inventory: Inventory, settings: Settings, *, findings_path: Path | None
+) -> tuple[list[Evaluation], bool]:
+    """Returns (evaluations, not_affected_capable).
+
+    The --findings fast path is auto-not_affected-blind by construction: a saved findings
+    artifact (schema_version 1) only ever stored MATCH outcomes, so there is no
+    NOT_AFFECTED evidence to replay (see docs/matching.md's design note). This is itself
+    conservative - less certainty available defaults to under_investigation, not a guess.
+    """
+    if findings_path is not None:
+        findings = _load_findings_artifact(findings_path)
+        return [finding_to_evaluation(f) for f in findings], False
+
+    api = ApiClient(settings.cache_dir, settings.cache_ttl_hours)
+    try:
+        client = EuvdClient(api, settings.euvd_api_base_url)
+        try:
+            records = _fetch_records(client, inventory, exploited_only=False)
+        except ApiError as exc:
+            typer.echo(
+                f"EUVD is unreachable and the local cache has no usable data: {exc}\n"
+                f"Refusing to draft VEX statements on missing data.",
+                err=True,
+            )
+            raise typer.Exit(code=2) from exc
+        return evaluate_inventory(inventory, records), True
+    finally:
+        api.close()
+
+
+def _render_vex_summary_table(
+    document_title: str, resolved: list[ResolvedDecision], not_affected_capable: bool
+) -> None:
+    table = Table(title=document_title)
+    table.add_column("Component")
+    table.add_column("Vulnerability")
+    table.add_column("Status")
+    table.add_column("Human?")
+    table.add_column("Why")
+    colors = {
+        Status.NOT_AFFECTED: "green",
+        Status.AFFECTED: "red",
+        Status.FIXED: "cyan",
+        Status.UNDER_INVESTIGATION: "yellow",
+    }
+    for r in resolved:
+        color = colors[r.decision.status]
+        table.add_row(
+            f"{r.evaluation.component.name} {r.evaluation.component.version or ''}".strip(),
+            r.evaluation.record.euvd_id,
+            f"[{color}]{r.decision.status.value}[/{color}]",
+            "yes" if r.is_human else "",
+            r.decision.explanation,
+        )
+    Console().print(table)
+    if not not_affected_capable:
+        typer.echo(
+            "Note: --findings was used, so no not_affected statements were auto-drafted "
+            "(the saved artifact carries no such evidence).",
+            err=True,
+        )
+
+
 @vex_app.command("generate")
 @cli_command
 def vex_generate(
+    ctx: typer.Context,
     sbom: str = typer.Argument(..., help="Path to a CycloneDX/SPDX SBOM file."),
+    decisions: Path | None = typer.Option(
+        None, "--decisions", help="vex-decisions.yaml overriding automated drafts."
+    ),
+    findings: Path | None = typer.Option(
+        None,
+        "--findings",
+        help="Reuse a saved findings artifact instead of live matching (conservative-only).",
+    ),
+    timestamp: str | None = typer.Option(
+        None, "--timestamp", help="Pin the document timestamp (ISO 8601); default: now."
+    ),
+    out: Path | None = typer.Option(
+        None, "--out", "-o", help="Write the OpenVEX document to this path."
+    ),
 ) -> None:
-    """Draft OpenVEX statements for an SBOM's findings."""
-    _not_implemented("vex generate")
+    """Draft OpenVEX statements: not_affected only with machine-checkable proof."""
+    state: GlobalState = ctx.obj
+    settings = state.settings
+
+    try:
+        inventory, _dropped = load_inventory_with_stats(sbom)
+    except (SbomParseError, UnsupportedFormatError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    try:
+        evaluations, not_affected_capable = _evaluations_for(
+            inventory, settings, findings_path=findings
+        )
+    except FindingsArtifactError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    decisions_file = DecisionsFile(decisions=[])
+    if decisions is not None:
+        try:
+            decisions_file = load_decisions(decisions)
+        except DecisionsError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(code=2) from exc
+
+    result = merge(evaluations, decisions_file)
+
+    document = build_document(
+        result.decisions,
+        document_id=f"urn:euvd-watch:vex:{_inventory_digest(inventory)}",
+        author=settings.organization.name or "euvd-watch",
+        timestamp=timestamp or datetime.now(UTC).isoformat(),
+    )
+    text = render(document)
+
+    if out is not None:
+        out.write_text(text, encoding="utf-8")
+
+    status_counts: dict[str, int] = {}
+    auto_not_affected = 0
+    for r in result.decisions:
+        status_counts[r.decision.status.value] = status_counts.get(r.decision.status.value, 0) + 1
+        if r.decision.status is Status.NOT_AFFECTED and not r.is_human:
+            auto_not_affected += 1
+
+    summary = (
+        f"{len(result.decisions)} statements ({status_counts}); "
+        f"{auto_not_affected} auto-drafted not_affected; "
+        f"{len(result.stale)} stale decisions; {len(result.conflicts)} conflicts"
+    )
+
+    if state.output is OutputFormat.JSON:
+        typer.echo(summary, err=True)
+        if out is None:
+            typer.echo(text, nl=False)
+    else:
+        _render_vex_summary_table(str(sbom), result.decisions, not_affected_capable)
+        typer.echo(summary)
+    if out is not None:
+        typer.echo(f"Wrote {out}", err=True)
+
+
+@vex_app.command("init-decisions")
+@cli_command
+def vex_init_decisions(
+    ctx: typer.Context,
+    sbom: str = typer.Argument(..., help="Path to a CycloneDX/SPDX SBOM file."),
+    out: Path = typer.Option(
+        Path("vex-decisions.yaml"), "--out", "-o", help="Where to write the scaffold."
+    ),
+) -> None:
+    """Scaffold a vex-decisions.yaml from current findings, for a human to fill in."""
+    state: GlobalState = ctx.obj
+    settings = state.settings
+
+    try:
+        inventory, _dropped = load_inventory_with_stats(sbom)
+    except (SbomParseError, UnsupportedFormatError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    evaluations, _ = _evaluations_for(inventory, settings, findings_path=None)
+    today = date.today().isoformat()
+    author = settings.organization.contact_email or settings.organization.name or "TODO"
+
+    entries = [
+        DecisionEntry(
+            euvd_id=evaluation.record.euvd_id,
+            purl=evaluation.component.normalized_purl or evaluation.component.purl or "TODO",
+            status=Status.UNDER_INVESTIGATION,
+            statement="TODO: describe your reasoning for this component/vulnerability.",
+            author=author,
+            date=today,
+        )
+        for evaluation in evaluations
+    ]
+    scaffold = DecisionsFile(decisions=entries)
+    out.write_text(
+        yaml.safe_dump(
+            scaffold.model_dump(mode="json", exclude_none=True), sort_keys=False, allow_unicode=True
+        ),
+        encoding="utf-8",
+    )
+    typer.echo(f"Wrote {len(entries)} decision stub(s) to {out}", err=True)
 
 
 @cra_app.command("check")
