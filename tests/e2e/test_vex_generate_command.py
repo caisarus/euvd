@@ -134,6 +134,68 @@ def test_decisions_file_overrides_and_reports_counts(tmp_path: Path) -> None:
     assert "'affected': 1" in result.output
 
 
+def _conflicting_decisions_file(tmp_path: Path) -> Path:
+    # Human says not_affected while automation independently finds a MATCH -> conflict.
+    decisions_path = tmp_path / "vex-decisions.yaml"
+    decisions_path.write_text(
+        yaml.safe_dump(
+            {
+                "decisions": [
+                    {
+                        "euvd_id": "EUVD-TEST-0002",
+                        "purl": "pkg:pypi/jinja2",
+                        "status": "not_affected",
+                        "justification": "vulnerable_code_not_in_execute_path",
+                        "statement": "We never render untrusted templates.",
+                        "author": "a@example.com",
+                        "date": "2026-01-01",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    return decisions_path
+
+
+@respx.mock
+def test_conflict_without_flag_still_exits_zero(tmp_path: Path) -> None:
+    _mock_search([MATCH_RECORD])
+    decisions_path = _conflicting_decisions_file(tmp_path)
+    result = _generate(tmp_path, "--timestamp", TIMESTAMP, "--decisions", str(decisions_path))
+    assert result.exit_code == 0
+    assert "1 conflicts" in result.output
+
+
+@respx.mock
+def test_fail_on_conflict_exits_one_but_still_writes_the_document(
+    tmp_path: Path, validate_openvex: Any
+) -> None:
+    # Owner decision 2026-07-10 (audit REQ-VEX-004): a CI gate for human-vs-automation
+    # conflicts. The gate must never suppress the document itself.
+    _mock_search([MATCH_RECORD])
+    decisions_path = _conflicting_decisions_file(tmp_path)
+    out = tmp_path / "doc.json"
+    result = _generate(
+        tmp_path,
+        "--timestamp", TIMESTAMP,
+        "--decisions", str(decisions_path),
+        "--out", str(out),
+        "--fail-on-conflict",
+    )
+    assert result.exit_code == 1
+    assert out.exists()
+    validate_openvex(out.read_text(encoding="utf-8"))
+    assert "1 conflicts" in result.output
+
+
+@respx.mock
+def test_fail_on_conflict_without_conflicts_exits_zero(tmp_path: Path) -> None:
+    _mock_search([MATCH_RECORD])
+    result = _generate(tmp_path, "--timestamp", TIMESTAMP, "--fail-on-conflict")
+    assert result.exit_code == 0
+
+
 @respx.mock
 def test_stale_decision_is_reported_in_summary(tmp_path: Path) -> None:
     _mock_search([MATCH_RECORD])

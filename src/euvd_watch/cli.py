@@ -482,6 +482,12 @@ def vex_generate(
     out: Path | None = typer.Option(
         None, "--out", "-o", help="Write the OpenVEX document to this path."
     ),
+    fail_on_conflict: bool = typer.Option(
+        False,
+        "--fail-on-conflict",
+        help="Exit 1 when a human decision conflicts with automated evidence (CI gate). "
+        "The document is still written; the human decision still wins.",
+    ),
 ) -> None:
     """Draft OpenVEX statements: not_affected only with machine-checkable proof."""
     state: GlobalState = ctx.obj
@@ -544,6 +550,12 @@ def vex_generate(
         typer.echo(summary)
     if out is not None:
         typer.echo(f"Wrote {out}", err=True)
+
+    if fail_on_conflict and result.conflicts:
+        # Exit 1 = "findings above threshold" in the CLI contract: a human decision that
+        # contradicts automated evidence is exactly the kind of finding a CI gate exists
+        # for. Output was already produced above - the gate never suppresses the document.
+        raise typer.Exit(code=1)
 
 
 @vex_app.command("init-decisions")
