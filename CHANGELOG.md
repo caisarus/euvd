@@ -8,6 +8,23 @@ breaking changes (each one listed explicitly below).
 ## [Unreleased]
 
 ### Added
+- **The CRA Article 14 workflow (milestone M4)**: `cra check` (configurable trigger over
+  EUVD-exploited / CISA-KEV / EPSS signals with a confidence floor; persists events; exit
+  1 when a new event opens; idempotent re-runs), `cra status` (config-driven deadline
+  stages — 24 h early warning, 72 h vulnerability notification, 14 d final report
+  anchored on remediation availability — all UTC), `cra draft` (prefilled Markdown/JSON
+  notification drafts with `TODO-HUMAN` markers; never upgrades a signal into an
+  exploitation claim), `cra mark` (records human stage completions and remediation
+  availability), and `cra verify-log` (hash-chained tamper-evident audit log with an
+  honestly documented threat model). See `docs/cra.md`. Nothing is ever submitted
+  automatically.
+- New config: `state_dir` (durable records, separate from the purgeable cache),
+  `cra_trigger.min_confidence` / `require_all`, configurable `cra_stages`, and
+  `tier2_product_search` (privacy toggle: tier-2 matching sends SBOM-derived product
+  names to the EUVD API; disable for confidential inventories).
+- Config values that gate the CRA trigger are now bounds-checked (`epss_threshold` must
+  be 0–1, stage hours positive, stage names unique, TTL non-negative) — semantically
+  impossible values used to load silently and could deaden trigger signals.
 - `match --timestamp` pins the findings artifact's `generated_at`, so identical inputs
   produce byte-identical JSON output (same contract as `vex generate --timestamp`).
 - `vex generate --fail-on-conflict`: exit 1 when a human decision contradicts automated

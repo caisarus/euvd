@@ -4,8 +4,8 @@
 
 > ⚠️ **Status: work in progress.** APIs and structure may change until `1.0.0`.
 > The Commands table below marks what is **✅ available today** versus **🚧 planned** —
-> milestones M0–M3 (scan, match, VEX) are implemented and tested; the CRA workflow (M4)
-> is being built now; watch/CI templates (M5) come next. The dashboard ships in `1.1`.
+> milestones M0–M4 (scan, match, VEX, the CRA workflow) are implemented and tested;
+> watch/CI templates (M5) come next. The dashboard ships in `1.1`.
 
 `euvd-watch` connects software supply-chain transparency to **Europe's own vulnerability infrastructure** and to the concrete reporting duties of the **EU Cyber Resilience Act**.
 
@@ -50,11 +50,8 @@ euvd-watch match sbom.cdx.json --exploited-only
 
 # 4. Generate OpenVEX statements (conservative by design)
 euvd-watch vex generate sbom.cdx.json -o openvex.json
-```
 
-Coming with the CRA milestone (in progress):
-
-```bash
+# 5. Check whether anything crossed your CRA reporting threshold
 euvd-watch cra check sbom.cdx.json
 euvd-watch cra status
 ```
@@ -67,9 +64,9 @@ euvd-watch cra status
 | `match <sbom>` | ✅ | Match components against the EUVD, with confidence scoring and EPSS/KEV enrichment. Flags: `--exploited-only`, `--min-confidence`, `--fail-on`, `--no-enrich`, `--save-findings`, `--timestamp`. |
 | `vex generate <sbom>` | ✅ | Draft OpenVEX statements. Only provably safe findings become `not_affected`; everything uncertain stays `under_investigation`. Merges your `vex-decisions.yaml` (`--fail-on-conflict` for CI). |
 | `vex init-decisions <sbom>` | ✅ | Scaffold a `vex-decisions.yaml` from current findings for humans to fill in. |
-| `cra check <sbom>` | 🚧 M4 (in progress) | Evaluate the configurable reporting trigger (EUVD exploited / CISA KEV / EPSS threshold) and open events. |
-| `cra status` / `cra draft <id>` / `cra mark <id>` | 🚧 M4 (in progress) | Track 24 h clocks, render a prefilled notification draft, record human completion. |
-| `cra verify-log` | 🚧 M4 (in progress) | Verify the tamper-evident (hash-chained) audit log. |
+| `cra check <sbom>` | ✅ | Evaluate the configurable reporting trigger (EUVD exploited / CISA KEV / EPSS threshold) and open events. Exit 1 when a **new** event opens. |
+| `cra status` / `cra draft <id>` / `cra mark <id>` | ✅ | Track the staged deadline clocks (24 h / 72 h / final report), render a prefilled notification draft with `TODO-HUMAN` markers, record human completion. |
+| `cra verify-log` | ✅ | Verify the tamper-evident (hash-chained) audit log; names the first broken entry. |
 | `watch <sbom>` | 🚧 M5 (planned) | Re-match on a schedule and notify **only about new or changed findings** (stdout / webhook). |
 | `web serve` | 🚧 post-1.0 (planned for `1.1`) | Self-hostable, WCAG-compliant dashboard: findings, VEX statuses, CRA countdowns, audit log. |
 
@@ -136,11 +133,13 @@ cra_trigger:
 ## Architecture & docs
 
 - [docs/matching.md](docs/matching.md) — matching strategies & confidence scoring
+- [docs/cra.md](docs/cra.md) — the CRA Article 14 workflow, deadline stages, and the
+  audit log's honest threat model
 - [docs/euvd-api.md](docs/euvd-api.md) — the verified EUVD API surface this tool uses
 - [README.simple.md](README.simple.md) — the same story, explained so a child can follow it
 - [GLOSSARY.md](GLOSSARY.md) — every technical term (SBOM, VEX, CRA, EPSS…) explained in plain language
-- 🚧 coming with their milestones: `ARCHITECTURE.md`, `docs/cra.md` (CRA Article 14
-  workflow), `docs/deploy.md` (self-hosting), `CONTRIBUTING.md`
+- 🚧 coming with their milestones: `ARCHITECTURE.md`, `docs/deploy.md` (self-hosting),
+  `CONTRIBUTING.md`
 
 ## Contributing
 

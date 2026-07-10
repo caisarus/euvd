@@ -20,8 +20,7 @@ def test_version_prints_version_and_exits_zero() -> None:
 @pytest.mark.parametrize(
     "args",
     [
-        ["watch", "sbom.json"],
-        ["cra", "check", "sbom.json"],
+        ["watch", "sbom.json"],  # the M5 stub; the cra group is real since M4
     ],
 )
 def test_stub_commands_exit_two_and_say_not_implemented(args: list[str]) -> None:
@@ -42,6 +41,10 @@ def test_stub_commands_exit_two_and_say_not_implemented(args: list[str]) -> None
         ["vex", "generate", "--help"],
         ["cra", "--help"],
         ["cra", "check", "--help"],
+        ["cra", "status", "--help"],
+        ["cra", "draft", "--help"],
+        ["cra", "mark", "--help"],
+        ["cra", "verify-log", "--help"],
     ],
 )
 def test_help_renders_for_every_command(args: list[str]) -> None:

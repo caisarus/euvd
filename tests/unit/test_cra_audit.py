@@ -142,6 +142,42 @@ def test_canonical_form_is_ascii_only(tmp_path: Path) -> None:
     assert canonical_json({"org": "Țesătorie"}) == '{"org":"\\u021aes\\u0103torie"}'
 
 
+def test_zero_byte_file_appends_from_genesis_and_verifies_empty(tmp_path: Path) -> None:
+    path = tmp_path / "audit.jsonl"
+    path.write_text("", encoding="utf-8")
+    assert verify(path).ok
+    assert verify(path).entries == 0
+    log = AuditLog(path)
+    assert log.path == path
+    entry = log.append("first", {"x": 1})
+    assert entry["prev_hash"] == GENESIS_SEED
+    assert verify(path).ok
+
+
+def test_mid_file_garbage_line_is_a_tamper_not_a_truncation(tmp_path: Path) -> None:
+    path = tmp_path / "audit.jsonl"
+    _build_log(path, 4)
+    lines = path.read_text(encoding="utf-8").splitlines()
+    lines[1] = "this is not json at all"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    result = verify(path)
+    assert not result.ok
+    assert result.bad_line == 2
+    assert not result.truncated_tail
+
+
+def test_entry_that_is_not_an_object_is_rejected(tmp_path: Path) -> None:
+    path = tmp_path / "audit.jsonl"
+    _build_log(path, 2)
+    lines = path.read_text(encoding="utf-8").splitlines()
+    lines.append('["an", "array"]')
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    result = verify(path)
+    assert not result.ok
+    assert result.bad_line == 3
+    assert "not an object" in (result.reason or "")
+
+
 def test_unicode_payload_round_trips(tmp_path: Path) -> None:
     path = tmp_path / "audit.jsonl"
     log = AuditLog(path)

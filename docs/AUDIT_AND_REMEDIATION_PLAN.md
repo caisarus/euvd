@@ -11,6 +11,16 @@
 > `mypy src` (strict) → **clean**; `ruff check .` → **5 errors, all in the uncommitted
 > M4 files** (line length ×4, one unused import/variable — normal mid-flight state).
 
+> **Status update — 2026-07-10, post-approval.** The owner approved this plan and
+> answered all seven open questions (§17). Executed the same day: **R1** in full
+> (TECH-001 `bc52538`, TECH-003 `4a79ace`, REQ-VEX-004 `705a1db`, justification decision
+> `6faa494`, DOC-001 + RO README + CHANGELOG `fe9c1d1`) and **M4-completion** in full
+> (`3c32eaa`…: Steps 4.1–4.5 with SEC-001/002/003, TECH-002, SEC-004 fixed before/at
+> first commit; scenario S3, INV-6/7, `docs/cra.md` shipped — closing DOC-002).
+> Still open: OPS-001 (owner-blocked: no GitHub org decided, PyPI name unreserved), the
+> M4 post-milestone review gate, then M5. Sections below are kept as written at audit
+> time; this note supersedes their status claims where they differ.
+
 ---
 
 ## 1. Executive summary

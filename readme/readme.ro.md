@@ -4,9 +4,8 @@
 
 > ⚠️ **Status: în lucru.** API-urile și structura se pot schimba până la `1.0.0`.
 > Tabelul de comenzi de mai jos marchează ce este **✅ disponibil azi** față de **🚧
-> planificat** — milestone-urile M0–M3 (scan, match, VEX) sunt implementate și testate;
-> fluxul CRA (M4) se construiește acum; watch și template-urile CI (M5) urmează.
-> Dashboard-ul apare în `1.1`.
+> planificat** — milestone-urile M0–M4 (scan, match, VEX, fluxul CRA) sunt implementate
+> și testate; watch și template-urile CI (M5) urmează. Dashboard-ul apare în `1.1`.
 >
 > *Această traducere urmează [README-ul în engleză](README.md); în caz de divergență,
 > versiunea engleză este cea de referință.*
@@ -62,11 +61,8 @@ euvd-watch match sbom.cdx.json --exploited-only
 
 # 4. Generează declarații OpenVEX (conservatoare prin design)
 euvd-watch vex generate sbom.cdx.json -o openvex.json
-```
 
-Vine odată cu milestone-ul CRA (în lucru):
-
-```bash
+# 5. Verifică dacă ceva a depășit pragul tău de raportare CRA
 euvd-watch cra check sbom.cdx.json
 euvd-watch cra status
 ```
@@ -79,9 +75,9 @@ euvd-watch cra status
 | `match <sbom>` | ✅ | Corelează componentele cu EUVD, cu scor de încredere și îmbogățire EPSS/KEV. Flag-uri: `--exploited-only`, `--min-confidence`, `--fail-on`, `--no-enrich`, `--save-findings`, `--timestamp`. |
 | `vex generate <sbom>` | ✅ | Redactează declarații OpenVEX. Doar finding-urile probabil sigure devin `not_affected`; tot ce e incert rămâne `under_investigation`. Îmbină `vex-decisions.yaml` (`--fail-on-conflict` pentru CI). |
 | `vex init-decisions <sbom>` | ✅ | Generează scheletul unui `vex-decisions.yaml` din finding-urile curente, pentru completare umană. |
-| `cra check <sbom>` | 🚧 M4 (în lucru) | Evaluează trigger-ul configurabil de raportare (EUVD exploited / CISA KEV / prag EPSS) și deschide evenimente. |
-| `cra status` / `cra draft <id>` / `cra mark <id>` | 🚧 M4 (în lucru) | Urmărește ceasurile de 24 h, redă un draft de notificare precompletat, înregistrează finalizarea umană. |
-| `cra verify-log` | 🚧 M4 (în lucru) | Verifică jurnalul de audit tamper-evident (hash-chained). |
+| `cra check <sbom>` | ✅ | Evaluează trigger-ul configurabil de raportare (EUVD exploited / CISA KEV / prag EPSS) și deschide evenimente. Iese cu 1 când se deschide un eveniment **nou**. |
+| `cra status` / `cra draft <id>` / `cra mark <id>` | ✅ | Urmărește ceasurile pe stagii (24 h / 72 h / raport final), redă un draft de notificare precompletat cu marcaje `TODO-HUMAN`, înregistrează finalizarea umană. |
+| `cra verify-log` | ✅ | Verifică jurnalul de audit tamper-evident (hash-chained); numește prima intrare ruptă. |
 | `watch <sbom>` | 🚧 M5 (planificat) | Re-corelează programat și notifică **doar despre finding-uri noi sau schimbate** (stdout / webhook). |
 | `web serve` | 🚧 post-1.0 (planificat pentru `1.1`) | Dashboard self-hostable, conform WCAG: finding-uri, statusuri VEX, countdown-uri CRA, audit log. |
 
@@ -150,11 +146,13 @@ cra_trigger:
 ## Arhitectură & documentație
 
 - [docs/matching.md](docs/matching.md) — strategii de matching & scor de încredere *(engleză)*
+- [docs/cra.md](docs/cra.md) — fluxul CRA Articolul 14, stagiile de termene și modelul
+  onest de amenințări al jurnalului de audit *(engleză)*
 - [docs/euvd-api.md](docs/euvd-api.md) — suprafața API EUVD verificată pe care o folosește tool-ul *(engleză)*
 - [README.simple.md](README.simple.md) — aceeași poveste, explicată pe înțelesul unui copil *(engleză)*
 - [GLOSSARY.md](GLOSSARY.md) — fiecare termen tehnic (SBOM, VEX, CRA, EPSS…) explicat simplu *(engleză)*
-- 🚧 vin odată cu milestone-urile lor: `ARCHITECTURE.md`, `docs/cra.md` (fluxul CRA
-  Articolul 14), `docs/deploy.md` (self-hosting), `CONTRIBUTING.md`
+- 🚧 vin odată cu milestone-urile lor: `ARCHITECTURE.md`, `docs/deploy.md`
+  (self-hosting), `CONTRIBUTING.md`
 
 ## Contribuții
 

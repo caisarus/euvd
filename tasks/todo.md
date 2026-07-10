@@ -14,22 +14,25 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
 - [x] CHANGELOG.md started (Keep a Changelog)
 - [x] Audit doc updated with owner decisions; dashboard rescoped to 1.1
 
-## M4-completion — CRA workflow (next)
+## M4-completion — CRA workflow (DONE 2026-07-10, commits 3c32eaa..HEAD)
 
-- [ ] Fix SEC-001 (event store quarantines, never deletes) BEFORE first commit of cra/
-- [ ] Fix SEC-003 (freeze first-fire policy_snapshot/fired_rules) BEFORE first commit
-- [ ] Fix TECH-002 (typed StateError boundary + event schema_version field)
-- [ ] SEC-002: config bounds (epss_threshold 0..1, cache_ttl_hours >= 0, stage hours > 0,
-      unique stage names) — lands here because config.py is part of the M4 diff
-- [ ] Tier-2 privacy toggle `tier2_product_search: true` (+ docs note) — same config diff
-- [ ] Step 4.3 draft renderer (TODO-HUMAN markers; never upgrade a signal to an
-      exploitation claim — REQ-CRA-004)
-- [ ] Step 4.4 audit log (canonicalization spec frozen in a fixture; tamper matrix;
-      truncated-tail vs tamper distinction; threat-model documented honestly)
-- [ ] Step 4.5 `cra` command group + stubs for still-unshipped commands
-- [ ] tests/invariants/test_m4_invariants.py (INV-6, INV-7); scenario S3
-- [ ] docs/cra.md (verbatim Art. 14 stage source, awareness-proxy caveat, disclaimer)
-- [ ] ruff clean over cra/ files; tag 0.3.0 after review gate
+- [x] SEC-001 fixed before first commit of cra/ (quarantine, never delete; tested)
+- [x] SEC-003 fixed (first-fire finding/fired_rules/policy_snapshot immutable;
+      latest_finding carries new knowledge; fire-time epss_threshold captured too)
+- [x] TECH-002 fixed (StateError boundary + Event.schema_version guard)
+- [x] SEC-002 config bounds (epss_threshold 0..1, TTL >= 0, stage hours > 0, unique
+      non-empty stage names, >= 1 stage) — each errors naming the field
+- [x] Tier-2 privacy toggle `tier2_product_search` (default on) + docs + e2e test
+- [x] Step 4.3 renderer (Jinja2 Markdown + deterministic JSON; goldens; TODO-HUMAN;
+      REQ-CRA-004 signal-vs-claim language tested; RO diacritics)
+- [x] Step 4.4 audit log (frozen canonicalization; tamper matrix incl. delete/reorder/
+      append-after-tamper; truncated-tail distinguished; honest threat model)
+- [x] Step 4.5 `cra` command group (check/status/draft/mark/verify-log) + state_dir
+- [x] INV-6 + INV-7 invariants; scenario S3 green
+- [x] docs/cra.md (stages source, awareness-proxy caveat, audit-log limits, disclaimer)
+- [x] ruff + mypy strict clean; READMEs (EN+RO) flipped to ✅ for cra commands
+- [ ] Post-milestone review gate (feedback_m4.md with empirical repros) before M5
+- [ ] Tag 0.3.0 after the review gate passes
 
 ## Owner-blocked (cannot proceed without)
 
