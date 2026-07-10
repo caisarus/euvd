@@ -206,12 +206,20 @@ def _vex_document_id(inventory: Inventory, resolved: list[ResolvedDecision]) -> 
 
 
 def _findings_artifact(
-    findings: list[Finding], inventory: Inventory, data_freshness: str | None
+    findings: list[Finding],
+    inventory: Inventory,
+    data_freshness: str | None,
+    generated_at: str,
 ) -> dict[str, object]:
-    """The versioned findings artifact consumed later by `vex generate` and `cra check`."""
+    """The versioned findings artifact consumed later by `vex generate` and `cra check`.
+
+    `generated_at` is caller-supplied so `--timestamp` can pin it: identical inputs must
+    be able to produce byte-identical output (INV-9), and this field was the one
+    uncontrolled piece of the match JSON (audit finding TECH-003).
+    """
     return {
         "schema_version": 1,
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": generated_at,
         "inventory_digest": _inventory_digest(inventory),
         "data_freshness": data_freshness,
         "findings": [f.model_dump(mode="json") for f in findings],
@@ -288,6 +296,12 @@ def match(
     save_findings: Path | None = typer.Option(
         None, "--save-findings", help="Also write the findings artifact to this path."
     ),
+    timestamp: str | None = typer.Option(
+        None,
+        "--timestamp",
+        help="Pin the artifact's generated_at (ISO 8601); default: now. Same contract as "
+        "'vex generate --timestamp' - identical inputs then produce byte-identical output.",
+    ),
 ) -> None:
     """Match SBOM components against the EUVD, with confidence scoring."""
     state: GlobalState = ctx.obj
@@ -334,7 +348,9 @@ def match(
         f"{len(inventory.components)} components; min confidence: {floor.value}"
     )
 
-    artifact = _findings_artifact(findings, inventory, data_freshness)
+    artifact = _findings_artifact(
+        findings, inventory, data_freshness, timestamp or datetime.now(UTC).isoformat()
+    )
     if save_findings is not None:
         save_findings.write_text(json.dumps(artifact, indent=2) + "\n", encoding="utf-8")
 
