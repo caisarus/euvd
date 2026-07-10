@@ -6,12 +6,12 @@
 - id: provably-outside-vendor-and-product-exact
   component: {name: openssl, version: "3.0.8", cpe: "cpe:2.3:a:openssl:openssl:3.0.8:*:*:*:*:*:*:*", purl: "pkg:generic/openssl@3.0.8"}
   affected: [{vendor: openssl, product: openssl, version_range: "<3.0.8"}]
-  expect: {status: not_affected, justification: vulnerable_code_not_present}
+  expect: {status: not_affected, justification: component_not_present}
 
 - id: provably-outside-vendor-unknown
   component: {name: widget, version: "1.5.0"}
   affected: [{vendor: acme, product: widget, version_range: "<1.0.0"}]
-  expect: {status: not_affected, justification: vulnerable_code_not_present}
+  expect: {status: not_affected, justification: component_not_present}
 
 - id: real-match-inside-range-stays-under-investigation
   component: {name: openssl, version: "3.0.2", cpe: "cpe:2.3:a:openssl:openssl:3.0.2:*:*:*:*:*:*:*", purl: "pkg:generic/openssl@3.0.2"}

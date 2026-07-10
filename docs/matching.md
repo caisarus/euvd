@@ -54,7 +54,9 @@ vendor+product both matched, `medium` when the vendor side was simply unknown. `
 public `Finding`s (M2) only ever see `Outcome.MATCH`; `evaluate_component`/
 `evaluate_inventory` expose both outcomes to `vex/rules.py`, which is the only M3 consumer:
 its one real rule (`ProvablyOutsideRule`) turns `NOT_AFFECTED` straight into an OpenVEX
-`not_affected` statement with justification `vulnerable_code_not_present`. See `vex/*.py`
+`not_affected` statement with justification `component_not_present` — the proof is that
+the component *at an affected version* is not present; no code was inspected, so
+`vulnerable_code_not_present` would overclaim (owner decision, 2026-07-10). See `vex/*.py`
 and `plans/feedback_m2.md`'s carried-forward design note for why this exists.
 
 **`vex generate --findings <path>` is auto-`not_affected`-blind by construction:** a saved

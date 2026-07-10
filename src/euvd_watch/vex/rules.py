@@ -59,6 +59,11 @@ class ProvablyOutsideRule:
     Fires only on Outcome.NOT_AFFECTED, which the matcher already restricts to strong
     identity evidence, a trustworthy version scheme, and a non-synthesized identifier -
     this rule adds no further conditions, it just translates that outcome into VEX terms.
+
+    Justification is `component_not_present` (owner decision, 2026-07-10): the proof is
+    that the *component at an affected version* is not present in the product. We have not
+    inspected any code, so `vulnerable_code_not_present` would claim more than the
+    evidence supports. Humans remain free to use any justification in vex-decisions.yaml.
     """
 
     name = "provably_outside"
@@ -68,7 +73,7 @@ class ProvablyOutsideRule:
             return None
         return Decision(
             status=Status.NOT_AFFECTED,
-            justification=Justification.VULNERABLE_CODE_NOT_PRESENT,
+            justification=Justification.COMPONENT_NOT_PRESENT,
             explanation=evaluation.explanation,
         )
 
