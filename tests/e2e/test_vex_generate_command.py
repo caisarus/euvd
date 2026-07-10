@@ -294,6 +294,44 @@ def test_malformed_findings_artifact_exits_two(tmp_path: Path) -> None:
 
 
 @respx.mock
+def test_findings_artifact_wrong_schema_version_exits_two(tmp_path: Path) -> None:
+    # feedback_m3.md finding 3.2: schema_version was never checked.
+    bad = tmp_path / "wrong-version-findings.json"
+    bad.write_text(json.dumps({"schema_version": 2, "findings": []}), encoding="utf-8")
+    result = _generate(tmp_path, "--findings", str(bad))
+    assert result.exit_code == 2
+    assert "schema_version" in result.output
+
+
+@respx.mock
+def test_document_id_changes_when_underlying_data_changes(tmp_path: Path) -> None:
+    # feedback_m3.md finding 1.2: two runs over the same SBOM with genuinely different
+    # EUVD data must not collide on document @id. Separate cache dirs per run - same dir
+    # would serve the first run's cached (empty) response to the second call, exactly the
+    # cache-first behavior test_euvd_down_but_fresh_cache_proceeds (M2) relies on.
+    _mock_search([])
+    empty_out = tmp_path / "empty.json"
+    assert (
+        _generate(tmp_path / "cache1", "--timestamp", TIMESTAMP, "--out", str(empty_out)).exit_code
+        == 0
+    )
+
+    respx.clear()
+    _mock_search([NOT_AFFECTED_RECORD])
+    with_findings_out = tmp_path / "with-findings.json"
+    assert (
+        _generate(
+            tmp_path / "cache2", "--timestamp", TIMESTAMP, "--out", str(with_findings_out)
+        ).exit_code
+        == 0
+    )
+
+    empty_doc = json.loads(empty_out.read_text(encoding="utf-8"))
+    filled_doc = json.loads(with_findings_out.read_text(encoding="utf-8"))
+    assert empty_doc["@id"] != filled_doc["@id"]
+
+
+@respx.mock
 def test_malformed_decisions_file_exits_two(tmp_path: Path) -> None:
     _mock_search([])
     bad = tmp_path / "bad-decisions.yaml"

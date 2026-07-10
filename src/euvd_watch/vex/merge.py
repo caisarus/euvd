@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from typing import NamedTuple
 
 from euvd_watch.euvd.match import Evaluation, Outcome
+from euvd_watch.sbom.normalize import normalize_purl
 from euvd_watch.vex.decisions import DecisionEntry, DecisionsFile
 from euvd_watch.vex.model import Status
 from euvd_watch.vex.rules import Decision, Rule, decide
@@ -37,10 +38,15 @@ def _matches(entry: DecisionEntry, evaluation: Evaluation) -> bool:
     component_purl = evaluation.component.normalized_purl or evaluation.component.purl
     if component_purl is None:
         return False
-    if entry.purl == component_purl:
+    # A human typing a decision plausibly copies the purl as it appears in the source SBOM
+    # or in `scan`/`match` table output, not necessarily already normalized (feedback_m3.md
+    # finding 1.1: an un-normalized entry.purl used to silently never match, defeating the
+    # human-in-the-loop mechanism and reporting the decision as "stale" with no diagnostic).
+    entry_purl = normalize_purl(entry.purl)
+    if entry_purl == component_purl:
         return True
     # A purl with no version acts as a pattern matching any version of that package.
-    return "@" not in entry.purl and _versionless(entry.purl) == _versionless(component_purl)
+    return "@" not in entry_purl and _versionless(entry_purl) == _versionless(component_purl)
 
 
 def _is_conflict(entry_status: Status, evaluation: Evaluation) -> bool:

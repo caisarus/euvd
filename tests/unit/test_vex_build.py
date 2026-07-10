@@ -116,6 +116,27 @@ def test_product_falls_back_to_synthetic_id_without_a_purl() -> None:
     assert statement.products[0].id == f"urn:euvd-watch:component:{component.dedupe_key}"
 
 
+def test_synthetic_id_percent_encodes_unsafe_characters() -> None:
+    # feedback_m3.md finding 2.1: a component name with spaces (or other characters
+    # invalid in an IRI per RFC 3986/3987) must not leak them into the @id verbatim.
+    component = normalize_component(
+        Component(
+            name="My Cool Component Name",
+            version="1.0.0",
+            source_format=SourceFormat.CYCLONEDX,
+            raw_ref="r",
+        )
+    )
+    assert component.purl is None and component.normalized_purl is None
+    record = EuvdRecord(euvd_id="EUVD-11")
+    evaluation = _synthetic_evaluation(component, record)
+    decision = decide(evaluation)
+    statement = build_statement(evaluation, decision)
+    assert statement.products[0].id is not None
+    assert " " not in statement.products[0].id
+    assert "my%20cool%20component%20name" in statement.products[0].id
+
+
 def test_build_document_assembles_all_statements() -> None:
     evaluation = _not_affected_evaluation()
     decision = decide(evaluation)

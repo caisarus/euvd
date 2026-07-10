@@ -8,6 +8,8 @@ supplied no justification); `affected` carries it as the required `action_statem
 
 from __future__ import annotations
 
+from urllib.parse import quote
+
 from euvd_watch.euvd.match import Evaluation
 from euvd_watch.euvd.models import EuvdRecord
 from euvd_watch.models import Component
@@ -31,7 +33,12 @@ def _product_for_component(component: Component) -> Product:
     # model_validate (not the `id=` keyword) to sidestep a mypy/pydantic PEP 681 quirk where
     # dataclass_transform checks constructor keywords against the field's alias ("@id"),
     # not its populate_by_name-enabled Python name, even with populate_by_name=True set.
-    return Product.model_validate({"@id": f"urn:euvd-watch:component:{component.dedupe_key}"})
+    # dedupe_key can contain spaces/other characters invalid in an IRI (e.g. a component
+    # named "My Cool Thing") - percent-encode it (feedback_m3.md finding 2.1). ":" and "@"
+    # are valid URN NSS characters and kept unescaped, so the common case (no spaces) is
+    # unaffected.
+    safe_key = quote(component.dedupe_key, safe=":@")
+    return Product.model_validate({"@id": f"urn:euvd-watch:component:{safe_key}"})
 
 
 def _vulnerability_for_record(record: EuvdRecord) -> Vulnerability:

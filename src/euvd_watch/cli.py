@@ -11,7 +11,7 @@ import hashlib
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import ParamSpec
@@ -175,6 +175,34 @@ class FailOn(StrEnum):
 
 def _inventory_digest(inventory: Inventory) -> str:
     return "sha256:" + hashlib.sha256(inventory.model_dump_json().encode("utf-8")).hexdigest()
+
+
+def _vex_document_id(inventory: Inventory, resolved: list[ResolvedDecision]) -> str:
+    """A document identity that changes whenever the resolved statements do, not just the
+    SBOM (feedback_m3.md finding 1.2): two `vex generate` runs over the same SBOM with
+    genuinely different EUVD data - the project's core "watch" scenario - must not collide
+    on @id, or a consumer that tracks VEX documents by identity would silently treat the
+    new assessment as the same as the old one. Still deterministic for identical re-runs.
+    """
+    statements_payload = json.dumps(
+        [
+            {
+                "euvd_id": r.evaluation.record.euvd_id,
+                "component": r.evaluation.component.dedupe_key,
+                "status": r.decision.status.value,
+                "justification": r.decision.justification.value
+                if r.decision.justification
+                else None,
+                "explanation": r.decision.explanation,
+            }
+            for r in resolved
+        ],
+        sort_keys=True,
+    )
+    digest = hashlib.sha256(
+        (_inventory_digest(inventory) + statements_payload).encode("utf-8")
+    ).hexdigest()
+    return f"urn:euvd-watch:vex:sha256:{digest}"
 
 
 def _findings_artifact(
@@ -344,6 +372,11 @@ def _load_findings_artifact(path: Path) -> list[Finding]:
         raise FindingsArtifactError(
             f"{path} does not look like a findings artifact (missing 'findings')."
         )
+    if data.get("schema_version") != 1:
+        raise FindingsArtifactError(
+            f"{path} has schema_version={data.get('schema_version')!r}, expected 1. "
+            f"This build of euvd-watch only understands schema_version 1."
+        )
     try:
         return [Finding.model_validate(f) for f in data["findings"]]
     except Exception as exc:  # pydantic.ValidationError, kept generic to avoid a new import
@@ -464,7 +497,7 @@ def vex_generate(
 
     document = build_document(
         result.decisions,
-        document_id=f"urn:euvd-watch:vex:{_inventory_digest(inventory)}",
+        document_id=_vex_document_id(inventory, result.decisions),
         author=settings.organization.name or "euvd-watch",
         timestamp=timestamp or datetime.now(UTC).isoformat(),
     )
@@ -517,7 +550,7 @@ def vex_init_decisions(
         raise typer.Exit(code=2) from exc
 
     evaluations, _ = _evaluations_for(inventory, settings, findings_path=None)
-    today = date.today().isoformat()
+    today = datetime.now(UTC).date().isoformat()
     author = settings.organization.contact_email or settings.organization.name or "TODO"
 
     entries = [

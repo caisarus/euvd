@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from euvd_watch.euvd.match import evaluate_component
+from euvd_watch.euvd.match import Confidence, Evaluation, Outcome, Strategy, evaluate_component
 from euvd_watch.euvd.models import AffectedProduct, EuvdRecord
 from euvd_watch.models import Component, SourceFormat
 from euvd_watch.sbom.normalize import normalize_component
@@ -174,3 +174,62 @@ def test_no_conflict_when_downgrading_a_not_affected_evaluation() -> None:
     )
     result = merge([evaluation], DecisionsFile(decisions=[entry]))
     assert result.conflicts == []
+
+
+def test_decision_matches_purl_typed_unnormalized() -> None:
+    # feedback_m3.md finding 1.1: a human plausibly copies the purl exactly as it appears
+    # in the SBOM/tool output, which may not already be normalized. This used to silently
+    # never match, falling through to the automated draft and getting reported as stale.
+    component = _component(
+        name="Requests",
+        version="2.31.0",
+        purl="pkg:pypi/Requests@2.31.0",  # mixed-case, un-normalized
+    )
+    assert component.normalized_purl == "pkg:pypi/requests@2.31.0"
+    record = EuvdRecord(euvd_id="EUVD-3")
+    evaluation = Evaluation(
+        component=component,
+        record=record,
+        outcome=Outcome.MATCH,
+        confidence=Confidence.LOW,
+        strategy=Strategy.FUZZY,
+        explanation="x",
+    )
+    entry = DecisionEntry(
+        euvd_id="EUVD-3",
+        purl="pkg:pypi/Requests@2.31.0",  # exact SBOM casing, not normalized
+        status=Status.FIXED,
+        statement="Patched.",
+        author="a@example.com",
+        date="2026-01-01",
+    )
+    result = merge([evaluation], DecisionsFile(decisions=[entry]))
+    assert result.decisions[0].decision.status is Status.FIXED
+    assert result.decisions[0].is_human is True
+    assert result.stale == []
+
+
+def test_decision_purl_pattern_also_normalizes() -> None:
+    # The no-version "pattern" branch must normalize too, not just the exact-match branch.
+    component = _component(name="Requests", version="2.31.0", purl="pkg:pypi/Requests@2.31.0")
+    record = EuvdRecord(euvd_id="EUVD-4")
+    evaluation = Evaluation(
+        component=component,
+        record=record,
+        outcome=Outcome.MATCH,
+        confidence=Confidence.LOW,
+        strategy=Strategy.FUZZY,
+        explanation="x",
+    )
+    entry = DecisionEntry(
+        euvd_id="EUVD-4",
+        purl="pkg:pypi/Requests",  # un-normalized, no version -> pattern match
+        status=Status.NOT_AFFECTED,
+        justification=Justification.VULNERABLE_CODE_NOT_PRESENT,
+        statement="Not used.",
+        author="a@example.com",
+        date="2026-01-01",
+    )
+    result = merge([evaluation], DecisionsFile(decisions=[entry]))
+    assert result.decisions[0].decision.status is Status.NOT_AFFECTED
+    assert result.stale == []
