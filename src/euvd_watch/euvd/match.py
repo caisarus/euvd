@@ -39,6 +39,7 @@ from functools import lru_cache
 from importlib.resources import files
 
 import yaml
+from packageurl import PackageURL
 from pydantic import BaseModel, ConfigDict
 
 from euvd_watch.euvd.models import AffectedProduct, EuvdRecord
@@ -133,8 +134,11 @@ def _load_aliases() -> dict[str, dict[str, str]]:
     return {str(k): dict(v) for k, v in data.items() if isinstance(v, dict)}
 
 
-def _versionless_purl(purl: str) -> str:
-    return purl.split("@", 1)[0]
+def _parse_purl(purl: str) -> PackageURL | None:
+    try:
+        return PackageURL.from_string(purl)
+    except ValueError:
+        return None
 
 
 def derive_candidates(component: Component) -> list[Candidate]:
@@ -149,19 +153,19 @@ def derive_candidates(component: Component) -> list[Candidate]:
         candidates.append(Candidate(vendor=vendor, product=cpe_product, source="cpe"))
 
     purl = component.normalized_purl or component.purl
-    if purl:
-        alias = _load_aliases().get(_versionless_purl(purl))
+    # Parsed via PackageURL, never by string splitting (hardening rule): qualifiers on a
+    # versionless purl sit exactly where a naive split("@")/split("/") expects the version
+    # to be, and percent-encoded segments (npm's %40scope) need decoding.
+    parsed = _parse_purl(purl) if purl else None
+    if parsed is not None:
+        alias_key = PackageURL(type=parsed.type, namespace=parsed.namespace, name=parsed.name)
+        alias = _load_aliases().get(alias_key.to_string())
         if alias and alias.get("product"):
             candidates.append(
                 Candidate(vendor=alias.get("vendor"), product=alias["product"], source="alias")
             )
         # purl namespace (if any) is a weak vendor hint; the name is the product.
-        rest = purl.removeprefix("pkg:").split("@", 1)[0]
-        segments = rest.split("/")
-        if len(segments) >= 2:
-            name = segments[-1]
-            namespace = segments[-2] if len(segments) >= 3 else None
-            candidates.append(Candidate(vendor=namespace, product=name, source="purl"))
+        candidates.append(Candidate(vendor=parsed.namespace, product=parsed.name, source="purl"))
 
     candidates.append(Candidate(vendor=None, product=component.name, source="name"))
 

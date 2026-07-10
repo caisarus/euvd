@@ -13,8 +13,10 @@ import logging
 from dataclasses import dataclass, field
 from typing import NamedTuple
 
+from packageurl import PackageURL
+
 from euvd_watch.euvd.match import Evaluation, Outcome
-from euvd_watch.sbom.normalize import normalize_purl
+from euvd_watch.sbom.normalize import normalize_purl, strip_purl_version
 from euvd_watch.vex.decisions import DecisionEntry, DecisionsFile
 from euvd_watch.vex.model import Status
 from euvd_watch.vex.rules import Decision, Rule, decide
@@ -22,10 +24,6 @@ from euvd_watch.vex.rules import Decision, Rule, decide
 logger = logging.getLogger(__name__)
 
 _DOWNGRADE_STATUSES = {Status.NOT_AFFECTED, Status.FIXED}
-
-
-def _versionless(purl: str) -> str:
-    return purl.split("@", 1)[0]
 
 
 def _matches(entry: DecisionEntry, evaluation: Evaluation) -> bool:
@@ -46,7 +44,15 @@ def _matches(entry: DecisionEntry, evaluation: Evaluation) -> bool:
     if entry_purl == component_purl:
         return True
     # A purl with no version acts as a pattern matching any version of that package.
-    return "@" not in entry_purl and _versionless(entry_purl) == _versionless(component_purl)
+    # Version presence and package identity both come from PackageURL, never string
+    # splitting: qualifiers on a versionless purl sit where split("@") expects the version.
+    try:
+        entry_parsed = PackageURL.from_string(entry_purl)
+    except ValueError:
+        return False  # unparseable entry purl: only the exact string compare above applies
+    if entry_parsed.version is not None:
+        return False
+    return strip_purl_version(entry_purl) == strip_purl_version(component_purl)
 
 
 def _is_conflict(entry_status: Status, evaluation: Evaluation) -> bool:

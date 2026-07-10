@@ -13,6 +13,7 @@ from euvd_watch.sbom.normalize import (
     normalize_component,
     normalize_purl,
     parse_cpe,
+    strip_purl_version,
     synthesize_purl,
 )
 
@@ -213,6 +214,24 @@ def test_normalize_component_no_synthesis_without_recognizable_ecosystem() -> No
     normalized = normalize_component(c)
     assert normalized.normalized_purl is None
     assert normalized.synthesized is False
+
+
+def test_strip_purl_version_drops_version_qualifiers_and_subpath() -> None:
+    # Audit finding TECH-001: qualifiers on a VERSIONLESS purl sit exactly where a naive
+    # split("@") expects the version, so identity keys must come from PackageURL.
+    assert strip_purl_version("pkg:deb/debian/curl?arch=amd64&distro=debian-12") == (
+        "pkg:deb/debian/curl"
+    )
+    assert strip_purl_version("pkg:pypi/pillow@9.0.0?xyz=1") == "pkg:pypi/pillow"
+    assert strip_purl_version("pkg:golang/github.com/gin-gonic/gin@v1.9.0#sub/path") == (
+        "pkg:golang/github.com/gin-gonic/gin"
+    )
+    assert strip_purl_version("pkg:pypi/requests") == "pkg:pypi/requests"
+
+
+def test_strip_purl_version_returns_none_on_unparseable_input() -> None:
+    assert strip_purl_version("not-a-purl") is None
+    assert strip_purl_version("") is None
 
 
 def test_normalize_component_is_idempotent() -> None:

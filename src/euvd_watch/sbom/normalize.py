@@ -59,6 +59,21 @@ def normalize_purl(purl: str) -> str:
         return purl
 
 
+def strip_purl_version(purl: str) -> str | None:
+    """The canonical type/namespace/name form of a purl: no version, qualifiers, or subpath.
+
+    This is the package-identity key used for alias-table lookups (euvd/match.py) and for
+    versionless decision patterns (vex/merge.py). Built through PackageURL, never by string
+    splitting: qualifiers on a versionless purl sit where a naive `split("@")` expects the
+    version to be. Returns None if the string isn't a parseable purl.
+    """
+    try:
+        parsed = PackageURL.from_string(purl)
+    except ValueError:
+        return None
+    return PackageURL(type=parsed.type, namespace=parsed.namespace, name=parsed.name).to_string()
+
+
 def parse_cpe(cpe: str) -> dict[str, str] | None:
     """Split a CPE 2.3 formatted string into its 11 fields, respecting backslash-escaping.
 

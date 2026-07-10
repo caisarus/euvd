@@ -20,6 +20,12 @@ The SBOM side speaks purl/CPE. The EUVD side speaks `(vendor, product, version-r
 3. **purl namespace/name** — namespace (when present) as a weak vendor hint.
 4. **Component name** — vendor-less last resort.
 
+Purls are parsed with `packageurl-python`, never string splitting (audit 2026-07-10,
+finding TECH-001): qualifiers on a *versionless* purl sit exactly where a naive
+`split("@")` expects the version, and percent-encoded npm scopes (`%40babel`) need
+decoding. Alias-table keys and versionless decision patterns use the same
+library-built identity (`sbom/normalize.py::strip_purl_version`).
+
 All vendor/product equality is on a normalized form: lowercase, punctuation-insensitive
 (`Spring-Framework` == `spring framework`).
 

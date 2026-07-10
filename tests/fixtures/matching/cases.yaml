@@ -142,3 +142,18 @@
   component: {name: widget, version: "1.0.0", cpe: "cpe:2.3:a:acme:widget:1.0.0:*:*:*:*:*:*:*", purl: "pkg:generic/widget@1.0.0"}
   affected: []
   expect: {matched: false}
+
+# Audit 2026-07-10 finding TECH-001: candidates were derived by string-splitting the purl,
+# so a VERSIONLESS purl's qualifiers landed inside the product name ("curl?arch=amd64...")
+# and the namespace vendor hint was lost, degrading a provable high to medium. Purls are
+# now parsed via packageurl-python. Versioned purls were never affected (qualifiers sit
+# after the version, which split("@") happened to remove).
+- id: versionless-purl-qualifiers-do-not-pollute-candidates
+  component: {name: curl, version: "7.88.1", purl: "pkg:deb/debian/curl?arch=amd64&distro=debian-12"}
+  affected: [{vendor: debian, product: curl, version_range: "<8.0.0"}]
+  expect: {matched: true, confidence: high, strategy: structured}
+
+- id: alias-lookup-survives-versionless-purl-qualifiers
+  component: {name: pillow, version: "9.0.0", purl: "pkg:pypi/pillow?xyz=1"}
+  affected: [{vendor: python-pillow, product: pillow, version_range: "<10.0.0"}]
+  expect: {matched: true, confidence: high, strategy: structured}

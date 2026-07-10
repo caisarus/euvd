@@ -130,6 +130,30 @@ def test_derive_candidates_prefers_cpe_then_alias_then_purl_then_name() -> None:
     assert sources[-1] == "name"
 
 
+def test_derive_candidates_versionless_purl_with_qualifiers() -> None:
+    # Audit finding TECH-001 (repro'd): string-splitting left "?arch=..." inside the
+    # product name and dropped the namespace vendor hint for versionless purls.
+    component = _component({"name": "curl", "purl": "pkg:deb/debian/curl?arch=amd64"})
+    by_source = {c.source: c for c in derive_candidates(component)}
+    assert by_source["purl"].product == "curl"
+    assert by_source["purl"].vendor == "debian"
+
+
+def test_derive_candidates_decodes_scoped_npm_namespace() -> None:
+    component = _component({"name": "core", "purl": "pkg:npm/%40babel/core@7.0.0"})
+    by_source = {c.source: c for c in derive_candidates(component)}
+    # PackageURL decodes %40 -> "@babel"; normalize_text then compares it as "babel".
+    assert by_source["purl"].vendor == "@babel"
+    assert by_source["purl"].product == "core"
+
+
+def test_derive_candidates_malformed_purl_yields_no_purl_candidate() -> None:
+    component = _component({"name": "widget", "purl": "pkg:::garbage"})
+    sources = [c.source for c in derive_candidates(component)]
+    assert "purl" not in sources
+    assert sources[-1] == "name"  # the vendor-less name fallback still exists
+
+
 def test_normalize_text_is_punctuation_and_case_insensitive() -> None:
     assert normalize_text("Spring-Framework") == normalize_text("spring framework")
     assert normalize_text("Node.js") == normalize_text("nodejs")

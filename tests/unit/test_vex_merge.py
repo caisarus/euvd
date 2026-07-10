@@ -108,6 +108,23 @@ def test_versionless_purl_pattern_matches_any_version() -> None:
     assert result.decisions[0][1].status is Status.NOT_AFFECTED
 
 
+def test_versionless_pattern_with_qualifiers_still_matches() -> None:
+    # Audit finding TECH-001 sibling: a versionless entry purl carrying qualifiers used to
+    # fail the pattern compare (split("@") mistook the qualifiers for a version slot).
+    evaluation = _match_evaluation()  # component purl is pkg:generic/openssl@3.0.2
+    entry = DecisionEntry(
+        euvd_id="EUVD-1",
+        purl="pkg:generic/openssl?os=linux",  # no @version -> pattern; qualifiers ignored
+        status=Status.NOT_AFFECTED,
+        justification=Justification.VULNERABLE_CODE_NOT_PRESENT,
+        statement="Not used in our build.",
+        author="a@example.com",
+        date="2026-01-01",
+    )
+    result = merge([evaluation], DecisionsFile(decisions=[entry]))
+    assert result.decisions[0][1].status is Status.NOT_AFFECTED
+
+
 def test_stale_decision_is_reported() -> None:
     entry = DecisionEntry(
         euvd_id="EUVD-NO-SUCH-RECORD",
