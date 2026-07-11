@@ -161,7 +161,7 @@ class ApiClient:
                 logger.debug("cache hit url=%s", url)
                 return json.loads(body)
 
-        response = self._request_with_retries(url, params, etag)
+        response = self._request_with_retries("GET", url, params=params, etag=etag)
 
         if response.status_code == 304 and cached is not None:
             # Server confirmed our stale copy is still current; refresh its timestamp.
@@ -185,15 +185,33 @@ class ApiClient:
             self.cache.set(key, text, response.headers.get("ETag"), time.time())
         return data
 
+    def post_json(self, url: str, payload: dict[str, Any]) -> None:
+        """POST a JSON payload with the same retry/backoff as GET. Raises ApiError on
+        failure. Never cached - a POST (e.g. a webhook delivery) is not an idempotent GET.
+        """
+        response = self._request_with_retries("POST", url, json_body=payload)
+        if response.status_code >= 400:
+            raise ApiError(
+                f"POST to {url} failed: HTTP {response.status_code}: {response.text[:200]!r}"
+            )
+
     def _request_with_retries(
-        self, url: str, params: dict[str, Any] | None, etag: str | None
+        self,
+        method: str,
+        url: str,
+        *,
+        params: dict[str, Any] | None = None,
+        json_body: dict[str, Any] | None = None,
+        etag: str | None = None,
     ) -> httpx.Response:
         headers = {"If-None-Match": etag} if etag else {}
         last_error: str = "unknown"
         for attempt in range(MAX_RETRIES):
             started = time.monotonic()
             try:
-                response = self._client.get(url, params=params, headers=headers)
+                response = self._client.request(
+                    method, url, params=params, json=json_body, headers=headers
+                )
             except httpx.HTTPError as exc:
                 last_error = str(exc)
                 logger.warning("request error url=%s attempt=%d error=%s", url, attempt + 1, exc)

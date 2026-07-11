@@ -1,7 +1,7 @@
 """Typer CLI entry point.
 
-`version`, `scan`, `match`, and `vex generate`/`vex init-decisions` are implemented;
-`watch` and `cra check` remain stubs until their owning milestone (M4-M5) lands.
+`version`, `scan`, `match`, `vex generate`/`vex init-decisions`, `cra ...`, and `watch`
+are implemented.
 """
 
 from __future__ import annotations
@@ -9,6 +9,8 @@ from __future__ import annotations
 import functools
 import hashlib
 import json
+import re
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -52,6 +54,8 @@ from euvd_watch.vex.decisions import DecisionEntry, DecisionsError, DecisionsFil
 from euvd_watch.vex.merge import ResolvedDecision, merge
 from euvd_watch.vex.model import Status
 from euvd_watch.vex.write import render
+from euvd_watch.watch.differ import DiffResult, diff_findings
+from euvd_watch.watch.sinks import NotificationSink, StdoutSink, WebhookSink
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 vex_app = typer.Typer(no_args_is_help=True)
@@ -70,11 +74,6 @@ class GlobalState:
     settings: Settings
     output: OutputFormat
     verbose: bool
-
-
-def _not_implemented(command: str) -> None:
-    typer.echo(f"'{command}' is not implemented yet.", err=True)
-    raise typer.Exit(code=2)
 
 
 _P = ParamSpec("_P")
@@ -380,13 +379,6 @@ def match(
         raise typer.Exit(code=1)
 
 
-@app.command()
-@cli_command
-def watch(sbom: str = typer.Argument(..., help="Path to a CycloneDX/SPDX SBOM file.")) -> None:
-    """Re-match an SBOM on a schedule, reporting only new/changed findings."""
-    _not_implemented("watch")
-
-
 class FindingsArtifactError(Exception):
     """Raised when a saved findings artifact (--findings) can't be loaded."""
 
@@ -628,10 +620,11 @@ def _audit_log(settings: Settings) -> AuditLog:
     return AuditLog(settings.state_dir / "cra-audit.jsonl")
 
 
-def _compute_findings_for_cra(
+def _compute_findings(
     settings: Settings, sbom: str, *, no_enrich: bool, findings_path: Path | None
 ) -> list[Finding]:
-    """The findings the trigger evaluates: a saved artifact, or live match + enrichment."""
+    """Findings for a saved artifact, or a live match + enrichment - shared by `cra check`
+    and `watch` (both need the same "match, then enrich, then hand me findings" pipeline)."""
     if findings_path is not None:
         return _load_findings_artifact(findings_path)
 
@@ -654,7 +647,7 @@ def _compute_findings_for_cra(
         except ApiError as exc:
             typer.echo(
                 f"EUVD is unreachable and the local cache has no usable data: {exc}\n"
-                f"Refusing to evaluate the CRA trigger on missing data.",
+                f"Refusing to report on missing data.",
                 err=True,
             )
             raise typer.Exit(code=2) from exc
@@ -711,7 +704,7 @@ def cra_check(
     """Evaluate the CRA reporting trigger; persist events; exit 1 when NEW events opened."""
     state: GlobalState = ctx.obj
     settings = state.settings
-    found = _compute_findings_for_cra(settings, sbom, no_enrich=no_enrich, findings_path=findings)
+    found = _compute_findings(settings, sbom, no_enrich=no_enrich, findings_path=findings)
     results = evaluate_all(found, settings)
 
     now = datetime.now(UTC)
@@ -986,6 +979,164 @@ def cra_verify_log(ctx: typer.Context) -> None:
         typer.echo(result.describe())
     if not result.ok:
         raise typer.Exit(code=1)
+
+
+_INTERVAL_RE = re.compile(r"^(\d+)([smhd])$")
+_INTERVAL_UNITS = {"s": 1, "m": 60, "h": 3600, "d": 86400}
+
+
+def _parse_interval(text: str) -> float:
+    """Parse '30m'/'6h'/'1d'-style durations into seconds."""
+    match = _INTERVAL_RE.match(text.strip())
+    if not match:
+        raise ValueError(f"Invalid --interval {text!r}; expected e.g. '30m', '6h', '1d'.")
+    value, unit = match.groups()
+    return int(value) * _INTERVAL_UNITS[unit]
+
+
+def _watch_snapshot_path(settings: Settings, sbom: str) -> Path:
+    """One snapshot file per watched SBOM, keyed by its resolved path so re-runs from a
+    different working directory still hit the same snapshot."""
+    key = hashlib.sha256(str(Path(sbom).resolve()).encode("utf-8")).hexdigest()[:16]
+    return settings.state_dir / "watch" / f"{key}.json"
+
+
+def _load_watch_snapshot(path: Path) -> list[Finding]:
+    """The previous run's findings, or an empty list on the very first run."""
+    if not path.exists():
+        return []
+    return _load_findings_artifact(path)
+
+
+def _save_watch_snapshot(path: Path, findings: list[Finding], generated_at: str) -> None:
+    # Deliberately the same minimal shape `_load_findings_artifact` already understands
+    # (schema_version + findings) - a watch snapshot has no SBOM/data-freshness of its own
+    # to report, unlike `match --save-findings`'s fuller artifact.
+    path.parent.mkdir(parents=True, exist_ok=True)
+    artifact = {
+        "schema_version": 1,
+        "generated_at": generated_at,
+        "findings": [f.model_dump(mode="json") for f in findings],
+    }
+    path.write_text(json.dumps(artifact, indent=2) + "\n", encoding="utf-8")
+
+
+def _echo_cycle_summary(diff: DiffResult, output: OutputFormat) -> None:
+    summary = f"{len(diff.new)} new, {len(diff.resolved)} resolved, {len(diff.changed)} changed."
+    typer.echo(summary, err=True)
+    if output is OutputFormat.JSON:
+        payload = {
+            "schema_version": 1,
+            "new": [f.model_dump(mode="json") for f in diff.new],
+            "resolved": [f.model_dump(mode="json") for f in diff.resolved],
+            "changed": [
+                {
+                    "changed_fields": c.changed_fields,
+                    "previous": c.previous.model_dump(mode="json"),
+                    "current": c.current.model_dump(mode="json"),
+                }
+                for c in diff.changed
+            ],
+        }
+        typer.echo(json.dumps(payload))
+
+
+def _run_watch_cycle(
+    settings: Settings, sbom: str, *, no_enrich: bool, sinks: list[NotificationSink]
+) -> DiffResult:
+    """One check-and-diff cycle: load the previous snapshot, match+enrich, diff, notify,
+    persist the new snapshot - always, even when the diff is empty, so the next cycle
+    compares against the latest data."""
+    snapshot_path = _watch_snapshot_path(settings, sbom)
+    previous = _load_watch_snapshot(snapshot_path)
+    current = _compute_findings(settings, sbom, no_enrich=no_enrich, findings_path=None)
+    diff = diff_findings(previous, current)
+
+    generated_at = datetime.now(UTC).isoformat()
+    resolved_sbom = str(Path(sbom).resolve())
+    for sink in sinks:
+        sink.notify(diff, sbom=resolved_sbom, generated_at=generated_at)
+    _save_watch_snapshot(snapshot_path, current, generated_at)
+    return diff
+
+
+@app.command()
+@cli_command
+def watch(
+    ctx: typer.Context,
+    sbom: str = typer.Argument(..., help="Path to a CycloneDX/SPDX SBOM file."),
+    interval: str | None = typer.Option(
+        None,
+        "--interval",
+        help="Re-check on a schedule (e.g. '30m', '6h', '1d'); runs until interrupted.",
+    ),
+    once: bool = typer.Option(
+        False, "--once", help="Run a single check-and-diff cycle and exit (the default)."
+    ),
+    webhook: str | None = typer.Option(
+        None,
+        "--webhook",
+        help="POST a JSON notification here for every new/resolved/changed finding.",
+    ),
+    no_enrich: bool = typer.Option(
+        False, "--no-enrich", help="Skip EPSS/KEV enrichment (offline mode)."
+    ),
+) -> None:
+    """Re-match an SBOM on a schedule; notify only new/resolved/changed findings.
+
+    Persists a findings snapshot in `state_dir` between runs, keyed by the SBOM's resolved
+    path, so the diff survives process restarts. With no `--interval`, runs one
+    check-and-diff cycle and exits (0 clean, 1 if anything changed, 2 on error) - the same
+    as passing `--once` explicitly. `--interval` loops the same cycle forever
+    (Ctrl+C to stop); a persistent failure (EUVD unreachable, webhook down) stops the loop
+    with exit 2 rather than retrying silently forever - rerun once the problem is fixed.
+    """
+    state: GlobalState = ctx.obj
+    settings = state.settings
+
+    if interval is not None and once:
+        typer.echo("--interval and --once are mutually exclusive.", err=True)
+        raise typer.Exit(code=2)
+
+    seconds: float | None = None
+    if interval is not None:
+        try:
+            seconds = _parse_interval(interval)
+        except ValueError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(code=2) from exc
+
+    # StdoutSink is the human ("table" mode) display; JSON mode prints a structured diff
+    # instead (see _echo_cycle_summary) - both never fire together, same as every other
+    # command's --output contract.
+    sinks: list[NotificationSink] = [StdoutSink()] if state.output is OutputFormat.TABLE else []
+    api: ApiClient | None = None
+    if webhook is not None:
+        api = ApiClient(settings.cache_dir, settings.cache_ttl_hours)
+        sinks.append(WebhookSink(api, webhook))
+
+    try:
+        if seconds is None:
+            diff = _run_watch_cycle(settings, sbom, no_enrich=no_enrich, sinks=sinks)
+            _echo_cycle_summary(diff, state.output)
+            if not diff.is_empty:
+                raise typer.Exit(code=1)
+            return
+
+        typer.echo(f"Watching {sbom} every {interval}. Press Ctrl+C to stop.", err=True)
+        try:
+            while True:
+                diff = _run_watch_cycle(settings, sbom, no_enrich=no_enrich, sinks=sinks)
+                _echo_cycle_summary(diff, state.output)
+                time.sleep(seconds)
+        except KeyboardInterrupt:
+            typer.echo("Interrupted.", err=True)
+    except ApiError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    finally:
+        if api is not None:
+            api.close()
 
 
 if __name__ == "__main__":

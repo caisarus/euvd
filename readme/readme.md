@@ -4,8 +4,9 @@
 
 > ⚠️ **Status: work in progress.** APIs and structure may change until `1.0.0`.
 > The Commands table below marks what is **✅ available today** versus **🚧 planned** —
-> milestones M0–M4 (scan, match, VEX, the CRA workflow) are implemented and tested;
-> watch/CI templates (M5) come next. The dashboard ships in `1.1`.
+> milestones M0–M4 (scan, match, VEX, the CRA workflow) and M5's `watch` mode are
+> implemented and tested; CI/CD packaging (PyPI release automation, Docker image, GitHub
+> Action/GitLab template) is the rest of M5. The dashboard ships in `1.1`.
 
 `euvd-watch` connects software supply-chain transparency to **Europe's own vulnerability infrastructure** and to the concrete reporting duties of the **EU Cyber Resilience Act**.
 
@@ -54,6 +55,9 @@ euvd-watch vex generate sbom.cdx.json -o openvex.json
 # 5. Check whether anything crossed your CRA reporting threshold
 euvd-watch cra check sbom.cdx.json
 euvd-watch cra status
+
+# 6. Watch it on a schedule - notify only new/resolved/changed findings
+euvd-watch watch sbom.cdx.json --interval 6h
 ```
 
 ## Commands
@@ -67,7 +71,7 @@ euvd-watch cra status
 | `cra check <sbom>` | ✅ | Evaluate the configurable reporting trigger (EUVD exploited / CISA KEV / EPSS threshold) and open events. Exit 1 when a **new** event opens. |
 | `cra status` / `cra draft <id>` / `cra mark <id>` | ✅ | Track the staged deadline clocks (24 h / 72 h / final report), render a prefilled notification draft with `TODO-HUMAN` markers, record human completion. |
 | `cra verify-log` | ✅ | Verify the tamper-evident (hash-chained) audit log; names the first broken entry. |
-| `watch <sbom>` | 🚧 M5 (planned) | Re-match on a schedule and notify **only about new or changed findings** (stdout / webhook). |
+| `watch <sbom>` | ✅ | Re-match on a schedule (`--interval 6h`) or once (`--once`, the default) and notify **only new/resolved/changed findings** (stdout, and `--webhook URL`). See `docs/watch.md`. |
 | `web serve` | 🚧 post-1.0 (planned for `1.1`) | Self-hostable, WCAG-compliant dashboard: findings, VEX statuses, CRA countdowns, audit log. |
 
 All implemented commands support `--output json|table` and CI-friendly exit codes

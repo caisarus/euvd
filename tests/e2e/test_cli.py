@@ -20,18 +20,6 @@ def test_version_prints_version_and_exits_zero() -> None:
 @pytest.mark.parametrize(
     "args",
     [
-        ["watch", "sbom.json"],  # the M5 stub; the cra group is real since M4
-    ],
-)
-def test_stub_commands_exit_two_and_say_not_implemented(args: list[str]) -> None:
-    result = runner.invoke(app, args)
-    assert result.exit_code == 2
-    assert "not implemented yet" in result.output
-
-
-@pytest.mark.parametrize(
-    "args",
-    [
         ["--help"],
         ["version", "--help"],
         ["scan", "--help"],

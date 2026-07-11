@@ -34,10 +34,27 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
 - [x] Post-milestone review gate (feedback_m4.md with empirical repros) before M5
 - [ ] Tag 0.3.0 after the review gate passes
 
+## M5 — CI/CD integrations, packaging & watch mode
+
+- [x] Step 5.4 `watch` mode: differ (`watch/differ.py`, new/resolved/changed keyed by
+      component+euvd_id), pluggable sinks (`watch/sinks.py`: stdout, webhook via new
+      `ApiClient.post_json`), `watch` CLI command (`--interval`/`--once`, `--webhook`,
+      `--output json|table`), snapshot persisted in `state_dir/watch/`. 442 tests (was
+      414), ruff + mypy strict clean, coverage 94.38%. Manual smoke against the live EUVD:
+      first run 14 new (exit 1), identical second run 0 notifications (exit 0) — the
+      literal test_plan.md 5.4 / implementation_plan.md acceptance criterion. docs/watch.md
+      written; READMEs (EN+RO) flipped to ✅.
+- [ ] Step 5.1 PyPI packaging & release automation — owner-blocked (needs GitHub remote +
+      reserved PyPI name to satisfy its own acceptance criterion)
+- [ ] Step 5.2 Docker image — owner-blocked (GHCR publish needs the remote)
+- [ ] Step 5.3 GitHub Action & GitLab CI template — owner-blocked (dogfooding needs the
+      remote)
+
 ## Owner-blocked (cannot proceed without)
 
-- [ ] GitHub org/name -> create remote, push, CI green (OPS-001)
-- [ ] Reserve PyPI name `euvd-watch` (squatting risk, open since M1)
+- [ ] GitHub org/name -> create remote, push, CI green (OPS-001) — now also blocks M5
+      steps 5.1–5.3
+- [ ] Reserve PyPI name `euvd-watch` (squatting risk, open since M1) — blocks M5 step 5.1
 
 ## Review — R1 (2026-07-10)
 

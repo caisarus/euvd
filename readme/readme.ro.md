@@ -4,8 +4,10 @@
 
 > ⚠️ **Status: în lucru.** API-urile și structura se pot schimba până la `1.0.0`.
 > Tabelul de comenzi de mai jos marchează ce este **✅ disponibil azi** față de **🚧
-> planificat** — milestone-urile M0–M4 (scan, match, VEX, fluxul CRA) sunt implementate
-> și testate; watch și template-urile CI (M5) urmează. Dashboard-ul apare în `1.1`.
+> planificat** — milestone-urile M0–M4 (scan, match, VEX, fluxul CRA) și modul `watch` din
+> M5 sunt implementate și testate; ambalarea CI/CD din M5 (automatizare release PyPI,
+> imagine Docker, GitHub Action/template GitLab) rămâne de făcut. Dashboard-ul apare în
+> `1.1`.
 >
 > *Această traducere urmează [README-ul în engleză](README.md); în caz de divergență,
 > versiunea engleză este cea de referință.*
@@ -65,6 +67,9 @@ euvd-watch vex generate sbom.cdx.json -o openvex.json
 # 5. Verifică dacă ceva a depășit pragul tău de raportare CRA
 euvd-watch cra check sbom.cdx.json
 euvd-watch cra status
+
+# 6. Urmărește programat - notifică doar finding-urile noi/rezolvate/schimbate
+euvd-watch watch sbom.cdx.json --interval 6h
 ```
 
 ## Comenzi
@@ -78,7 +83,7 @@ euvd-watch cra status
 | `cra check <sbom>` | ✅ | Evaluează trigger-ul configurabil de raportare (EUVD exploited / CISA KEV / prag EPSS) și deschide evenimente. Iese cu 1 când se deschide un eveniment **nou**. |
 | `cra status` / `cra draft <id>` / `cra mark <id>` | ✅ | Urmărește ceasurile pe stagii (24 h / 72 h / raport final), redă un draft de notificare precompletat cu marcaje `TODO-HUMAN`, înregistrează finalizarea umană. |
 | `cra verify-log` | ✅ | Verifică jurnalul de audit tamper-evident (hash-chained); numește prima intrare ruptă. |
-| `watch <sbom>` | 🚧 M5 (planificat) | Re-corelează programat și notifică **doar despre finding-uri noi sau schimbate** (stdout / webhook). |
+| `watch <sbom>` | ✅ | Re-corelează programat (`--interval 6h`) sau o singură dată (`--once`, implicit) și notifică **doar finding-urile noi/rezolvate/schimbate** (stdout, și `--webhook URL`). Vezi `docs/watch.md`. |
 | `web serve` | 🚧 post-1.0 (planificat pentru `1.1`) | Dashboard self-hostable, conform WCAG: finding-uri, statusuri VEX, countdown-uri CRA, audit log. |
 
 Toate comenzile implementate suportă `--output json|table` și coduri de ieșire prietenoase

@@ -8,6 +8,15 @@ breaking changes (each one listed explicitly below).
 ## [Unreleased]
 
 ### Added
+- **`watch` mode (milestone M5, Step 5.4)**: `euvd-watch watch <sbom>` re-matches an SBOM
+  and reports only **new/resolved/changed** findings since the last run (no flag or
+  `--once` runs a single cycle; `--interval 6h`-style loops forever until interrupted).
+  Diff identity is `(component, EUVD record)`; "changed" covers `confidence`,
+  `record.exploited`, `in_kev`, `epss_score`, `record.cvss_score`. Two sinks: stdout
+  (human mode) / structured JSON (`--output json`), and `--webhook URL` (one POST per
+  changed finding, via the same disciplined `ApiClient` retry/backoff as everywhere else
+  in the project — `ApiClient` gained `post_json`). A findings snapshot persists in
+  `state_dir/watch/` between runs. See `docs/watch.md`.
 - **The CRA Article 14 workflow (milestone M4)**: `cra check` (configurable trigger over
   EUVD-exploited / CISA-KEV / EPSS signals with a confidence floor; persists events; exit
   1 when a new event opens; idempotent re-runs), `cra status` (config-driven deadline
