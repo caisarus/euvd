@@ -178,6 +178,17 @@ def test_entry_that_is_not_an_object_is_rejected(tmp_path: Path) -> None:
     assert "not an object" in (result.reason or "")
 
 
+def test_append_refuses_when_last_entry_is_not_an_object(tmp_path: Path) -> None:
+    # Review finding: a last line that is valid JSON but not a dict (e.g. an array, a
+    # bare number) must raise the documented AuditError, not an uncaught TypeError from
+    # indexing a non-dict with "entry_hash" - that would escape cli_command's OSError-only
+    # boundary as a raw traceback instead of the clean "run verify-log" message.
+    path = tmp_path / "audit.jsonl"
+    path.write_text("[1,2,3]\n", encoding="utf-8")
+    with pytest.raises(AuditError, match="verify-log"):
+        AuditLog(path).append("more", {"x": 1})
+
+
 def test_unicode_payload_round_trips(tmp_path: Path) -> None:
     path = tmp_path / "audit.jsonl"
     log = AuditLog(path)

@@ -95,8 +95,10 @@ class AuditLog:
             return GENESIS_SEED, False
         try:
             last = json.loads(lines[-1])
+            if not isinstance(last, dict):
+                raise TypeError(f"entry is a {type(last).__name__}, not an object")
             return str(last["entry_hash"]), not text.endswith("\n")
-        except (json.JSONDecodeError, KeyError) as exc:
+        except (json.JSONDecodeError, KeyError, TypeError) as exc:
             raise AuditError(
                 f"Audit log {self._path} has an unreadable last entry (crash during a "
                 f"previous write, or damage): {exc}. Refusing to append; run "

@@ -79,6 +79,12 @@ duplicates the event, and never rewrites the recorded first-fire evidence
 then). What later runs learn (an EPSS score moving, a KEV listing appearing) is stored
 separately as `latest_finding`.
 
+**Do not rename a configured stage once events exist.** Stage completions are keyed by
+`stage.name`; renaming a stage in `cra_stages` orphans any recorded completion under the
+old name; the renamed stage then has no completion, so `cra status`/`cra check` will
+report it (and the event) as open/overdue again even though a human already marked it
+done. Add or remove stages freely - only renaming an in-use name is unsafe.
+
 ## Where the records live, and how to keep them safe
 
 Durable records live in `state_dir` (default `~/.local/share/euvd-watch`) — deliberately

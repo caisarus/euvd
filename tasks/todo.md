@@ -31,7 +31,7 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
 - [x] INV-6 + INV-7 invariants; scenario S3 green
 - [x] docs/cra.md (stages source, awareness-proxy caveat, audit-log limits, disclaimer)
 - [x] ruff + mypy strict clean; READMEs (EN+RO) flipped to ✅ for cra commands
-- [ ] Post-milestone review gate (feedback_m4.md with empirical repros) before M5
+- [x] Post-milestone review gate (feedback_m4.md with empirical repros) before M5
 - [ ] Tag 0.3.0 after the review gate passes
 
 ## Owner-blocked (cannot proceed without)
@@ -46,3 +46,12 @@ all tests pass, coverage >= gate, mypy strict clean, ruff clean on touched files
 audit repro findings on committed code are closed; the three findings inside the
 uncommitted M4 code (SEC-001/003, TECH-002) are deliberately left for the M4 commit series
 so the fixes land before that code's first commit.
+
+## Review — M4 post-milestone gate (2026-07-11)
+
+`plans/feedback_m4.md` — 2 new verified findings, both fixed in the same commit: a raw
+`TypeError` escaping `AuditLog.append` on a non-dict audit-log tail (recurrence of the
+"no raw exception escapes to the CLI" class), and a documentation gap where renaming a
+`cra_stages` entry silently un-completes an already-marked stage. 415 tests (was 414),
+ruff + mypy strict clean, coverage 93.96%. SEC-001/002/003 and TECH-002 all re-verified
+holding under direct testing. Nothing blocks M5; ready to tag `0.3.0`.
