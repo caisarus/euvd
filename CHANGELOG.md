@@ -7,6 +7,15 @@ breaking changes (each one listed explicitly below).
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.3.0] — 2026-07-13
+
+Everything below ships as a **git tag + GHCR container image** (`0.3.0`); PyPI
+publication still waits on the `euvd-watch` name reservation (Step 5.1). Covers
+milestones M4 (CRA workflow), M5 minus release automation (watch mode, Docker image,
+GitHub Action, GitLab template), and the pre-M6 quality sweep.
+
 ### Fixed
 - **Comma version ranges** (`"0.40.0, < 0.46.2"`, the introduced-at/fixed-before shape
   seen live on EUVD-2026-4133) are now parsed: in-range versions get the confidence the
