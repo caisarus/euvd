@@ -4,10 +4,10 @@
 
 > ⚠️ **Status: în lucru.** API-urile și structura se pot schimba până la `1.0.0`.
 > Tabelul de comenzi de mai jos marchează ce este **✅ disponibil azi** față de **🚧
-> planificat** — milestone-urile M0–M4 (scan, match, VEX, fluxul CRA) și modul `watch` din
-> M5 sunt implementate și testate; ambalarea CI/CD din M5 (automatizare release PyPI,
-> imagine Docker, GitHub Action/template GitLab) rămâne de făcut. Dashboard-ul apare în
-> `1.1`.
+> planificat** — milestone-urile M0–M4 (scan, match, VEX, fluxul CRA) și, din M5, modul
+> `watch`, imaginea Docker, GitHub Action-ul și template-ul GitLab sunt implementate și
+> testate; din M5 rămâne automatizarea release-ului PyPI (blocată de rezervarea numelui
+> pe PyPI). Dashboard-ul apare în `1.1`.
 >
 > *Această traducere urmează [README-ul în engleză](README.md); în caz de divergență,
 > versiunea engleză este cea de referință.*
@@ -90,18 +90,20 @@ Toate comenzile implementate suportă `--output json|table` și coduri de ieșir
 cu CI (`0` curat, `1` finding-uri, `2` eroare). Comenzile neimplementate ies cu `2` și un
 mesaj clar.
 
-## Folosire în CI (🚧 planificat — M5)
+## Folosire în CI (✅ implementat — coordonatele publice urmează)
 
-GitHub Action-ul gata făcut și template-ul include pentru GitLab CI vin cu milestone-ul M5.
-Până atunci, `pip install` + `euvd-watch match --fail-on exploited` funcționează în orice
-job de CI. Snippet-urile plănuite:
+GitHub Action-ul (`action.yml` în rădăcina repo-ului), template-ul include pentru GitLab
+(`templates/euvd-watch.gitlab-ci.yml`) și imaginea Docker (`docker/Dockerfile`) sunt
+implementate, validate pe schemă și folosite chiar de CI-ul acestui repo — referința
+completă e în `docs/integrations.md`. Placeholder-ele `<org>` de mai jos devin coordonate
+reale odată ce există repo-ul public și primul release pe PyPI.
 
 GitHub Actions:
 
 ```yaml
 - uses: anchore/sbom-action@v0          # generează SBOM cu Syft
   with: { format: cyclonedx-json, output-file: sbom.cdx.json }
-- uses: <org>/euvd-watch-action@v1      # 🚧 încă nepublicat
+- uses: <org>/euvd-watch@v1             # 🚧 coordonatele publice urmează
   with:
     sbom-path: sbom.cdx.json
     fail-on: exploited
@@ -110,8 +112,18 @@ GitHub Actions:
 GitLab CI:
 
 ```yaml
-include:  # 🚧 template încă nepublicat
+include:  # 🚧 coordonatele publice urmează
   - remote: 'https://raw.githubusercontent.com/<org>/euvd-watch/main/templates/euvd-watch.gitlab-ci.yml'
+
+euvd-watch:
+  variables: { EUVDWATCH_SBOM: "sbom.cdx.json", EUVDWATCH_FAIL_ON: "exploited" }
+```
+
+Docker (build local azi; `ghcr.io/<org>/euvd-watch` după publicare):
+
+```bash
+docker build -f docker/Dockerfile -t euvd-watch .
+docker run --rm -v "$PWD:/work:ro" euvd-watch match /work/sbom.cdx.json
 ```
 
 ## Configurare

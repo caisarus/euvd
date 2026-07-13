@@ -39,6 +39,60 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: pytest
 
+  # Self-consumption of the composite action (test_plan.md §7 "dogfood", 5.3): the action
+  # matches the demo SBOM against a cache primed from a committed fixture — no network —
+  # and the matrix proves each fail-on value produces its contracted exit code.
+  dogfood:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - fail-on: none
+            expect: "0"
+          - fail-on: any
+            expect: "1"
+          - fail-on: exploited
+            expect: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Prime the HTTP cache from the committed fixture (no network in CI)
+        run: |
+          pip install --quiet .
+          python scripts/prime_cache.py
+      - name: Dogfood the action
+        id: euvd
+        continue-on-error: true
+        uses: ./
+        with:
+          sbom-path: examples/sboms/demo.cdx.json
+          fail-on: ${{ matrix.fail-on }}
+          extra-args: "--exploited-only --no-enrich"
+          version: source
+          artifact-name: dogfood-findings-${{ matrix.fail-on }}
+      - name: Assert exit code and findings
+        env:
+          EXPECT: ${{ matrix.expect }}
+          GOT: ${{ steps.euvd.outputs.exit-code }}
+          OUTCOME: ${{ steps.euvd.outcome }}
+        run: |
+          [ "$GOT" = "$EXPECT" ] || { echo "expected exit $EXPECT, got '$GOT'"; exit 1; }
+          if [ "$EXPECT" = "0" ]; then
+            [ "$OUTCOME" = "success" ]
+          else
+            [ "$OUTCOME" = "failure" ]
+          fi
+          python - <<'EOF'
+          import json
+          findings = json.load(open("euvd-findings.json"))["findings"]
+          assert len(findings) == 1, findings
+          assert findings[0]["record"]["euvd_id"] == "EUVD-DOGFOOD-0001", findings
+          print("dogfood finding OK:", findings[0]["record"]["euvd_id"])
+          EOF
+
   build:
     runs-on: ubuntu-latest
     needs: [lint, typecheck, test]

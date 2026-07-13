@@ -1,0 +1,37 @@
+# euvd-watch GitLab CI include template (plans/implementation_plan.md Step 5.3).
+#
+# Usage — generate an SBOM first (e.g. with Syft), then:
+#
+#   include:
+#     - remote: 'https://raw.githubusercontent.com/<org>/euvd-watch/main/templates/euvd-watch.gitlab-ci.yml'
+#
+#   euvd-watch:
+#     variables:
+#       EUVDWATCH_SBOM: "build/sbom.cdx.json"
+#       EUVDWATCH_FAIL_ON: "exploited"
+#
+# Variables use the EUVDWATCH_ prefix, NOT EUVD_WATCH_: the CLI reads EUVD_WATCH_* env
+# vars as configuration overrides and rejects unknown keys, so job-control variables must
+# stay out of that namespace.
+
+euvd-watch:
+  stage: test
+  image: python:3.12-slim
+  variables:
+    EUVDWATCH_SBOM: "sbom.cdx.json"
+    EUVDWATCH_FAIL_ON: "any" # none | any | exploited
+    EUVDWATCH_MIN_CONFIDENCE: "" # low | medium | high; empty = tool default
+    EUVDWATCH_VERSION: "" # PyPI version to pin; empty = latest
+    EUVDWATCH_EXTRA_ARGS: "" # e.g. "--exploited-only --no-enrich"
+    EUVDWATCH_OUTPUT_FILE: "euvd-findings.json"
+  script:
+    - pip install --quiet "euvd-watch${EUVDWATCH_VERSION:+==${EUVDWATCH_VERSION}}"
+    - euvd-watch match "${EUVDWATCH_SBOM}"
+      --fail-on "${EUVDWATCH_FAIL_ON}"
+      ${EUVDWATCH_MIN_CONFIDENCE:+--min-confidence "${EUVDWATCH_MIN_CONFIDENCE}"}
+      --save-findings "${EUVDWATCH_OUTPUT_FILE}"
+      ${EUVDWATCH_EXTRA_ARGS}
+  artifacts:
+    when: always
+    paths:
+      - "${EUVDWATCH_OUTPUT_FILE}"

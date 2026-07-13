@@ -1,0 +1,112 @@
+# Composite GitHub Action (plans/implementation_plan.md Step 5.3).
+# Matches an SBOM against ENISA's EUVD and gates CI on the findings; the findings JSON is
+# uploaded as a workflow artifact even when the gate fails. Dogfooded by this repo's own
+# CI (.github/workflows/ci.yml "dogfood" job, network-free via scripts/prime_cache.py).
+name: "euvd-watch"
+description: >-
+  Match a CycloneDX/SPDX SBOM against ENISA's EU Vulnerability Database (EUVD)
+  and fail the build on vulnerable components.
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  sbom-path:
+    description: "Path to the CycloneDX or SPDX SBOM to match."
+    required: true
+  fail-on:
+    description: "What fails the step: none, any, or exploited."
+    required: false
+    default: "any"
+  min-confidence:
+    description: "Drop findings below this confidence (low, medium, high). Empty = tool default."
+    required: false
+    default: ""
+  output-file:
+    description: "Where the findings JSON is written."
+    required: false
+    default: "euvd-findings.json"
+  artifact-name:
+    description: "Name of the uploaded findings artifact (must be unique per job/matrix leg)."
+    required: false
+    default: "euvd-findings"
+  extra-args:
+    description: "Extra arguments appended to `euvd-watch match` (e.g. --exploited-only --no-enrich)."
+    required: false
+    default: ""
+  version:
+    description: >-
+      euvd-watch version to install from PyPI (empty = latest).
+      The special value "source" installs from this action's own checkout (dogfooding/testing).
+    required: false
+    default: ""
+  python-version:
+    description: "Python version set up for the tool."
+    required: false
+    default: "3.12"
+
+outputs:
+  exit-code:
+    description: "euvd-watch match exit code: 0 clean, 1 findings above the gate."
+    value: ${{ steps.run.outputs.exit-code }}
+  findings-file:
+    description: "Path of the findings JSON artifact."
+    value: ${{ steps.run.outputs.findings-file }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install euvd-watch
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        if [ "$VERSION" = "source" ]; then
+          pip install --quiet "$GITHUB_ACTION_PATH"
+        elif [ -n "$VERSION" ]; then
+          pip install --quiet "euvd-watch==$VERSION"
+        else
+          pip install --quiet euvd-watch
+        fi
+
+    - name: Match SBOM against the EUVD
+      id: run
+      shell: bash
+      env:
+        SBOM_PATH: ${{ inputs.sbom-path }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        MIN_CONFIDENCE: ${{ inputs.min-confidence }}
+        OUTPUT_FILE: ${{ inputs.output-file }}
+        EXTRA_ARGS: ${{ inputs.extra-args }}
+      run: |
+        set +e
+        # EXTRA_ARGS is deliberately word-split so callers can pass several flags.
+        euvd-watch match "$SBOM_PATH" \
+          --fail-on "$FAIL_ON" \
+          ${MIN_CONFIDENCE:+--min-confidence "$MIN_CONFIDENCE"} \
+          --save-findings "$OUTPUT_FILE" \
+          $EXTRA_ARGS
+        code=$?
+        set -e
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        echo "findings-file=$OUTPUT_FILE" >> "$GITHUB_OUTPUT"
+        # Exit 2 is an execution error (bad SBOM, unreachable EUVD with a cold cache):
+        # fail right here; there is no findings artifact worth uploading.
+        if [ "$code" -ge 2 ]; then exit "$code"; fi
+
+    - name: Upload findings artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ steps.run.outputs.findings-file }}
+        if-no-files-found: warn
+
+    - name: Enforce the gate
+      shell: bash
+      env:
+        CODE: ${{ steps.run.outputs.exit-code }}
+      run: exit "$CODE"

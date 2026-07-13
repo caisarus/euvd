@@ -1,0 +1,6 @@
+# keep the build context tiny: only pyproject.toml, LICENSE, readme/ and src/ are copied
+*
+!pyproject.toml
+!LICENSE
+!readme/
+!src/

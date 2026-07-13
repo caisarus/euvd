@@ -37,6 +37,7 @@ dev = [
     "freezegun>=1.5",
     "hypothesis>=6.100",
     "jsonschema>=4.20",
+    "check-jsonschema>=0.28",
     "mypy>=1.10",
     "ruff>=0.5",
     "pre-commit>=3.7",

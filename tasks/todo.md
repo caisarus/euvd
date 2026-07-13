@@ -44,17 +44,39 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
       first run 14 new (exit 1), identical second run 0 notifications (exit 0) — the
       literal test_plan.md 5.4 / implementation_plan.md acceptance criterion. docs/watch.md
       written; READMEs (EN+RO) flipped to ✅.
-- [ ] Step 5.1 PyPI packaging & release automation — owner-blocked (needs GitHub remote +
-      reserved PyPI name to satisfy its own acceptance criterion)
-- [ ] Step 5.2 Docker image — owner-blocked (GHCR publish needs the remote)
-- [ ] Step 5.3 GitHub Action & GitLab CI template — owner-blocked (dogfooding needs the
-      remote)
+- [ ] Step 5.1 PyPI packaging & release automation — still owner-blocked (needs the
+      reserved PyPI name; trusted publishing can't even be configured without it)
+- [x] Step 5.2 Docker image: `docker/Dockerfile` (multi-stage, python:3.12-slim, non-root
+      uid 1000, entrypoint `euvd-watch`, ~152 MB) + `.dockerignore`;
+      `.github/workflows/image.yml` runs the four test-plan assertions on PRs and
+      publishes to GHCR (`:edge` on main, `:X.Y.Z`+`:latest` on tags) with the
+      workflow-scoped GITHUB_TOKEN only. All four assertions verified locally with
+      Docker 29.3.1. Docs in `docs/integrations.md`.
+- [x] Step 5.3 GitHub Action & GitLab CI template: composite `action.yml` (repo root;
+      sbom-path/fail-on/min-confidence + output-file/artifact-name/extra-args/version/
+      python-version; outputs exit-code/findings-file; artifact uploaded even when the
+      gate fails); `templates/euvd-watch.gitlab-ci.yml` (EUVDWATCH_* variables — NOT
+      EUVD_WATCH_*, which the config env parser owns and extra="forbid" would reject);
+      dogfood job in ci.yml (fail-on matrix none/any/exploited → exit 0/1/1, network-free
+      via `scripts/prime_cache.py` + seeded fixture
+      `tests/fixtures/euvd/dogfood-seeded-exploited.json`, asserts exactly one
+      EUVD-DOGFOOD-0001 finding); offline schema lint of template+workflows+action in
+      `tests/integration/test_ci_templates.py` (new dev dep check-jsonschema). Offline
+      flow verified locally through a dead proxy. REMAINING (owner-gated): the literal
+      acceptance criterion "copy-paste snippet works in a fresh repo" needs the public
+      repo + first PyPI release; dogfood/image CI runs on GitHub not yet observed (no
+      gh/token in the sandbox — owner to relay).
 
 ## Owner-blocked (cannot proceed without)
 
-- [ ] GitHub org/name -> create remote, push, CI green (OPS-001) — now also blocks M5
-      steps 5.1–5.3
+- [x] GitHub org/name -> create remote, push (DONE 2026-07-13: private
+      github.com/caisarus/euvd, branch renamed master->main, 27 commits force-pushed over
+      the stub initial commit). CI green still UNVERIFIED from the sandbox — owner to
+      check the Actions tab or install gh.
 - [ ] Reserve PyPI name `euvd-watch` (squatting risk, open since M1) — blocks M5 step 5.1
+      and the action/template default install path
+- [ ] Make the repo public (or pick the public org/home) — blocks the 5.3 copy-paste
+      acceptance check and external `uses:`/`include:`/GHCR consumption
 
 ## Review — R1 (2026-07-10)
 

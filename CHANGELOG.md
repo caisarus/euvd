@@ -8,6 +8,22 @@ breaking changes (each one listed explicitly below).
 ## [Unreleased]
 
 ### Added
+- **Docker image (milestone M5, Step 5.2)**: `docker/Dockerfile` — multi-stage build on
+  `python:3.12-slim`, non-root user (uid 1000), `euvd-watch` entrypoint, ~152 MB.
+  `.github/workflows/image.yml` re-runs the four image assertions on PRs (version exit 0,
+  scan of a mounted fixture, non-root, size < 200 MB) and publishes to GHCR on pushes to
+  `main` (`:edge`) and on `vX.Y.Z` tags (`:X.Y.Z` + `:latest`). See `docs/integrations.md`.
+- **GitHub Action (milestone M5, Step 5.3)**: composite `action.yml` at the repo root —
+  inputs `sbom-path`/`fail-on`/`min-confidence` (plus `output-file`, `artifact-name`,
+  `extra-args`, `version`, `python-version`), outputs `exit-code`/`findings-file`; the
+  findings JSON is uploaded as a workflow artifact even when the gate fails. Dogfooded by
+  this repo's CI over a fail-on matrix against a **network-free** cache primed from a
+  committed, clearly-seeded fixture (`scripts/prime_cache.py`).
+- **GitLab CI include template (milestone M5, Step 5.3)**:
+  `templates/euvd-watch.gitlab-ci.yml`, configured via `EUVDWATCH_*` variables
+  (deliberately not `EUVD_WATCH_*`, which the CLI reserves for config overrides and
+  where unknown keys are rejected). Template, workflows, and `action.yml` are all
+  schema-linted offline in `tests/integration/test_ci_templates.py`.
 - **`watch` mode (milestone M5, Step 5.4)**: `euvd-watch watch <sbom>` re-matches an SBOM
   and reports only **new/resolved/changed** findings since the last run (no flag or
   `--once` runs a single cycle; `--interval 6h`-style loops forever until interrupted).
