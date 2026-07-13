@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """SPDX 2.3 (JSON) parser.
 
 Purpose (plans/implementation_plan.md Step 1.3): SPDX is the second major SBOM format

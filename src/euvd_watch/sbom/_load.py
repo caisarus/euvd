@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Shared "read + JSON-parse" step used by every format parser and by format detection."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """The single normalized Component/Inventory shape shared by every SBOM format.
 
 This is the contract for the whole pipeline (plans/implementation_plan.md Step 1.1): the

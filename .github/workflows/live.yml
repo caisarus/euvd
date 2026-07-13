@@ -1,0 +1,40 @@
+# Nightly live smoke (test_plan.md §7 "live-smoke", M2 review 2.3): the ONLY networked CI
+# job. Runs the `live`-marked tests against the real EUVD/EPSS/KEV services to detect API
+# drift (docs/euvd-api.md going stale). Never blocks PRs — a failure opens an issue instead.
+name: Live smoke
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet -e ".[dev]"
+      - name: Run live smoke tests against the real services
+        run: pytest -m live --no-cov
+      - name: Open a drift issue on failure (one at a time)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          title="Nightly live smoke failed - EUVD/EPSS/KEV API drift?"
+          open_count="$(gh issue list --state open --search "in:title \"$title\"" --json number --jq length)"
+          if [ "$open_count" = "0" ]; then
+            gh issue create --title "$title" --body "Failed run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          The live-marked tests exercise the real EUVD/EPSS/KEV endpoints (docs/euvd-api.md documents the expected behavior). A failure here usually means the beta API changed shape - refresh fixtures per the test plan's drift policy (test_plan.md SS5) and update docs/euvd-api.md."
+          else
+            echo "an open drift issue already exists; not filing another"
+          fi

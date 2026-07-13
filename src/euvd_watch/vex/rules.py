@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Conservative statement rules (Step 3.2): findings -> draft VEX statements.
 
 The credibility of the tool: it must never auto-suppress real risk. Automation only

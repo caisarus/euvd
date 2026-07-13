@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Configuration loading: defaults -> YAML file -> EUVD_WATCH_* environment variables.
 
 One validated Settings object is used everywhere instead of scattered constants (see

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Durable CRA event state (Step 4.1).
 
 A separate SQLite store from http.py's response Cache, deliberately: CRA events are a

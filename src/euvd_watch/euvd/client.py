@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """EUVD API access patterns (plans/implementation_plan.md Step 2.2).
 
 Endpoints and quirks verified live on 2026-07-10 and documented in docs/euvd-api.md.
@@ -30,8 +31,14 @@ class EuvdClient:
         self._base = base_url.rstrip("/")
 
     def _search_pages(self, params: dict[str, Any]) -> list[EuvdRecord]:
-        """Fetch every page of a /search query, tolerating a shrinking/buggy `total`."""
+        """Fetch every page of a /search query, tolerating a shrinking/buggy `total`.
+
+        Records are deduplicated by euvd_id (first occurrence wins): pages are fetched —
+        and cached — at different moments, so a catalog shift can surface the same record
+        on two pages (M2 review 3.2). Unique records are part of this method's contract.
+        """
         records: list[EuvdRecord] = []
+        seen: set[str] = set()
         page = 0
         while page < MAX_PAGES:
             data = self._api.get_json(
@@ -40,7 +47,10 @@ class EuvdClient:
             if not isinstance(data, dict):
                 break
             items = data.get("items") or []
-            records.extend(parse_records(items))
+            for record in parse_records(items):
+                if record.euvd_id not in seen:
+                    seen.add(record.euvd_id)
+                    records.append(record)
             total = data.get("total")
             page += 1
             if len(items) < PAGE_SIZE:

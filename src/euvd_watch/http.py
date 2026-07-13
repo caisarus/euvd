@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """The single disciplined HTTP layer (plans/implementation_plan.md Step 2.1).
 
 The EUVD API is beta with unknown rate limits; one client with retry/backoff and an
@@ -101,7 +102,8 @@ class Cache:
             self._self_heal()
 
     def newest_stored_at(self) -> float | None:
-        """Timestamp of the freshest cached entry — used for data_freshness stamping."""
+        """Timestamp of the freshest cached entry (diagnostics only — data_freshness
+        stamping uses ApiClient.oldest_served_stored_at, the responses actually used)."""
         try:
             row = self._conn.execute("SELECT MAX(stored_at) FROM responses").fetchone()
         except sqlite3.Error:
@@ -138,6 +140,9 @@ class ApiClient:
         self.cache = Cache(cache_dir / "euvd-cache.sqlite")
         self._ttl_seconds = cache_ttl_hours * 3600
         self._sleep = sleep
+        # stored_at of every response actually served by this client instance, whether
+        # from cache or the network — feeds oldest_served_stored_at().
+        self._served_stored_at: list[float] = []
 
     def get_json(
         self,
@@ -159,6 +164,7 @@ class ApiClient:
             body, etag, stored_at = cached
             if time.time() - stored_at < ttl:
                 logger.debug("cache hit url=%s", url)
+                self._served_stored_at.append(stored_at)
                 return json.loads(body)
 
         response = self._request_with_retries("GET", url, params=params, etag=etag)
@@ -166,7 +172,9 @@ class ApiClient:
         if response.status_code == 304 and cached is not None:
             # Server confirmed our stale copy is still current; refresh its timestamp.
             body, etag, _ = cached
-            self.cache.set(key, body, etag, time.time())
+            revalidated_at = time.time()
+            self.cache.set(key, body, etag, revalidated_at)
+            self._served_stored_at.append(revalidated_at)
             return json.loads(body)
         if response.status_code == 204:
             return None
@@ -181,9 +189,24 @@ class ApiClient:
             data = json.loads(text) if text.strip() else None
         except json.JSONDecodeError as exc:
             raise ApiError(f"Non-JSON response from {url}: {text[:200]!r}") from exc
+        # One timestamp for both the cache row and the served-response tracker: a later
+        # run replaying this row from cache must report the identical stored_at, or
+        # byte-identical output (INV-9) breaks on microsecond skew.
+        fetched_at = time.time()
         if use_cache and data is not None:
-            self.cache.set(key, text, response.headers.get("ETag"), time.time())
+            self.cache.set(key, text, response.headers.get("ETag"), fetched_at)
+        if data is not None:
+            self._served_stored_at.append(fetched_at)
         return data
+
+    def oldest_served_stored_at(self) -> float | None:
+        """Worst-case age of the responses this client actually served so far.
+
+        The honest `data_freshness` bound (feedback_m2.md 2.2): the oldest response used
+        in this run — not the newest row anywhere in the shared on-disk cache, which
+        EPSS/KEV entries and rows written by unrelated later runs would inflate.
+        """
+        return min(self._served_stored_at, default=None)
 
     def post_json(self, url: str, payload: dict[str, Any]) -> None:
         """POST a JSON payload with the same retry/backoff as GET. Raises ApiError on

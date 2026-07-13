@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Enrichment (Step 2.4): independent exploitation-likelihood signals for the CRA trigger.
 
 EUVD carries some signals; independent FIRST.org EPSS scores and CISA KEV membership make

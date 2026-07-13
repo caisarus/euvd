@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Logging bootstrap: one place where --verbose becomes a logging configuration.
 
 Exists so every module can just `logging.getLogger(__name__)` and emit warnings (parsers)

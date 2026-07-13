@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """24h / 72h / 14-day clock tracking (Step 4.2).
 
 Stages are config (`Settings.cra_stages`), not code, so a legal-text change never requires

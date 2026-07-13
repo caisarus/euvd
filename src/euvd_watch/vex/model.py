@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """OpenVEX document models (Step 3.1), mirroring the vendored schema exactly.
 
 Schema vendored at tests/fixtures/openvex/schema.json, fetched from

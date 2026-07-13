@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Decisions merge (Step 3.3): human decisions override automated drafts.
 
 Precedence is absolute: a matching human decision always wins, even against stronger

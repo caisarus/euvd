@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """The watch differ (Step 5.4): what changed since the last run, and nothing else.
 
 Pure evaluation - no I/O, no persistence (mirrors `cra/trigger.py`'s shape). The caller

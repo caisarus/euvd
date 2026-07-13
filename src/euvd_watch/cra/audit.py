@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Tamper-evident audit log (Step 4.4): the evidence trail behind "when did you know
 and what did you do".
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Identifier normalization & reconciliation (plans/implementation_plan.md Step 1.4).
 
 Matching quality (M2) lives or dies on identifiers. PURLs and CPEs from real SBOMs are messy:

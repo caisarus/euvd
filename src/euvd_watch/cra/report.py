@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """CRA Article 14 notification draft renderer (Step 4.3).
 
 Under deadline pressure, a prefilled draft with everything the tool knows is the

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Typed EUVD records: stable shapes the matcher consumes, insulated from beta-API churn.
 
 Parsing here is tolerant (the API is beta: unknown fields ignored, missing fields default),

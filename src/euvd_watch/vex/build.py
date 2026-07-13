@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Assembling OpenVEX Statements/Documents from (Evaluation, Decision) pairs (Step 3.4).
 
 Field mapping: `not_affected`/`fixed`/`under_investigation` carry the decision's

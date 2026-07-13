@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Deterministic OpenVEX serialization (Step 3.1).
 
 Byte-stable regardless of the order evaluations/findings arrived in: `render` sorts

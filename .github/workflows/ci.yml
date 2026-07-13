@@ -93,6 +93,56 @@ jobs:
           print("dogfood finding OK:", findings[0]["record"]["euvd_id"])
           EOF
 
+  # X.3 hygiene (test_plan.md §7 "security"): dependency advisories. The SPDX-header
+  # sweep lives in pytest (tests/unit/test_spdx_headers.py) and runs in the test job.
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet -e . pip-audit
+      - run: pip-audit
+
+  # X.3 dogfood: Syft generates THIS repo's SBOM and euvd-watch matches it, gated on
+  # exploited findings — against the committed real exploited-catalog fixture (network-free).
+  self-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generate this repo's SBOM with Syft
+        uses: anchore/sbom-action@v0
+        with:
+          format: cyclonedx-json
+          output-file: self-sbom.cdx.json
+      - name: Prime the HTTP cache with the real exploited-catalog fixture
+        run: |
+          pip install --quiet .
+          python scripts/prime_cache.py tests/fixtures/euvd/search-exploited-page0.json
+      - name: Match our own SBOM (gate on exploited)
+        uses: ./
+        with:
+          sbom-path: self-sbom.cdx.json
+          fail-on: exploited
+          extra-args: "--exploited-only --no-enrich"
+          version: source
+          artifact-name: self-sbom-findings
+
+  # X.2: the demo script is a product promise; it must keep running end-to-end (offline).
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet .
+      - run: ./examples/demo.sh
+
   build:
     runs-on: ubuntu-latest
     needs: [lint, typecheck, test]

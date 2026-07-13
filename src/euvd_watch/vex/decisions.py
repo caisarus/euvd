@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Human decisions file (Step 3.3): the human-in-the-loop mechanism.
 
 Humans record judgments ("we don't ship that code path") that persist across runs and

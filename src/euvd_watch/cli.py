@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Typer CLI entry point.
 
 `version`, `scan`, `match`, `vex generate`/`vex init-decisions`, `cra ...`, and `watch`
@@ -338,9 +339,11 @@ def match(
             )
             raise typer.Exit(code=2) from exc
 
-        newest = api.cache.newest_stored_at()
+        # Read before enrichment on purpose: the stamp qualifies the EUVD data in the
+        # artifact, so EPSS/KEV responses must not participate (feedback_m2.md 2.2).
+        oldest = api.oldest_served_stored_at()
         data_freshness = (
-            datetime.fromtimestamp(newest, UTC).isoformat() if newest is not None else None
+            datetime.fromtimestamp(oldest, UTC).isoformat() if oldest is not None else None
         )
 
         findings = match_inventory(inventory, records)

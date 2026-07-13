@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Typed errors for SBOM parsing and format detection."""
 
 from __future__ import annotations

@@ -48,6 +48,14 @@ def test_semver_prerelease_when_pep440_rejects() -> None:
         ("1.5.0", ">=1.0 <2.0", RangeResult.INSIDE),
         ("1.2.3", "1.2.3", RangeResult.INSIDE),
         ("1.2.4", "1.2.3", RangeResult.OUTSIDE),
+        # Real comma shape from EUVD-2026-4133 (wheel): "introduced-at, < fixed-before".
+        ("0.45.1", "0.40.0, < 0.46.2", RangeResult.INSIDE),
+        ("0.39.0", "0.40.0, < 0.46.2", RangeResult.OUTSIDE),  # below introduced-at
+        ("0.46.2", "0.40.0, < 0.46.2", RangeResult.OUTSIDE),  # the fix itself
+        ("0.40.0", "0.40.0, < 0.46.2", RangeResult.INSIDE),  # inclusive introduced-at
+        ("1.0.0", "0.40.0, <= 0.46.2", RangeResult.OUTSIDE),
+        ("0.46.2", "0.40.0, <= 0.46.2", RangeResult.INSIDE),
+        ("1.2.3", "improper input, < validation", RangeResult.AMBIGUOUS),  # low not a version
         ("1.2.3", "all versions before fix", RangeResult.AMBIGUOUS),
         ("1.2.3", "", RangeResult.AMBIGUOUS),
         ("1.2.3", "n/a", RangeResult.AMBIGUOUS),

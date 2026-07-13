@@ -157,3 +157,27 @@
   component: {name: pillow, version: "9.0.0", purl: "pkg:pypi/pillow?xyz=1"}
   affected: [{vendor: python-pillow, product: pillow, version_range: "<10.0.0"}]
   expect: {matched: true, confidence: high, strategy: structured}
+
+# M2 review finding 3.1 (plans/feedback_m2.md, seen live on EUVD-2026-4133 / wheel):
+# the "introduced-at, < fixed-before" comma shape was unparsed -> AMBIGUOUS, so an
+# in-range version got medium instead of high and a version BELOW the introduced-at
+# bound still produced a (false-positive) medium finding.
+- id: comma-range-inside-is-high
+  component: {name: wheel, version: "0.45.1", cpe: "cpe:2.3:a:pypa:wheel:0.45.1:*:*:*:*:*:*:*", purl: "pkg:pypi/wheel@0.45.1"}
+  affected: [{vendor: pypa, product: wheel, version_range: "0.40.0, < 0.46.2"}]
+  expect: {matched: true, confidence: high, strategy: structured}
+
+- id: comma-range-below-introduced-at-no-finding
+  component: {name: wheel, version: "0.39.0", cpe: "cpe:2.3:a:pypa:wheel:0.39.0:*:*:*:*:*:*:*", purl: "pkg:pypi/wheel@0.39.0"}
+  affected: [{vendor: pypa, product: wheel, version_range: "0.40.0, < 0.46.2"}]
+  expect: {matched: false}
+
+# M2 review finding 3.3 (plans/feedback_m2.md): scoped npm purls (pkg:npm/%40babel/core)
+# used to surface vendor='%40babel' -> normalized '40babel', never matching the real EUVD
+# vendor. Fixed by the TECH-001 packageurl-python rework (percent-decodes to '@babel',
+# which normalize_text folds to 'babel'); this row pins the vendor signal so it can't
+# silently regress to the vendor-less path.
+- id: npm-scoped-purl-keeps-vendor-signal
+  component: {name: core, version: "7.24.0", purl: "pkg:npm/%40babel/core@7.24.0"}
+  affected: [{vendor: babel, product: core, version_range: "<7.25.0"}]
+  expect: {matched: true, confidence: high, strategy: structured}

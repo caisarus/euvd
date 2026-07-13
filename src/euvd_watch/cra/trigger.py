@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Trigger policy engine (Step 4.1): one configurable, defensible definition of "this
 crossed the line" for CRA Article 14 purposes.
 

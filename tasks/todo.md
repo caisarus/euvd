@@ -67,6 +67,27 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
       repo + first PyPI release; dogfood/image CI runs on GitHub not yet observed (no
       gh/token in the sandbox — owner to relay).
 
+## Cross-cutting sweep (2026-07-13, after 5.2/5.3)
+
+- [x] M2 review debt closed: 3.1 comma ranges ("A, < B" parsed; truth-table rows from the
+      real EUVD-2026-4133 wheel record, red-then-green), 3.2 client-level pagination
+      dedupe by euvd_id, 3.3 npm-scoped vendor row (already fixed by the TECH-001 purl
+      rework — row pins it), 2.2 data_freshness = oldest EUVD response *served* this run
+      (ApiClient._served_stored_at; one timestamp shared with the cache row so INV-9
+      byte-identity holds).
+- [x] X.3 hygiene: SPDX EUPL-1.2 headers on all 37 src files + presence test; `security`
+      CI job (pip-audit); `self-sbom` CI job (Syft SBOM of this repo matched offline,
+      --fail-on exploited; rehearsed locally: 330 components, 0 findings, exit 0).
+- [x] X.2 examples/demo.sh: scan→match→vex→cra check/status→watch --once ×2, fully
+      offline (prime_cache + TIER2_PRODUCT_SEARCH=false), verified through a dead proxy;
+      `demo` CI job runs it every PR.
+- [x] X.1 tests/e2e/test_readme_quickstart.py executes every euvd-watch line of the
+      README Quickstart block (mocked network; --interval rewritten to --once).
+- [x] 2.3 nightly live-smoke workflow (live.yml): pytest -m live, cron 03:17 UTC,
+      failure opens a deduplicated drift issue; never blocks PRs.
+- Deliberately not done: feedback_m2 3.4 "smaller items" (cache purge sweep, get_by_cve
+  page cap, fixture annotations) — unchanged priority, revisit with M6's storage work.
+
 ## Owner-blocked (cannot proceed without)
 
 - [x] GitHub org/name -> create remote, push (DONE 2026-07-13: private

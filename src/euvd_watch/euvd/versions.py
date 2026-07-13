@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Version comparison and EUVD version-range evaluation (Step 2.3).
 
 The comparator always reports *which scheme* it used, because the matcher's confidence
@@ -79,12 +80,15 @@ class RangeResult(StrEnum):
 
 
 # Observed EUVD product_version shapes (docs/euvd-api.md): "A-B", "<X", "<=X", ">=A <B",
-# exact versions, and free text (-> AMBIGUOUS).
+# "A, < B" (introduced-at/fixed-before, seen live on EUVD-2026-4133), exact versions, and
+# free text (-> AMBIGUOUS).
 # Non-greedy first group: "1.0.0-6.6.1" must split at the FIRST hyphen (low=1.0.0,
 # high=6.6.1), and both sides must independently look like versions.
 _HYPHEN_RANGE = re.compile(r"^\s*(\S+?)\s*-\s*(\S+)\s*$")
 _BOUND = re.compile(r"^\s*(<=|>=|<|>|=)\s*(\S+)\s*$")
 _COMPOUND = re.compile(r"^\s*(>=|>)\s*(\S+)\s+(<=|<)\s*(\S+)\s*$")
+# "0.40.0, < 0.46.2": inclusive introduced-at, explicit upper bound (M2 review 3.1).
+_COMMA_RANGE = re.compile(r"^\s*(\S+?)\s*,\s*(<=|<)\s*(\S+)\s*$")
 _VERSIONISH = re.compile(r"^\d[\w.+]*(\.\w+)*$")
 
 
@@ -119,6 +123,13 @@ def evaluate_range(version: str, range_text: str) -> tuple[RangeResult, Scheme]:
     if compound:
         low_in, scheme_low = _check_bound(version, compound.group(1), compound.group(2))
         high_in, scheme_high = _check_bound(version, compound.group(3), compound.group(4))
+        scheme = _weakest(scheme_low, scheme_high)
+        return (RangeResult.INSIDE if (low_in and high_in) else RangeResult.OUTSIDE, scheme)
+
+    comma = _COMMA_RANGE.match(text)
+    if comma and _looks_versionish(comma.group(1)):
+        low_in, scheme_low = _check_bound(version, ">=", comma.group(1))
+        high_in, scheme_high = _check_bound(version, comma.group(2), comma.group(3))
         scheme = _weakest(scheme_low, scheme_high)
         return (RangeResult.INSIDE if (low_in and high_in) else RangeResult.OUTSIDE, scheme)
 

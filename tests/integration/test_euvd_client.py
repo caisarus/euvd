@@ -101,6 +101,29 @@ def test_fetch_exploited_paginates_to_total(api_client: ApiClient, euvd_fixture:
 
 
 @respx.mock
+def test_pagination_dedupes_records_shifted_across_pages(
+    api_client: ApiClient, euvd_fixture: Any
+) -> None:
+    # M2 review 3.2 (plans/feedback_m2.md): pages are fetched at different moments; a
+    # catalog shift can surface the same euvd_id on two pages. The client's contract is
+    # unique records — callers must not need to remember to dedupe.
+    page0 = euvd_fixture("search-exploited-page0")
+    page1 = euvd_fixture("search-exploited-page0")  # worst case: identical page repeated
+    page0["total"] = 150
+    page1["total"] = 150
+    page1["items"] = page1["items"][:50]
+
+    def route(request: httpx.Request) -> httpx.Response:
+        page = request.url.params.get("page")
+        return httpx.Response(200, json=page0 if page == "0" else page1)
+
+    respx.get(f"{BASE}/search").mock(side_effect=route)
+    records = _client(api_client).fetch_exploited()
+    ids = [r.euvd_id for r in records]
+    assert len(ids) == len(set(ids)) == 100  # page1's 50 are all repeats of page0's
+
+
+@respx.mock
 def test_search_product_single_page(api_client: ApiClient, euvd_fixture: Any) -> None:
     respx.get(f"{BASE}/search").mock(
         return_value=httpx.Response(200, json=euvd_fixture("search-product-jinja2"))

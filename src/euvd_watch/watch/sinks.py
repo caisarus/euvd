@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Notification sinks (Step 5.4): where a diff's findings get reported.
 
 `NotificationSink` is deliberately a small `Protocol` - stdout and a generic webhook ship

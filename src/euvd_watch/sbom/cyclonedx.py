@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """CycloneDX (JSON) parser. Supports spec versions 1.4-1.6 via tolerant field extraction.
 
 Purpose (plans/implementation_plan.md Step 1.2): CycloneDX is the most common SBOM output of

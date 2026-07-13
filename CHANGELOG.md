@@ -7,7 +7,27 @@ breaking changes (each one listed explicitly below).
 
 ## [Unreleased]
 
+### Fixed
+- **Comma version ranges** (`"0.40.0, < 0.46.2"`, the introduced-at/fixed-before shape
+  seen live on EUVD-2026-4133) are now parsed: in-range versions get the confidence the
+  evidence supports instead of an AMBIGUOUS `medium` cap, and versions *below* the
+  introduced-at bound no longer produce a false-positive finding (M2 review 3.1).
+- **`EuvdClient` deduplicates paginated search results** by EUVD id (first occurrence
+  wins) — a catalog shift between page fetches can no longer surface the same record
+  twice (M2 review 3.2).
+- **`data_freshness` is now the honest worst-case bound**: the oldest EUVD response
+  actually served during the run, instead of the newest row anywhere in the shared cache
+  (which EPSS/KEV entries and unrelated later runs inflated) (M2 review 2.2).
+
 ### Added
+- **CI hygiene & doc-drift jobs (test-plan X.1–X.3 + M2 review 2.3)**: every `src/**`
+  file carries an `SPDX-License-Identifier: EUPL-1.2` header, enforced by a test;
+  `security` CI job (pip-audit); `self-sbom` CI job (Syft generates this repo's SBOM,
+  euvd-watch matches it offline, gated `--fail-on exploited`); `examples/demo.sh` — the
+  full pipeline scan→match→vex→cra→watch, offline, executed on every PR; the README
+  Quickstart block is now executed by `tests/e2e/test_readme_quickstart.py`; nightly
+  `live.yml` workflow runs the `live`-marked tests against the real EUVD/EPSS/KEV and
+  opens a drift issue on failure (never blocks PRs).
 - **Docker image (milestone M5, Step 5.2)**: `docker/Dockerfile` — multi-stage build on
   `python:3.12-slim`, non-root user (uid 1000), `euvd-watch` entrypoint, ~152 MB.
   `.github/workflows/image.yml` re-runs the four image assertions on PRs (version exit 0,

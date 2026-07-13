@@ -131,9 +131,9 @@ def test_json_output_is_a_valid_versioned_artifact(tmp_path: Path) -> None:
 @respx.mock
 def test_pinned_timestamp_makes_json_output_byte_identical(tmp_path: Path) -> None:
     # INV-9 for match (audit finding TECH-003): generated_at was the one uncontrolled
-    # field. Same cache dir on purpose - data_freshness must also be stable across runs.
-    # --no-enrich because enrichment caches EPSS/KEV *after* data_freshness is read, so
-    # run 2's max(stored_at) would differ (known data_freshness looseness, feedback_m2 2.2).
+    # field. Same cache dir on purpose - data_freshness must also be stable across runs:
+    # since the feedback_m2 2.2 fix it is the oldest EUVD response *served*, which run 2
+    # replays from cache with the same stored_at (--no-enrich just keeps the test lean).
     _mock_euvd([JINJA_RECORD])
     args = [
         "--output", "json", "match", str(DEMO),

@@ -7,7 +7,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from euvd_watch.http import MAX_RETRIES, USER_AGENT, ApiClient, ApiError, Cache
+from euvd_watch.http import MAX_RETRIES, USER_AGENT, ApiClient, ApiError, Cache, _cache_key
 
 pytestmark = pytest.mark.unit
 
@@ -151,6 +151,26 @@ def test_cache_purge_and_newest_stored_at(tmp_path: Path) -> None:
     assert cache.newest_stored_at() == 456.0
     cache.purge()
     assert cache.get("k") is None
+
+
+def test_oldest_served_stored_at_tracks_responses_actually_used(tmp_path: Path) -> None:
+    # feedback_m2.md 2.2: data_freshness must reflect the OLDEST response actually served
+    # in this run (worst case), not the newest row anywhere in the shared cache — EPSS/KEV
+    # entries and rows written by unrelated later runs must not inflate the stamp.
+    client = _client_with(lambda r: httpx.Response(200, json={"ok": True}), tmp_path)
+    assert client.oldest_served_stored_at() is None  # nothing served yet
+
+    # Seed an hour-old (but within-TTL) cached response and serve it from cache.
+    old = time.time() - 3600
+    client.cache.set(_cache_key("https://api.example/old", None), '{"v": 1}', None, old)
+    assert client.get_json("https://api.example/old") == {"v": 1}
+
+    # A newer network fetch and a newer never-served cache row must not mask the old one.
+    assert client.get_json("https://api.example/new") == {"ok": True}
+    client.cache.set("unrelated-newer-row", "{}", None, time.time() + 999)
+
+    oldest = client.oldest_served_stored_at()
+    assert oldest == pytest.approx(old, abs=1.0)
 
 
 def test_connection_error_retries_then_raises(tmp_path: Path) -> None:

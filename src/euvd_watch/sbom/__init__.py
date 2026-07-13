@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """SBOM ingestion: format detection, parsing, and normalization into Inventory.
 
 `load_inventory` is the single entry point M2's matcher (and the `scan` command) build on:

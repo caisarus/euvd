@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """CISA Known Exploited Vulnerabilities catalog membership (Step 2.4). 24 h cache TTL."""
 
 from __future__ import annotations

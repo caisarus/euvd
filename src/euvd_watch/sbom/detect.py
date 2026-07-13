@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """Format detection and single-entry-point parsing for any supported SBOM format."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: EUPL-1.2
 """The matching engine (Step 2.3): does EUVD record X affect component Y, and how sure?
 
 Core problem: the SBOM side speaks purl/CPE; the EUVD side speaks (vendor, product,
