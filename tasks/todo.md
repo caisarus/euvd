@@ -44,8 +44,20 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
       first run 14 new (exit 1), identical second run 0 notifications (exit 0) — the
       literal test_plan.md 5.4 / implementation_plan.md acceptance criterion. docs/watch.md
       written; READMEs (EN+RO) flipped to ✅.
-- [ ] Step 5.1 PyPI packaging & release automation — still owner-blocked (needs the
-      reserved PyPI name; trusted publishing can't even be configured without it)
+- [~] Step 5.1 PyPI packaging & release automation — IN PROGRESS 2026-07-14. Owner
+      configured the PyPI pending publisher (project euvd-watch, repo caisarus/euvd,
+      workflow **workflow.yaml**, environment **pypi** — the filename is load-bearing).
+      Built: `.github/workflows/workflow.yaml` (tag → build+twine check with
+      tag/pyproject/__init__ version-agreement guard → rc tags publish to TestPyPI +
+      clean-venv install check; final tags publish to PyPI + install check + GitHub
+      release), `scripts/extract_changelog.py` + unit tests (test-plan 5.1),
+      `docs/release.md` (process + version/deprecation policy — a §18 DoD item),
+      SECURITY.md (REQ-NF-009). GitHub environments `pypi`/`testpypi` + private
+      vulnerability reporting set up via gh api.
+      REMAINING: (owner) add the **TestPyPI** pending publisher on test.pypi.org — same
+      values, environment `testpypi`; then bump 0.3.1rc1 → tag `v0.3.1rc1` (exercises the
+      full TestPyPI path, test-plan 5.1 exit criterion) → bump 0.3.1 → tag `v0.3.1`
+      (first real PyPI release) → verify 5.3's copy-paste-in-fresh-repo acceptance.
 - [x] Step 5.2 Docker image: `docker/Dockerfile` (multi-stage, python:3.12-slim, non-root
       uid 1000, entrypoint `euvd-watch`, ~152 MB) + `.dockerignore`;
       `.github/workflows/image.yml` runs the four test-plan assertions on PRs and
@@ -96,8 +108,16 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
       the ghcr.io/caisarus/euvd-watch package is PRIVATE (anonymous pull denied; GHCR
       does not inherit repo visibility). Owner: flip package visibility to public in
       GitHub UI (Packages → euvd-watch → Package settings → Change visibility).
-- [ ] M6 planned, awaiting owner sign-off (see session notes: storage source-of-truth
-      A/B decision, [web] extra, SECURITY.md contact, 1.1 target confirmation).
+- [x] M6 sign-off — owner delegated all four decisions 2026-07-14; taken and recorded in
+      docs/AUDIT_AND_REMEDIATION_PLAN.md §17: (1) SQLite = source of truth for
+      operational state (CRA events + watch snapshots migrate in), audit log stays the
+      append-only hash-chained file (refs only in DB), vex-decisions.yaml stays the
+      human-edited input of record (DB caches derived statuses); (2) [web] extra: yes,
+      core stays lean, `web serve` without it exits 2 with an install hint;
+      (3) SECURITY.md: GitHub private vulnerability reporting primary + owner email
+      fallback — shipped; (4) 1.1 target confirmed. M6 implementation starts after 5.1
+      ships and the 5.3 fresh-repo acceptance is verified.
+- [x] GHCR package flipped public by owner 2026-07-14 (anonymous pull now possible).
 
 ## Owner-blocked (cannot proceed without)
 

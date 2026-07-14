@@ -602,6 +602,27 @@ membership, neither is proof of exploitation *of you*.
    `aliases.yaml` entry must cite a real EUVD record id showing the vendor/product naming
    and add a matching truth-table row; goes into `CONTRIBUTING.md` and `docs/matching.md`.
 7. GitHub org/name — **not yet decided**; placeholders remain, OPS-001 stays owner-blocked.
+   *(Resolved 2026-07-13: `github.com/caisarus/euvd`, public since 2026-07-14.)*
+
+**M6 sign-off — owner delegated all four decisions 2026-07-14; decisions taken:**
+
+1. **Storage source of truth (Step 6.1):** the consolidated SQLite DB becomes the
+   authoritative store for *operational* state — CRA trigger events and watch snapshots
+   migrate in via `db migrate` (numbered SQL migrations; the `Event.schema_version` field
+   from TECH-002 drives the event migration). Two explicit carve-outs stay files, by
+   design: the **audit log** remains the append-only hash-chained file (the DB stores
+   references only — moving it into a mutable DB would gut the tamper-evidence claim),
+   and **`vex-decisions.yaml`** remains the human-edited input of record (the DB caches
+   derived VEX statuses as a read model, rebuildable from the file). Rationale: a single
+   DB gives the dashboard one coherent read model and WAL concurrency, while the two
+   trust-critical artifacts keep their integrity properties.
+2. **`[web]` extra:** yes — FastAPI/uvicorn/Jinja2 ship as `pip install euvd-watch[web]`;
+   the core CLI stays dependency-lean. `web serve` without the extra exits 2 with an
+   actionable install hint.
+3. **SECURITY.md contact:** GitHub private vulnerability reporting on `caisarus/euvd` as
+   the primary channel, owner email as fallback. Shipped 2026-07-14 (`SECURITY.md`).
+4. **`1.1` target:** confirmed — M6 ships as `1.1`; `1.0.0` scope stays CLI + CRA +
+   watch/integrations + docs, unblocked by dashboard work.
 
 ## 18. Definition of Done — 1.0.0
 

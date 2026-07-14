@@ -1,0 +1,152 @@
+# Release automation (Step 5.1).
+#
+# NOTE on the filename: PyPI trusted publishing for this project is registered
+# against ".github/workflows/workflow.yaml" — renaming this file breaks
+# publishing until the publisher entry on (Test)PyPI is updated to match.
+#
+# Flow, per plans/test_plan.md §5.1:
+#   - pre-release tag  (vX.Y.ZrcN) → build → publish to TestPyPI → clean-venv
+#     install from TestPyPI → `euvd-watch version` smoke check.
+#   - final tag        (vX.Y.Z)    → build → publish to PyPI → clean-venv
+#     install from PyPI → GitHub release with the CHANGELOG section as notes.
+#
+# Publishing uses trusted publishing (OIDC) only — no long-lived tokens.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify tag matches package version (pyproject + __init__)
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PYPROJECT_VERSION="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          INIT_VERSION="$(python -c 'import re, pathlib; print(re.search(r"__version__ = \"(.+?)\"", pathlib.Path("src/euvd_watch/__init__.py").read_text()).group(1))')"
+          echo "tag=$TAG_VERSION pyproject=$PYPROJECT_VERSION __init__=$INIT_VERSION"
+          test "$TAG_VERSION" = "$PYPROJECT_VERSION"
+          test "$TAG_VERSION" = "$INIT_VERSION"
+      - name: Verify the changelog has a section for this release
+        run: python scripts/extract_changelog.py "${GITHUB_REF_NAME#v}" CHANGELOG.md
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade build twine
+          python -m build
+          python -m twine check --strict dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish-testpypi:
+    needs: build
+    if: contains(github.ref_name, 'rc')
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/euvd-watch
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  verify-testpypi:
+    needs: publish-testpypi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install from TestPyPI in a clean venv and run `euvd-watch version`
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          python -m venv "$RUNNER_TEMP/venv"
+          # TestPyPI hosts only euvd-watch; dependencies resolve from real PyPI.
+          # The index needs a moment to serve a fresh upload — retry briefly.
+          for attempt in 1 2 3 4 5 6 7 8; do
+            "$RUNNER_TEMP/venv/bin/pip" install \
+              --index-url https://test.pypi.org/simple/ \
+              --extra-index-url https://pypi.org/simple/ \
+              "euvd-watch==$VERSION" && break
+            echo "TestPyPI not serving $VERSION yet (attempt $attempt), retrying in 30s"
+            sleep 30
+          done
+          "$RUNNER_TEMP/venv/bin/euvd-watch" version
+          "$RUNNER_TEMP/venv/bin/euvd-watch" version | grep -F "$VERSION"
+
+  publish-pypi:
+    needs: build
+    if: ${{ !contains(github.ref_name, 'rc') }}
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/euvd-watch
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  verify-pypi:
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install from PyPI in a clean venv and run `euvd-watch version`
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          python -m venv "$RUNNER_TEMP/venv"
+          for attempt in 1 2 3 4 5 6 7 8; do
+            "$RUNNER_TEMP/venv/bin/pip" install "euvd-watch==$VERSION" && break
+            echo "PyPI not serving $VERSION yet (attempt $attempt), retrying in 30s"
+            sleep 30
+          done
+          "$RUNNER_TEMP/venv/bin/euvd-watch" version
+          "$RUNNER_TEMP/venv/bin/euvd-watch" version | grep -F "$VERSION"
+
+  github-release:
+    needs: verify-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Extract this release's changelog section
+        run: python scripts/extract_changelog.py "${GITHUB_REF_NAME#v}" CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "euvd-watch $GITHUB_REF_NAME" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            --verify-tag

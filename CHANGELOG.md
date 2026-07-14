@@ -7,7 +7,16 @@ breaking changes (each one listed explicitly below).
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+- **Release automation (milestone M5, Step 5.1)**: pushing a `vX.Y.Z` tag now builds
+  sdist+wheel, publishes to PyPI via trusted publishing (OIDC, no tokens), verifies a
+  clean-venv `pip install euvd-watch==X.Y.Z` + `euvd-watch version`, and creates a GitHub
+  release whose notes are this file's section for that version
+  (`scripts/extract_changelog.py`, unit-tested). `vX.Y.ZrcN` pre-release tags exercise the
+  same path against TestPyPI. Process and version/deprecation policy in `docs/release.md`.
+- `SECURITY.md`: private disclosure channel (GitHub private vulnerability reporting, email
+  fallback), response targets, and explicit scope notes (audit-log threat model, tier-2
+  data sharing).
 
 ## [0.3.0] — 2026-07-13
 

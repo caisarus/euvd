@@ -36,7 +36,13 @@ def test_gitlab_template_passes_schema_lint() -> None:
 
 
 def test_github_workflows_pass_schema_lint() -> None:
-    _schema_lint("vendor.github-workflows", *sorted((REPO / ".github" / "workflows").glob("*.yml")))
+    workflows = REPO / ".github" / "workflows"
+    # *.yaml matters: the release workflow is workflow.yaml (the name PyPI trusted
+    # publishing is registered against).
+    _schema_lint(
+        "vendor.github-workflows",
+        *sorted([*workflows.glob("*.yml"), *workflows.glob("*.yaml")]),
+    )
 
 
 def test_action_passes_schema_lint() -> None:
