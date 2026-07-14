@@ -88,16 +88,30 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
 - Deliberately not done: feedback_m2 3.4 "smaller items" (cache purge sweep, get_by_cve
   page cap, fixture annotations) — unchanged priority, revisit with M6's storage work.
 
+## Release 0.3.0 (2026-07-13)
+
+- [x] Tagged `v0.3.0` at `a142bff` (version bump 0.1.0→0.3.0, CHANGELOG cut). Git tag +
+      GHCR image only; PyPI name reserved 2026-07-14, 5.1 unblocked. GHCR `:0.3.0` and
+      `:latest` confirmed pushed (same digest, verified in the image.yml run log) — but
+      the ghcr.io/caisarus/euvd-watch package is PRIVATE (anonymous pull denied; GHCR
+      does not inherit repo visibility). Owner: flip package visibility to public in
+      GitHub UI (Packages → euvd-watch → Package settings → Change visibility).
+- [ ] M6 planned, awaiting owner sign-off (see session notes: storage source-of-truth
+      A/B decision, [web] extra, SECURITY.md contact, 1.1 target confirmation).
+
 ## Owner-blocked (cannot proceed without)
 
 - [x] GitHub org/name -> create remote, push (DONE 2026-07-13: private
       github.com/caisarus/euvd, branch renamed master->main, 27 commits force-pushed over
-      the stub initial commit). CI green still UNVERIFIED from the sandbox — owner to
-      check the Actions tab or install gh.
-- [ ] Reserve PyPI name `euvd-watch` (squatting risk, open since M1) — blocks M5 step 5.1
-      and the action/template default install path
-- [ ] Make the repo public (or pick the public org/home) — blocks the 5.3 copy-paste
-      acceptance check and external `uses:`/`include:`/GHCR consumption
+      the stub initial commit). CI VERIFIED 2026-07-14 via gh (now installed+authed):
+      demo job was red on the last two main pushes — examples/demo.sh committed as
+      100644 (WSL /mnt/c masks the missing exec bit; exit 126 on runners). Fixed in
+      `418772d`; full CI green (11 jobs), Image and nightly Live smoke green throughout.
+- [x] Reserve PyPI name `euvd-watch` (DONE 2026-07-14, owner) — 5.1 unblocked; trusted
+      publishing config on PyPI still pending (part of 5.1)
+- [x] Make the repo public (DONE 2026-07-14, owner; confirmed via API) — 5.3 copy-paste
+      acceptance now checkable once 5.1 ships the pip-installable release. GHCR package
+      visibility is separate and still private (see Release 0.3.0 note).
 
 ## Review — R1 (2026-07-10)
 
