@@ -26,7 +26,11 @@
       `db migrate` row.
 - [ ] Step 6.2 web application (FastAPI + Jinja2, [web] extra, basic auth, paginated
       findings + CLI table cap per M0/M1 review 3.7); populate vex_status_cache +
-      audit_log_refs read models.
+      audit_log_refs read models. **DESIGN SPEC READY:** docs/dashboard-design.md
+      (tokens, components, per-page wireframes, states, a11y, copy rules) + interactive
+      visual mockup https://claude.ai/code/artifact/4859edee-edb7-4c0e-aaee-553172192ddf
+      — build the templates from the spec (it governs appearance; implementation_plan
+      §6.2 + test_plan §6.2 govern behavior).
 - [ ] Revisit parked feedback_m2 3.4 small items with 6.2 storage work: cache purge
       sweep, get_by_cve page cap, fixture annotations.
 - [ ] Step 6.3 accessibility (WCAG 2.1 AA; pa11y CI gate zero serious/critical;
