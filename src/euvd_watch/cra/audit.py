@@ -133,6 +133,27 @@ class AuditLog:
         return entry
 
 
+def read_entries(path: Path) -> list[dict[str, Any]]:
+    """Best-effort parse of every complete line, oldest first. Does NOT verify the
+    chain - this is for display (web/dashboard.py's audit log page); pair with
+    `verify()` and slice to `result.entries` before treating a line as genuine, since a
+    damaged tail can still contain syntactically-valid-looking JSON."""
+    if not path.exists():
+        return []
+    entries: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line:
+            continue
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            break
+        if not isinstance(entry, dict):
+            break
+        entries.append(entry)
+    return entries
+
+
 def verify(path: Path) -> VerificationResult:
     """Recompute the whole chain; O(n), reports the FIRST broken entry precisely."""
     if not path.exists():

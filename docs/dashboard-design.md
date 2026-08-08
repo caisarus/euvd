@@ -287,7 +287,7 @@ RECENT FINDINGS                                              [ View all findings
 | **Empty** | Page-specific calm copy (see each page). Never celebratory; never implies safety. |
 | **Error** | A `--crit` bordered card: what went wrong + how to fix (e.g. "State DB not found at <path>. Run `euvd-watch db migrate` or check `state_dir`."). No stack traces, no apologies. |
 | **Stale / partial data** | If the read model is older than the last scan, or a source (EPSS/KEV) was unavailable, a `--warn` banner: "Enrichment data unavailable; EPSS/KEV columns may be blank." |
-| **Unauthorized** | 401 → a minimal sign-in page, same shell, one form. Never leak whether the user existed. |
+| **Unauthorized** | 401 with `WWW-Authenticate: Basic` → the browser's own native credential prompt (real HTTP Basic auth, per the engineering contract's "basic auth from config"; there is no custom HTML login page - a 401 response is never shown as a page, browsers intercept it). Username and password are each checked in constant time (`hmac.compare_digest`), never a short-circuiting `==`, so response timing never leaks which one was wrong. |
 
 ---
 

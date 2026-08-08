@@ -71,6 +71,19 @@ DEFAULT_CRA_STAGES = [
 ]
 
 
+class WebConfig(BaseModel):
+    """The self-hostable dashboard's auth (Step 6.2). `web serve` is basic-auth-only,
+    designed to sit behind a reverse proxy for TLS - see docs/deploy.md."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    username: str = "admin"
+    # A pbkdf2_sha256$<iterations>$<salt-hex>$<hash-hex> string from
+    # `euvd-watch web hash-password`. None means `web serve` refuses to start - a
+    # dashboard with no credential set would otherwise be wide open (SEC-precedent).
+    password_hash: str | None = None
+
+
 class Settings(BaseModel):
     """The single validated configuration object shared across all commands."""
 
@@ -103,6 +116,7 @@ class Settings(BaseModel):
     organization: OrganizationConfig = OrganizationConfig()
     cra_trigger: CraTriggerConfig = CraTriggerConfig()
     cra_stages: list[CraStageConfig] = Field(default_factory=lambda: list(DEFAULT_CRA_STAGES))
+    web: WebConfig = WebConfig()
 
     @field_validator("cache_dir", "state_dir", mode="after")
     @classmethod

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}euvd-watch{% endblock %} — euvd-watch dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='dashboard.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="app">
+    <header class="topbar">
+      <span class="brand"><span class="dot" aria-hidden="true"></span> euvd-watch</span>
+      <span class="spacer"></span>
+      <span class="scope mono">{{ state_dir }}</span>
+      <span class="fresh">rendered <span class="mono">{{ rendered_at }}</span></span>
+      <button class="theme-btn" id="theme-toggle" type="button" aria-label="Toggle color theme">◐ Theme</button>
+    </header>
+
+    <nav class="sidebar" aria-label="Primary">
+      <a class="navlink" href="{{ url_for('overview') }}" {% if active_page == 'overview' %}aria-current="page"{% endif %}>
+        <span class="ic" aria-hidden="true">▤</span> Overview
+      </a>
+      <a class="navlink" href="{{ url_for('findings_list') }}" {% if active_page == 'findings' %}aria-current="page"{% endif %}>
+        <span class="ic" aria-hidden="true">◈</span> Findings
+        {% if exploited_badge %}<span class="badge">{{ exploited_badge }}⚠</span>{% endif %}
+      </a>
+      <a class="navlink" href="{{ url_for('cra_events_list') }}" {% if active_page == 'cra' %}aria-current="page"{% endif %}>
+        <span class="ic" aria-hidden="true">◷</span> CRA events
+      </a>
+      <a class="navlink" href="{{ url_for('audit_log_page') }}" {% if active_page == 'audit' %}aria-current="page"{% endif %}>
+        <span class="ic" aria-hidden="true">⛓</span> Audit log
+      </a>
+      <div class="sidefoot">Signed in as <b>{{ username }}</b><br>{{ host }}:{{ port }} · behind reverse proxy</div>
+    </nav>
+
+    <main id="main">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function formatRemaining(seconds) {
+        var sign = seconds < 0 ? '+' : '';
+        var total = Math.abs(seconds);
+        var h = Math.floor(total / 3600);
+        var m = Math.floor((total % 3600) / 60);
+        var s = Math.floor(total % 60);
+        function pad(n) { return (n < 10 ? '0' : '') + n; }
+        return sign + pad(h) + ':' + pad(m) + ':' + pad(s);
+      }
+
+      function tickCountdowns() {
+        var nodes = document.querySelectorAll('[data-countdown-seconds]');
+        nodes.forEach(function (el) {
+          var value = parseInt(el.getAttribute('data-countdown-seconds'), 10);
+          el.textContent = formatRemaining(value);
+          el.setAttribute('data-countdown-seconds', value - 1);
+        });
+      }
+      if (document.querySelector('[data-countdown-seconds]')) {
+        tickCountdowns();
+        if (!reduceMotion) {
+          setInterval(tickCountdowns, 1000);
+        }
+      }
+
+      document.querySelectorAll('[data-copy-target]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var target = document.querySelector(btn.getAttribute('data-copy-target'));
+          if (target && navigator.clipboard) {
+            navigator.clipboard.writeText(target.textContent);
+            var original = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(function () { btn.textContent = original; }, 1500);
+          }
+        });
+      });
+
+      var themeBtn = document.getElementById('theme-toggle');
+      var root = document.documentElement;
+      themeBtn.addEventListener('click', function () {
+        var current = root.getAttribute('data-theme');
+        var isDark = current ? current === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      });
+    })();
+  </script>
+</body>
+</html>

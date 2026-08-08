@@ -16,11 +16,13 @@ from euvd_watch.euvd.match import Finding
 _TRACKED_FIELDS = ("confidence", "exploited", "in_kev", "epss_score", "cvss_score")
 
 
-def _key(finding: Finding) -> str:
+def finding_identity(finding: Finding) -> str:
     """Stable identity across runs: (component, EUVD record) pair.
 
     Deliberately not `cra/state.py::Event.make_id` - watch mode must work whether or not
     the CRA trigger is configured/used at all, so `watch/` does not depend on `cra/`.
+    Public: `web/dashboard.py` (Step 6.2) reuses this exact format to key the VEX-status
+    read model and Finding-detail URLs, so the identity space stays single-sourced.
     """
     return f"{finding.component.dedupe_key}|{finding.record.euvd_id}"
 
@@ -67,8 +69,8 @@ class DiffResult(BaseModel):
 
 def diff_findings(previous: list[Finding], current: list[Finding]) -> DiffResult:
     """Compare two findings snapshots. Unchanged findings produce no output at all."""
-    previous_by_key = {_key(f): f for f in previous}
-    current_by_key = {_key(f): f for f in current}
+    previous_by_key = {finding_identity(f): f for f in previous}
+    current_by_key = {finding_identity(f): f for f in current}
 
     new = [current_by_key[key] for key in current_by_key if key not in previous_by_key]
     resolved = [previous_by_key[key] for key in previous_by_key if key not in current_by_key]
@@ -81,7 +83,7 @@ def diff_findings(previous: list[Finding], current: list[Finding]) -> DiffResult
         and (fields := _changed_fields(previous_by_key[key], current_by_key[key]))
     ]
 
-    new.sort(key=_key)
-    resolved.sort(key=_key)
-    changed.sort(key=lambda c: _key(c.current))
+    new.sort(key=finding_identity)
+    resolved.sort(key=finding_identity)
+    changed.sort(key=lambda c: finding_identity(c.current))
     return DiffResult(new=new, resolved=resolved, changed=changed)

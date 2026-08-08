@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Overview</h1>
+  <p>What needs attention in <span class="mono">{{ view.sbom_path }}</span>{% if view.generated_at_iso %} — last matched <span class="mono">{{ view.generated_at_iso }}</span>{% endif %}.</p>
+</section>
+
+<div class="tiles">
+  <a class="tile" href="{{ url_for('findings_list') }}">
+    <span class="stripe" aria-hidden="true"></span>
+    <span class="eyebrow">Findings</span>
+    <span class="num">{{ view.findings_count }}</span>
+    <span class="sub">across the current scan</span>
+  </a>
+  <a class="tile {{ 'attn' if view.exploited_count else '' }}" href="{{ url_for('findings_list') }}?exploited=yes">
+    <span class="stripe" aria-hidden="true"></span>
+    <span class="eyebrow">Exploited</span>
+    <span class="num">{{ view.exploited_count }}{% if view.exploited_count %} <span class="pill pill--crit pill--filled">⚠</span>{% endif %}</span>
+    <span class="sub">{{ view.exploited_component_names[:2] | join(", ") if view.exploited_component_names else "none right now" }}</span>
+  </a>
+  <a class="tile {{ 'attn' if view.worst_open_state and view.worst_open_state.value == 'overdue' else ('warnt' if view.worst_open_state else '') }}" href="{{ url_for('cra_events_list') }}">
+    <span class="stripe" aria-hidden="true"></span>
+    <span class="eyebrow">Open CRA clocks</span>
+    <span class="num">{{ view.open_clock_count }}</span>
+    <span class="sub">{% if view.worst_open_state %}worst: {{ view.worst_open_state.value.replace('_', ' ') }}{% else %}nothing due soon{% endif %}</span>
+  </a>
+  <a class="tile {{ 'attn' if not view.audit_ok else 'okt' }}" href="{{ url_for('audit_log_page') }}">
+    <span class="stripe" aria-hidden="true"></span>
+    <span class="eyebrow">Audit log</span>
+    <span class="num">{{ "✓" if view.audit_ok else "✗" }}</span>
+    <span class="sub">{% if view.audit_ok %}chain intact · {{ view.audit_entries }} entries{% else %}broken at entry {{ view.audit_bad_line }}{% endif %}</span>
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-h"><h2>Open CRA clocks</h2><a href="{{ url_for('cra_events_list') }}">CRA events →</a></div>
+  {% if view.open_clocks %}
+  {% for clock in view.open_clocks %}
+  <div class="clock attn">
+    <div class="chead">
+      {% if clock.exploited %}<span class="pill pill--crit pill--filled">⚠ exploited</span>{% endif %}
+      <span class="id mono">{{ clock.euvd_id }}</span>
+      <span class="comp">{{ clock.component_name }}{% if clock.component_version %} {{ clock.component_version }}{% endif %}</span>
+      <a href="{{ url_for('cra_event_detail', url_id=clock.url_id) }}">details →</a>
+    </div>
+    {% for stage in clock.stages %}{{ m.deadline_bar(stage) }}{% endfor %}
+  </div>
+  {% endfor %}
+  {% else %}
+  <p class="empty-state">No clocks due soon or overdue right now.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-h"><h2>Recent findings</h2><a href="{{ url_for('findings_list') }}">View all findings →</a></div>
+  {% if view.recent_findings %}
+  {% for row in view.recent_findings %}
+  <a class="rowitem {{ row.stripe_class }}" href="{{ url_for('finding_detail', comp_hash=row.comp_hash, euvd_id=row.euvd_id) }}">
+    <div class="comp">{{ row.component_name }} <span class="ver mono">{{ row.component_version or "" }}</span></div>
+    <div class="id">{{ row.euvd_id }}</div>
+    <div class="grow"></div>
+    <div class="metaline">
+      {% if row.exploited %}<span class="pill pill--crit pill--filled">⚠ exploited</span>{% endif %}
+      {{ m.pill(row.confidence) }}
+      {{ m.pill(row.vex_status) }}
+    </div>
+  </a>
+  {% endfor %}
+  {% else %}
+  <p class="empty-state">No findings in the current scan. Absence of findings is not a guarantee of safety.</p>
+  {% endif %}
+</div>
+{% endblock %}

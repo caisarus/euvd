@@ -17,7 +17,7 @@ from euvd_watch.cra.state import EventStore
 from euvd_watch.euvd.match import Confidence, Finding, Strategy
 from euvd_watch.euvd.models import EuvdRecord
 from euvd_watch.models import Component, SourceFormat
-from euvd_watch.web.store import DB_FILENAME, Store, StoreError
+from euvd_watch.web.store import DB_FILENAME, Store, StoreError, VexStatusRow
 
 pytestmark = pytest.mark.unit
 
@@ -206,4 +206,76 @@ def test_legacy_event_with_unknown_shape_fails_loudly(tmp_path: Path) -> None:
     store = Store(tmp_path)
     with pytest.raises(StoreError, match="does not match this build's event schema"):
         store.migrate()
+    store.close()
+
+
+def test_vex_status_cache_rebuild_replaces_everything(tmp_path: Path) -> None:
+    store = Store(tmp_path)
+    store.migrate()
+
+    store.rebuild_vex_status_cache(
+        [
+            VexStatusRow(
+                finding_key="purl:pkg:pypi/jinja2@3.1.6|EUVD-1",
+                status="under_investigation",
+                justification=None,
+                source="automated",
+                updated_at="2026-08-08T12:00:00+00:00",
+            )
+        ]
+    )
+    assert set(store.list_vex_statuses()) == {"purl:pkg:pypi/jinja2@3.1.6|EUVD-1"}
+
+    # A second rebuild with different content REPLACES, never appends.
+    store.rebuild_vex_status_cache(
+        [
+            VexStatusRow(
+                finding_key="purl:pkg:pypi/requests@2.31.0|EUVD-2",
+                status="not_affected",
+                justification="component_not_present",
+                source="automated",
+                updated_at="2026-08-08T13:00:00+00:00",
+            )
+        ]
+    )
+    statuses = store.list_vex_statuses()
+    assert set(statuses) == {"purl:pkg:pypi/requests@2.31.0|EUVD-2"}
+    row = statuses["purl:pkg:pypi/requests@2.31.0|EUVD-2"]
+    assert row.status == "not_affected"
+    assert row.justification == "component_not_present"
+    store.close()
+
+
+def test_vex_status_cache_empty_rebuild_clears(tmp_path: Path) -> None:
+    store = Store(tmp_path)
+    store.migrate()
+    store.rebuild_vex_status_cache(
+        [
+            VexStatusRow(
+                finding_key="k",
+                status="affected",
+                justification=None,
+                source="human",
+                updated_at="2026-08-08T12:00:00+00:00",
+            )
+        ]
+    )
+    store.rebuild_vex_status_cache([])
+    assert store.list_vex_statuses() == {}
+    store.close()
+
+
+def test_audit_log_refs_upsert_and_list(tmp_path: Path) -> None:
+    store = Store(tmp_path)
+    store.migrate()
+    store.record_audit_log_ref("/state/cra-audit.jsonl", "2026-08-08T12:00:00+00:00")
+    assert store.list_audit_log_refs() == [
+        ("/state/cra-audit.jsonl", "2026-08-08T12:00:00+00:00")
+    ]
+
+    # Re-registering the same path updates recorded_at, never duplicates the row.
+    store.record_audit_log_ref("/state/cra-audit.jsonl", "2026-08-08T13:00:00+00:00")
+    assert store.list_audit_log_refs() == [
+        ("/state/cra-audit.jsonl", "2026-08-08T13:00:00+00:00")
+    ]
     store.close()

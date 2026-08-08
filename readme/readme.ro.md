@@ -3,10 +3,12 @@
 **Toolkit nativ EUVD pentru supravegherea vulnerabilităților din lanțul de aprovizionare software + raportare conform EU Cyber Resilience Act (CRA).**
 
 > ⚠️ **Status: în lucru.** API-urile și structura se pot schimba până la `1.0.0`.
-> Tabelul de comenzi de mai jos marchează ce este **✅ disponibil azi** față de **🚧
-> planificat** — milestone-urile M0–M5 (scan, match, VEX, fluxul CRA, modul `watch`,
-> imaginea Docker, GitHub Action-ul, template-ul GitLab, release-urile PyPI) sunt
-> implementate și testate. Dashboard-ul apare în `1.1`.
+> Tabelul de comenzi de mai jos marchează ce este **✅ disponibil azi** față de **🧪
+> beta** față de **🚧 planificat** — milestone-urile M0–M5 (scan, match, VEX, fluxul
+> CRA, modul `watch`, imaginea Docker, GitHub Action-ul, template-ul GitLab,
+> release-urile PyPI) sunt implementate și testate. Dashboard-ul (M6) este implementat
+> și utilizabil azi (`web serve`), dar încă **beta**: verificarea de accesibilitate și
+> un ghid de desfășurare apar înaintea versiunii `1.1` GA.
 >
 > *Această traducere urmează [README-ul în engleză](README.md); în caz de divergență,
 > versiunea engleză este cea de referință.*
@@ -83,7 +85,7 @@ euvd-watch watch sbom.cdx.json --interval 6h
 | `cra verify-log` | ✅ | Verifică jurnalul de audit tamper-evident (hash-chained); numește prima intrare ruptă. |
 | `watch <sbom>` | ✅ | Re-corelează programat (`--interval 6h`) sau o singură dată (`--once`, implicit) și notifică **doar finding-urile noi/rezolvate/schimbate** (stdout, și `--webhook URL`). Vezi `docs/watch.md`. |
 | `db migrate` | ✅ | Aplică migrările de schemă pe baza de date de stare consolidată (`state_dir/euvd-watch.sqlite`) și importă fișierele de stare pre-0.4. Rulează transparent la fiecare comandă care atinge starea; comanda o face explicit. Vezi `docs/storage.md`. |
-| `web serve` | 🚧 post-1.0 (planificat pentru `1.1`) | Dashboard self-hostable, conform WCAG: finding-uri, statusuri VEX, countdown-uri CRA, audit log. |
+| `web serve` | 🧪 beta (țintă `1.1`) | Dashboard self-hostable: finding-uri, statusuri VEX, countdown-uri CRA, audit log, o singură acțiune de scriere protejată prin parolă. `web hash-password` generează credențiala. Verificarea de accesibilitate (WCAG 2.1 AA) și un ghid de desfășurare rămân deschise — vezi `docs/web.md`. |
 
 Toate comenzile implementate suportă `--output json|table` și coduri de ieșire prietenoase
 cu CI (`0` curat, `1` finding-uri, `2` eroare). Comenzile neimplementate ies cu `2` și un

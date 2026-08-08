@@ -1,0 +1,24 @@
+{% macro pill(view) -%}
+<span class="pill {{ view.css_class }}">{{ view.label }}</span>
+{%- endmacro %}
+
+{% macro deadline_bar(bar) -%}
+<div class="stage">
+  <span class="name">{{ bar.stage_label }}</span>
+  {% if bar.has_bar %}
+  <progress class="track {{ 'crit' if bar.remaining_seconds is not none and bar.remaining_seconds < 0 else ('warn' if bar.pill.css_class == 'pill--warn pill--outline' else '') }}"
+            value="{{ bar.progress_value }}" max="{{ bar.progress_max }}"
+            aria-label="{{ bar.stage_label }} progress"></progress>
+  {% else %}
+  {{ pill(bar.pill) }}
+  {% endif %}
+  <span class="remain {{ 'crit' if bar.remaining_seconds is not none and bar.remaining_seconds < 0 else ('warn' if bar.pill.css_class == 'pill--warn pill--outline' else 'ok') }}">
+    {% if bar.remaining_seconds is not none %}
+    <span aria-live="polite" data-countdown-seconds="{{ bar.remaining_seconds }}">{{ bar.remaining_text }}</span>
+    <span class="visually-hidden">deadline {{ bar.deadline_iso }}</span>
+    {% else %}
+    {{ bar.remaining_text }}{% if bar.completed_note %} — {{ bar.completed_note }}{% endif %}
+    {% endif %}
+  </span>
+</div>
+{%- endmacro %}

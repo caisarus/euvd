@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>{{ title }}</h1>
+</section>
+<div class="banner-crit">
+  <span>{{ message }}</span>
+  {% if hint %}<code>{{ hint }}</code>{% endif %}
+</div>
+{% endblock %}

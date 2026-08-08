@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}CRA events{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>CRA events</h1>
+  <p>Reporting clocks for findings that fired the CRA trigger policy.</p>
+</section>
+
+<div class="disclaimer">
+  <span aria-hidden="true">⚖</span>
+  <span><b>euvd-watch assists preparation and record-keeping.</b> Legal validation and submission to your CSIRT / authority remain your responsibility — this tool never files anything.</span>
+</div>
+
+{% if rows %}
+<div class="tablewrap">
+  <table>
+    <caption class="visually-hidden">CRA trigger events, open events first</caption>
+    <thead>
+      <tr>
+        <th scope="col">Event id</th>
+        <th scope="col">EUVD id</th>
+        <th scope="col">Component</th>
+        <th scope="col">First seen (UTC)</th>
+        <th scope="col">Fired rules</th>
+        <th scope="col">Worst stage state</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td><a class="rowlink mono" href="{{ url_for('cra_event_detail', url_id=row.url_id) }}">{{ row.event_id }}</a></td>
+        <td class="tbl-mono">{{ row.euvd_id }}</td>
+        <td>{{ row.component_name }} <span class="tbl-mono">{{ row.component_version or "" }}</span></td>
+        <td class="tbl-mono">{{ row.first_seen_iso }}</td>
+        <td>
+          {% for rule in row.fired_rules %}<span class="chip">{{ rule.replace("_", " ") }}</span>{% endfor %}
+        </td>
+        <td>{{ m.pill(row.worst) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="empty-state">No CRA trigger events yet. Run <span class="mono">euvd-watch cra check &lt;sbom&gt;</span> to evaluate the trigger.</p>
+{% endif %}
+{% endblock %}

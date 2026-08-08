@@ -28,6 +28,7 @@ so recording new awareness is never blocked.
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import json
 import logging
 import sqlite3
@@ -46,8 +47,33 @@ _LEGACY_WATCH_DIRNAME = "watch"
 _MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 
 
+def sbom_snapshot_key(sbom: str) -> str:
+    """One snapshot row per watched SBOM, keyed by its resolved path so re-runs from a
+    different working directory still hit the same snapshot. Same key derivation as the
+    pre-6.1 per-file layout, so migrated rows keep matching their SBOMs. Public: both
+    `cli.py::watch` and `web/dashboard.py` (Step 6.2) must compute the identical key to
+    find the same snapshot row."""
+    return hashlib.sha256(str(Path(sbom).resolve()).encode("utf-8")).hexdigest()[:16]
+
+
 class StoreError(Exception):
     """Raised when the consolidated state store cannot be read, written, or migrated."""
+
+
+class VexStatusRow(BaseModel):
+    """One dashboard-cached VEX status, keyed like `watch/differ.py`'s finding identity:
+    `f"{component.dedupe_key}|{record.euvd_id}"`. Always rebuildable from
+    vex-decisions.yaml + the current findings (web/dashboard.py) - this table is a read
+    model, never the source of truth (M6 sign-off, docs/AUDIT_AND_REMEDIATION_PLAN.md
+    §17)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    finding_key: str
+    status: str
+    justification: str | None
+    source: str  # "automated" | "human"
+    updated_at: str
 
 
 class MigrationReport(BaseModel):
@@ -259,6 +285,73 @@ class Store:
             self._conn.commit()
         except sqlite3.Error as exc:
             raise StoreError(f"Could not write watch snapshot to {self.path}: {exc}") from exc
+
+    # -- VEX status read model (Step 6.2) ------------------------------------------
+
+    def rebuild_vex_status_cache(self, rows: list[VexStatusRow]) -> None:
+        """Replace the entire cache with `rows` in one transaction.
+
+        A rebuild, not an incremental update - the dashboard recomputes the full set
+        from vex-decisions.yaml + the current findings on every read (never trusts a
+        possibly-stale cache for what it *shows*) and calls this only to keep the read
+        model populated for other consumers, per the Step 6.1 sign-off.
+        """
+        try:
+            self._conn.execute("DELETE FROM vex_status_cache")
+            self._conn.executemany(
+                "INSERT INTO vex_status_cache "
+                "(finding_key, status, justification, source, updated_at) "
+                "VALUES (?, ?, ?, ?, ?)",
+                [
+                    (row.finding_key, row.status, row.justification, row.source, row.updated_at)
+                    for row in rows
+                ],
+            )
+            self._conn.commit()
+        except sqlite3.Error as exc:
+            raise StoreError(f"Could not write VEX status cache to {self.path}: {exc}") from exc
+
+    def list_vex_statuses(self) -> dict[str, VexStatusRow]:
+        try:
+            rows = self._conn.execute(
+                "SELECT finding_key, status, justification, source, updated_at "
+                "FROM vex_status_cache"
+            ).fetchall()
+        except sqlite3.Error as exc:
+            raise StoreError(f"Could not read VEX status cache from {self.path}: {exc}") from exc
+        return {
+            finding_key: VexStatusRow(
+                finding_key=finding_key,
+                status=status,
+                justification=justification,
+                source=source,
+                updated_at=updated_at,
+            )
+            for finding_key, status, justification, source, updated_at in rows
+        }
+
+    # -- audit log references (Step 6.2) --------------------------------------------
+
+    def record_audit_log_ref(self, path: str, recorded_at: str) -> None:
+        """Register a known audit-log file location. A reference only - the log's
+        content always stays in the file (tamper-evidence carve-out, §17)."""
+        try:
+            self._conn.execute(
+                "INSERT OR REPLACE INTO audit_log_refs (path, recorded_at) VALUES (?, ?)",
+                (path, recorded_at),
+            )
+            self._conn.commit()
+        except sqlite3.Error as exc:
+            raise StoreError(f"Could not write audit log ref to {self.path}: {exc}") from exc
+
+    def list_audit_log_refs(self) -> list[tuple[str, str]]:
+        try:
+            rows = self._conn.execute(
+                "SELECT path, recorded_at FROM audit_log_refs ORDER BY path"
+            ).fetchall()
+        except sqlite3.Error as exc:
+            raise StoreError(f"Could not read audit log refs from {self.path}: {exc}") from exc
+        return [(path, recorded_at) for path, recorded_at in rows]
 
     # -- plumbing -----------------------------------------------------------------
 

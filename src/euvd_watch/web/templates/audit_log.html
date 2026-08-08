@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Audit log</h1>
+  <p>Append-only, hash-chained record of every CRA action.</p>
+</section>
+
+<div class="verify {{ 'okv' if view.ok else 'badv' }}">
+  {% if view.ok %}
+  <span class="verdict"><span aria-hidden="true">✓</span> Chain intact</span>
+  <span class="mono">{{ view.entries_count }} entries</span>
+  {% else %}
+  <span class="verdict"><span aria-hidden="true">✗</span> Chain broken at entry {{ view.bad_line }}</span>
+  <span>{{ view.reason }}</span>
+  {% endif %}
+  <span class="spacer"></span>
+  <a class="btn btn--ghost" href="{{ url_for('audit_log_page') }}">Re-verify</a>
+</div>
+
+{% if view.entries %}
+<div class="entries">
+  {% for entry in view.entries %}
+  <div class="entry">
+    <div class="etop">
+      <span class="chip">{{ entry.actor }}</span>
+      <span class="action">{{ entry.summary }}</span>
+      <span class="when mono">{{ entry.ts_iso }}</span>
+    </div>
+    <div class="hashline">
+      <span><b>entry</b> {{ entry.entry_hash[:12] }}…</span>
+      {% if entry.is_genesis %}<span>(chain start)</span>{% else %}<span><b>prev</b> {{ entry.prev_hash[:12] }}…</span>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty-state">No audit log entries yet.</p>
+{% endif %}
+
+<p class="aside">"Tamper-evident" means any edit to a past entry breaks the chain and is detected here. It cannot stop a fully-privileged attacker who rewrites the whole file and every hash after it — keep the log on append-only / off-host storage for that threat.</p>
+{% endblock %}

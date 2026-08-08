@@ -17,6 +17,21 @@ breaking changes (each one listed explicitly below).
   are renamed `.migrated-<timestamp>`, never deleted. The audit log and
   `vex-decisions.yaml` deliberately stay files (tamper-evidence / human input of
   record). See `docs/storage.md`.
+- **Web dashboard, beta (milestone M6, Step 6.2)**: `euvd-watch web serve <sbom>`
+  serves a read-mostly dashboard over the state store — Overview, Findings
+  (filterable/paginated), Finding detail (verbatim match explanation, EUVD data, a VEX
+  decision-shortcut snippet), CRA events with deadline countdowns, and a hash-chain
+  audit-log viewer with a re-verify control. HTTP Basic auth on every route
+  (`euvd-watch web hash-password` sets the credential; PBKDF2-HMAC-SHA256, 600k
+  iterations); the one write action ("Mark stage complete") records the same audit
+  trail as `cra mark`. Server-rendered Jinja2, no SPA, no inline styles/handlers.
+  Requires the new `[web]` extra (`pip install 'euvd-watch[web]'`); the core CLI stays
+  dependency-lean. Design spec: `docs/dashboard-design.md`; usage: `docs/web.md`.
+  Accessibility verification (Step 6.3) and a deployment guide (Step 6.4) are still
+  open before `1.1` GA.
+- The CLI's human-readable tables (`scan`, `match`) now cap at 50 rows with an
+  "… and N more" footer instead of printing unbounded output (M0/M1 review 3.7);
+  `--output json` is unaffected.
 
 ## [0.3.1] — 2026-08-08
 

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Draft — {{ event_id }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Notification draft</h1>
+  <p class="mono">{{ event_id }}</p>
+</section>
+
+<div class="disclaimer">
+  <span aria-hidden="true">⚖</span>
+  <span><b>This is a machine-prepared DRAFT.</b> It has not been submitted anywhere and euvd-watch never submits anything. Complete every <span class="mono">TODO-HUMAN</span> field and file through your official channel.</span>
+</div>
+
+<div class="card">
+  <div class="card-h">
+    <h2>Markdown draft</h2>
+    <button class="btn btn--ghost" type="button" data-copy-target="#draft-text">Copy</button>
+  </div>
+  <div class="card-body">
+    <pre class="snippet" id="draft-text">{{ draft_text }}</pre>
+  </div>
+</div>
+
+<p><a href="{{ url_for('cra_event_detail', url_id=url_id) }}">← Back to event</a></p>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}{{ view.component_name }} — {{ view.euvd_id }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1 class="mono">{{ view.component_name }} {{ view.component_version or "" }}</h1>
+  <p>
+    <span class="mono">{{ view.euvd_id }}</span>
+    {% if view.exploited %}<span class="pill pill--crit pill--filled">⚠ exploited</span>{% endif %}
+    {{ m.pill(view.confidence) }}
+    {{ m.pill(view.vex_status) }}
+  </p>
+</section>
+
+<div class="card">
+  <div class="card-h"><h2>Why the tool matched this</h2></div>
+  <div class="card-body">
+    <div class="well">{{ view.explanation }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-h"><h2>EUVD data</h2></div>
+  <div class="card-body">
+    <dl class="evidence">
+      <dt>Matching strategy</dt><dd>{{ view.strategy }}</dd>
+      <dt>Description</dt><dd>{{ view.euvd_description or "—" }}</dd>
+      <dt>Affected products</dt>
+      <dd>
+        {% if view.affected_products %}
+        <ul>
+          {% for p in view.affected_products %}
+          <li>{{ p.vendor or "(vendor unknown)" }} / {{ p.product }} — <span class="mono">{{ p.version_range or "(no range published)" }}</span></li>
+          {% endfor %}
+        </ul>
+        {% else %}—{% endif %}
+      </dd>
+      <dt>Package identifier</dt><dd class="mono">{{ view.component_purl or "—" }}</dd>
+      <dt>Aliases</dt><dd class="mono">{{ view.aliases | join(", ") if view.aliases else "—" }}</dd>
+      <dt>Exploited since</dt><dd>{{ view.exploited_since or "—" }}</dd>
+      <dt>EPSS score</dt><dd class="mono">{{ view.epss_text }}</dd>
+      <dt>In CISA KEV</dt><dd>{{ view.in_kev_text }}</dd>
+      {% if view.references %}
+      <dt>References</dt>
+      <dd><ul>{% for r in view.references %}<li class="mono">{{ r }}</li>{% endfor %}</ul></dd>
+      {% endif %}
+    </dl>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-h"><h2>VEX status</h2></div>
+  <div class="card-body">
+    <dl class="evidence">
+      <dt>Status</dt><dd>{{ m.pill(view.vex_status) }} {% if view.vex_is_human %}(human decision){% else %}(automated draft){% endif %}</dd>
+      {% if view.vex_justification %}<dt>Justification</dt><dd>{{ view.vex_justification }}</dd>{% endif %}
+      <dt>Explanation</dt><dd>{{ view.vex_explanation }}</dd>
+    </dl>
+    {% if not view.vex_is_human %}
+    <p class="eyebrow section-label">Record a human decision</p>
+    <p>euvd-watch never sets <span class="mono">affected</span>/<span class="mono">fixed</span> automatically. To record your own judgment, add this entry to <span class="mono">vex-decisions.yaml</span>:</p>
+    <pre class="snippet">{{ view.vex_snippet }}</pre>
+    <p>Then re-generate the OpenVEX document:</p>
+    <pre class="snippet">{{ view.vex_cli_hint }}</pre>
+    {% endif %}
+  </div>
+</div>
+
+{% if view.cra_event_url_id %}
+<div class="disclaimer">
+  <span aria-hidden="true">⚖</span>
+  <span>This finding fired a CRA reporting event. <a href="{{ url_for('cra_event_detail', url_id=view.cra_event_url_id) }}">View the CRA event and deadlines →</a></span>
+</div>
+{% endif %}
+{% endblock %}

@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import ParamSpec
+from typing import Any, ParamSpec
 
 import typer
 import yaml
@@ -26,6 +26,8 @@ from rich.table import Table
 
 from euvd_watch import __version__
 from euvd_watch.config import ConfigError, Settings, load_settings
+from euvd_watch.cra.actions import UnknownStageError, validate_stage_name
+from euvd_watch.cra.actions import mark as cra_mark_action
 from euvd_watch.cra.audit import AuditError, AuditLog
 from euvd_watch.cra.audit import verify as verify_audit_log
 from euvd_watch.cra.clock import ClockState, compute_all, is_event_open
@@ -45,6 +47,11 @@ from euvd_watch.euvd.match import (
     match_inventory,
 )
 from euvd_watch.euvd.models import EuvdRecord
+from euvd_watch.findings_artifact import (
+    FindingsArtifactError,
+    load_findings_artifact,
+    parse_findings_artifact,
+)
 from euvd_watch.http import ApiClient, ApiError
 from euvd_watch.log import setup_logging
 from euvd_watch.models import Inventory
@@ -57,15 +64,17 @@ from euvd_watch.vex.model import Status
 from euvd_watch.vex.write import render
 from euvd_watch.watch.differ import DiffResult, diff_findings
 from euvd_watch.watch.sinks import NotificationSink, StdoutSink, WebhookSink
-from euvd_watch.web.store import Store, StoreError
+from euvd_watch.web.store import Store, StoreError, sbom_snapshot_key
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 vex_app = typer.Typer(no_args_is_help=True)
 cra_app = typer.Typer(no_args_is_help=True)
 db_app = typer.Typer(no_args_is_help=True)
+web_app = typer.Typer(no_args_is_help=True)
 app.add_typer(vex_app, name="vex", help="OpenVEX statement generation.")
 app.add_typer(cra_app, name="cra", help="CRA Article 14 reporting workflow.")
 app.add_typer(db_app, name="db", help="Consolidated state database maintenance.")
+app.add_typer(web_app, name="web", help="Self-hostable dashboard.")
 
 
 class OutputFormat(StrEnum):
@@ -135,6 +144,19 @@ def version() -> None:
     typer.echo(__version__)
 
 
+# A table is a terminal-scale artifact; a 5,000-component SBOM printing 5,000 rows is
+# not (M0/M1 review 3.7 - "Table output is unbounded"). --output json always carries
+# every row; this cap only ever affects the human-readable table.
+_TABLE_ROW_LIMIT = 50
+
+
+def _echo_row_limit_note(total: int) -> None:
+    if total > _TABLE_ROW_LIMIT:
+        typer.echo(
+            f"… and {total - _TABLE_ROW_LIMIT} more (use --output json to see all).", err=True
+        )
+
+
 @app.command()
 @cli_command
 def scan(
@@ -167,7 +189,7 @@ def scan(
     table.add_column("PURL")
     table.add_column("Type")
     table.add_column("Flags")
-    for component in inventory.components:
+    for component in inventory.components[:_TABLE_ROW_LIMIT]:
         table.add_row(
             component.name,
             component.version or "",
@@ -176,6 +198,7 @@ def scan(
             "synthesized" if component.synthesized else "",
         )
     Console().print(table)
+    _echo_row_limit_note(len(inventory.components))
     typer.echo(summary)
 
 
@@ -277,7 +300,7 @@ def _render_findings_table(findings: list[Finding], title: str) -> None:
     table.add_column("KEV")
     table.add_column("Why")
     colors = {Confidence.HIGH: "red", Confidence.MEDIUM: "yellow", Confidence.LOW: "cyan"}
-    for f in findings:
+    for f in findings[:_TABLE_ROW_LIMIT]:
         table.add_row(
             f"{f.component.name} {f.component.version or ''}".strip(),
             f.record.euvd_id,
@@ -288,6 +311,7 @@ def _render_findings_table(findings: list[Finding], title: str) -> None:
             f.explanation,
         )
     Console().print(table)
+    _echo_row_limit_note(len(findings))
 
 
 @app.command()
@@ -388,36 +412,6 @@ def match(
         raise typer.Exit(code=1)
 
 
-class FindingsArtifactError(Exception):
-    """Raised when a saved findings artifact (--findings) can't be loaded."""
-
-
-def _load_findings_artifact(path: Path) -> list[Finding]:
-    raw = path.read_text(encoding="utf-8")  # OSError -> caught by the cli_command boundary
-    return _parse_findings_artifact(raw, str(path))
-
-
-def _parse_findings_artifact(raw: str, source: str) -> list[Finding]:
-    """Parse a findings artifact from JSON text; `source` names it in error messages."""
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        raise FindingsArtifactError(f"{source} is not valid JSON: {exc}") from exc
-    if not isinstance(data, dict) or "findings" not in data:
-        raise FindingsArtifactError(
-            f"{source} does not look like a findings artifact (missing 'findings')."
-        )
-    if data.get("schema_version") != 1:
-        raise FindingsArtifactError(
-            f"{source} has schema_version={data.get('schema_version')!r}, expected 1. "
-            f"This build of euvd-watch only understands schema_version 1."
-        )
-    try:
-        return [Finding.model_validate(f) for f in data["findings"]]
-    except Exception as exc:  # pydantic.ValidationError, kept generic to avoid a new import
-        raise FindingsArtifactError(f"{source} contains invalid finding data: {exc}") from exc
-
-
 def _evaluations_for(
     inventory: Inventory, settings: Settings, *, findings_path: Path | None
 ) -> tuple[list[Evaluation], bool]:
@@ -429,7 +423,7 @@ def _evaluations_for(
     conservative - less certainty available defaults to under_investigation, not a guess.
     """
     if findings_path is not None:
-        findings = _load_findings_artifact(findings_path)
+        findings = load_findings_artifact(findings_path)
         return [finding_to_evaluation(f) for f in findings], False
 
     api = ApiClient(settings.cache_dir, settings.cache_ttl_hours)
@@ -653,7 +647,7 @@ def _compute_findings(
     """Findings for a saved artifact, or a live match + enrichment - shared by `cra check`
     and `watch` (both need the same "match, then enrich, then hand me findings" pipeline)."""
     if findings_path is not None:
-        return _load_findings_artifact(findings_path)
+        return load_findings_artifact(findings_path)
 
     try:
         inventory, _dropped = load_inventory_with_stats(sbom)
@@ -946,32 +940,29 @@ def cra_mark(
         typer.echo("Nothing to record: pass --stage NAME and/or --remediation-available.", err=True)
         raise typer.Exit(code=2)
 
-    valid_stages = [s.name for s in settings.cra_stages]
-    if stage is not None and stage not in valid_stages:
-        typer.echo(
-            f"Unknown stage {stage!r}. Configured stages: {', '.join(valid_stages)}", err=True
-        )
-        raise typer.Exit(code=2)
+    if stage is not None:
+        try:
+            validate_stage_name(stage, settings.cra_stages)
+        except UnknownStageError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(code=2) from exc
 
     now = datetime.now(UTC)
     store = _event_store(settings)
     log = _audit_log(settings)
     try:
+        cra_mark_action(
+            store,
+            log,
+            event_id,
+            stage=stage,
+            note=note,
+            remediation_available=remediation_available,
+            now=now,
+        )
         if remediation_available:
-            store.set_remediation_available(event_id, now)
-            log.append(
-                "remediation_marked",
-                {"event_id": event_id, "at": now.isoformat(), "note": note},
-                actor="human",
-            )
             typer.echo(f"Recorded remediation availability for {event_id} at {now.isoformat()}.")
         if stage is not None:
-            store.mark_stage_completed(event_id, stage, now, note)
-            log.append(
-                "stage_marked",
-                {"event_id": event_id, "stage": stage, "at": now.isoformat(), "note": note},
-                actor="human",
-            )
             typer.echo(f"Marked stage '{stage}' completed for {event_id} at {now.isoformat()}.")
     except KeyError as exc:
         typer.echo(f"No CRA event with id {event_id!r}. See 'euvd-watch cra status'.", err=True)
@@ -1021,25 +1012,18 @@ def _parse_interval(text: str) -> float:
     return int(value) * _INTERVAL_UNITS[unit]
 
 
-def _watch_snapshot_key(sbom: str) -> str:
-    """One snapshot row per watched SBOM, keyed by its resolved path so re-runs from a
-    different working directory still hit the same snapshot. Same key derivation as the
-    pre-6.1 per-file layout, so migrated rows keep matching their SBOMs."""
-    return hashlib.sha256(str(Path(sbom).resolve()).encode("utf-8")).hexdigest()[:16]
-
-
 def _load_watch_snapshot(store: Store, sbom_key: str) -> list[Finding]:
     """The previous run's findings, or an empty list on the very first run."""
     raw = store.load_watch_snapshot(sbom_key)
     if raw is None:
         return []
-    return _parse_findings_artifact(raw, f"watch snapshot {sbom_key!r}")
+    return parse_findings_artifact(raw, f"watch snapshot {sbom_key!r}")
 
 
 def _save_watch_snapshot(
     store: Store, sbom_key: str, findings: list[Finding], generated_at: str
 ) -> None:
-    # Deliberately the same minimal shape `_parse_findings_artifact` already understands
+    # Deliberately the same minimal shape `parse_findings_artifact` already understands
     # (schema_version + findings) - a watch snapshot has no SBOM/data-freshness of its own
     # to report, unlike `match --save-findings`'s fuller artifact.
     artifact = {
@@ -1076,7 +1060,7 @@ def _run_watch_cycle(
     """One check-and-diff cycle: load the previous snapshot, match+enrich, diff, notify,
     persist the new snapshot - always, even when the diff is empty, so the next cycle
     compares against the latest data."""
-    sbom_key = _watch_snapshot_key(sbom)
+    sbom_key = sbom_snapshot_key(sbom)
     store = _state_store(settings)
     try:
         previous = _load_watch_snapshot(store, sbom_key)
@@ -1206,6 +1190,85 @@ def db_migrate(ctx: typer.Context) -> None:
         )
         for renamed in report.renamed_legacy:
             typer.echo(f"  original kept as: {renamed}")
+
+
+class WebExtraMissingError(Exception):
+    """Raised when `web serve` runs without the `[web]` extra installed."""
+
+
+def _import_web_app() -> tuple[Any, Any]:
+    """Import euvd_watch.web.app lazily so the base install never needs fastapi/uvicorn.
+
+    A thin wrapper (rather than importing inline in `web_serve`) so tests can
+    monkeypatch this one function to simulate a missing `[web]` extra without actually
+    uninstalling anything from the test environment.
+    """
+    try:
+        from euvd_watch.web.app import create_app, run_server
+    except ImportError as exc:
+        raise WebExtraMissingError() from exc
+    return create_app, run_server
+
+
+@web_app.command("serve")
+@cli_command
+def web_serve(
+    ctx: typer.Context,
+    sbom: str = typer.Argument(
+        ..., help="Path to the CycloneDX/SPDX SBOM being watched (its watch snapshot is shown)."
+    ),
+    host: str = typer.Option(
+        "127.0.0.1", "--host", help="Bind address. Keep this on localhost behind a reverse proxy."
+    ),
+    port: int = typer.Option(8642, "--port", help="Bind port."),
+) -> None:
+    """Serve the self-hostable dashboard over `euvd-watch watch`'s stored findings.
+
+    Requires the `[web]` extra (`pip install 'euvd-watch[web]'`) and a password hash
+    configured at `web.password_hash` (see 'euvd-watch web hash-password'). Designed to
+    sit behind a reverse proxy for TLS - see docs/deploy.md.
+    """
+    state: GlobalState = ctx.obj
+    settings = state.settings
+
+    try:
+        create_app, run_server = _import_web_app()
+    except WebExtraMissingError as exc:
+        typer.echo(
+            "The web dashboard requires the [web] extra: pip install 'euvd-watch[web]'.",
+            err=True,
+        )
+        raise typer.Exit(code=2) from exc
+
+    if settings.web.password_hash is None:
+        typer.echo(
+            "web serve requires a password hash in config: set 'web.password_hash' in "
+            "euvd-watch.yaml (generate one with 'euvd-watch web hash-password').",
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
+    application = create_app(settings, sbom_path=sbom, host=host, port=port)
+    typer.echo(
+        f"Serving the dashboard on http://{host}:{port} (Ctrl+C to stop). "
+        f"Bind only to localhost/behind a reverse proxy - see docs/deploy.md.",
+        err=True,
+    )
+    run_server(application, host=host, port=port)
+
+
+@web_app.command("hash-password")
+@cli_command
+def web_hash_password(
+    password: str = typer.Option(
+        ..., prompt=True, hide_input=True, confirmation_prompt=True, help="The dashboard password."
+    ),
+) -> None:
+    """Hash a password for `web.password_hash` in euvd-watch.yaml. Prompts interactively
+    (hidden input) so the plaintext password never lands in shell history."""
+    from euvd_watch.web.auth import hash_password
+
+    typer.echo(hash_password(password))
 
 
 if __name__ == "__main__":

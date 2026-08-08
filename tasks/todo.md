@@ -24,15 +24,41 @@
       cycle verified (snapshot row lands in DB, WAL, exit codes 1 then 0).
       docs/storage.md written; cra.md/watch.md storage sections updated; README EN+RO
       `db migrate` row.
-- [ ] Step 6.2 web application (FastAPI + Jinja2, [web] extra, basic auth, paginated
-      findings + CLI table cap per M0/M1 review 3.7); populate vex_status_cache +
-      audit_log_refs read models. **DESIGN SPEC READY:** docs/dashboard-design.md
-      (tokens, components, per-page wireframes, states, a11y, copy rules) + interactive
-      visual mockup https://claude.ai/code/artifact/4859edee-edb7-4c0e-aaee-553172192ddf
-      — build the templates from the spec (it governs appearance; implementation_plan
-      §6.2 + test_plan §6.2 govern behavior).
-- [ ] Revisit parked feedback_m2 3.4 small items with 6.2 storage work: cache purge
-      sweep, get_by_cve page cap, fixture annotations.
+- [x] Step 6.2 web application — DONE 2026-08-08 (beta). FastAPI + server-rendered
+      Jinja2 (`web/app.py`, `web/dashboard.py` view-model layer, `web/store.py`
+      read-model methods, `web/auth.py` PBKDF2 basic-auth, `web/templates/*.html`,
+      `web/static/dashboard.css` — all from docs/dashboard-design.md's tokens/spec).
+      New `[web]` extra (fastapi/uvicorn/python-multipart); `euvd-watch web serve
+      <sbom>` (exits 2 with install hint if extra missing, exits 2 if
+      `web.password_hash` unset) + `euvd-watch web hash-password`. All 5 pages:
+      Overview, Findings (filter+paginate), Finding detail (verbatim explanation + VEX
+      decision-shortcut snippet, never auto-sets affected/fixed), CRA events + detail
+      (deadline bars, the one write action "Mark stage complete" reusing
+      `cra/actions.py::mark` — same audit trail as `cra mark`), Audit log (re-verify,
+      only ever shows chain-verified entries). HTTP Basic on every route (401 without
+      creds, WWW-Authenticate header — native browser prompt, not a custom login page;
+      design doc §7 corrected to match). CRA event URLs use a hashed `url_id` (purl-derived
+      event_ids routinely contain '/', which breaks a plain path segment — found via
+      real smoke test, not by inspection). Refactors done alongside: shared
+      `findings_artifact.py` (was duplicated in cli.py), shared `cra/actions.py` (CLI
+      `cra mark` and the web route now call the identical function), `watch/differ.py`
+      `_key`→public `finding_identity`. CLI table cap (M0/M1 review 3.7) also closed:
+      `scan`/`match` tables cap at 50 rows + "… and N more" footer, `--output json`
+      unaffected. `from __future__ import annotations` deliberately OMITTED from
+      web/app.py — it stringifies annotations, which broke FastAPI's dependency
+      resolution for closure-local `Depends(...)` in nested route functions (silent
+      fallback to treating them as query params, 422s on every route) — caught by
+      manually smoke-testing the real app, not by tests alone.
+      Verified: 568 tests (was 482) / 94.34%, ruff+mypy strict clean; real `uvicorn`
+      server run end-to-end offline (dead-proxy `watch`/`cra check` to seed state, then
+      curl every page + the write flow + audit-chain-stays-intact, not just
+      TestClient). Docs: new docs/web.md, CHANGELOG entry, README EN+RO `web serve`
+      row flipped 🚧→🧪 beta. **Deliberately NOT done here** (belongs to 6.3/6.4): no
+      CSRF token on the mark form (documented limitation in docs/web.md — same-origin
+      HTTP Basic, single-operator tool behind a reverse proxy); WCAG audit; deploy
+      guide.
+- [ ] Revisit parked feedback_m2 3.4 small items: cache purge sweep, get_by_cve page
+      cap, fixture annotations.
 - [ ] Step 6.3 accessibility (WCAG 2.1 AA; pa11y CI gate zero serious/critical;
       docs/accessibility.md keyboard checklist).
 - [ ] Step 6.4 deployment docs (docs/deploy.md: compose, Caddy TLS, backup, upgrade;

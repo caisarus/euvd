@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}{{ view.event_id }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1 class="mono">{{ view.event_id }}</h1>
+  <p>{{ view.component_name }} {{ view.component_version or "" }} — <span class="mono">{{ view.euvd_id }}</span></p>
+</section>
+
+<div class="disclaimer">
+  <span aria-hidden="true">⚖</span>
+  <span><b>euvd-watch assists preparation and record-keeping.</b> Legal validation and submission to your CSIRT / authority remain your responsibility — this tool never files anything.</span>
+</div>
+
+<div class="card">
+  <div class="card-h"><h2>First-fire record</h2></div>
+  <div class="card-body">
+    <p class="eyebrow">Recorded when the clock started — never changed by later evaluations</p>
+    <dl class="evidence">
+      <dt>First seen (UTC)</dt><dd class="mono">{{ view.first_seen_iso }}</dd>
+      <dt>Fired rules</dt>
+      <dd>{% for rule in view.fired_rules %}<span class="chip">{{ rule.replace("_", " ") }}</span>{% endfor %}</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-h"><h2>Deadlines</h2></div>
+  <div class="card-body">
+    {% for stage in view.stages %}{{ m.deadline_bar(stage) }}{% endfor %}
+  </div>
+</div>
+
+{% if view.open %}
+<div class="card">
+  <div class="card-h"><h2>Record a human action</h2></div>
+  <div class="card-body">
+    <form method="post" action="{{ url_for('cra_event_mark', url_id=view.url_id) }}">
+      <div class="filters filters--plain">
+        <div class="field">
+          <label for="mark-stage">Mark stage complete</label>
+          <select id="mark-stage" name="stage">
+            <option value="">(none)</option>
+            {% for name in view.valid_stage_names %}
+            <option value="{{ name }}">{{ name.replace("_", " ") }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="mark-note">Note</label>
+          <input id="mark-note" name="note" type="text" placeholder="e.g. filed via CSIRT portal, ref #123">
+        </div>
+        <div class="field">
+          <label for="mark-remediation">
+            <input id="mark-remediation" name="remediation_available" type="checkbox" value="yes"> Remediation available
+          </label>
+        </div>
+        <button class="btn btn--primary" type="submit">Record</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-h"><h2>Notification draft</h2><a href="{{ url_for('cra_event_draft', url_id=view.url_id) }}">View / copy draft →</a></div>
+  <div class="card-body">
+    <p>A prefilled early-warning notification draft with <span class="mono">TODO-HUMAN</span> markers for you to complete before filing through your official channel.</p>
+  </div>
+</div>
+{% endblock %}
