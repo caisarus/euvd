@@ -3,13 +3,11 @@
 How to run euvd-watch from a container, a GitHub workflow, or a GitLab pipeline.
 For `watch` mode see `docs/watch.md`; for the CRA workflow see `docs/cra.md`.
 
-> **Publishing status.** The Docker image, the GitHub Action, and the GitLab template are
-> implemented and exercised by this repository's own CI (see "How this repo dogfoods
-> them" below). *External* consumption — `ghcr.io/<org>/euvd-watch`, `uses:
-> <org>/euvd-watch@v1`, `include: remote:` — additionally needs the repository to be
-> public and (for the Action/template default install path) the first PyPI release
-> (Step 5.1, blocked on reserving the `euvd-watch` name). `<org>` in the examples below
-> is a placeholder until the public home is settled.
+> **Publishing status.** All three are published and externally consumable: the
+> repository is public at `github.com/caisarus/euvd`, `euvd-watch` is on PyPI (first
+> release `0.3.1`, 2026-08-08), and the container image is on GHCR
+> (`ghcr.io/caisarus/euvd-watch`). The Action lives at the repo root, so its coordinate
+> is the repo itself: `uses: caisarus/euvd@vX.Y.Z`.
 
 ## Docker image (Step 5.2)
 
@@ -31,10 +29,10 @@ Run — the entrypoint is the CLI, so arguments are exactly the normal CLI argum
 docker run --rm -v "$PWD:/work:ro" euvd-watch match /work/sbom.cdx.json
 ```
 
-Once published, the same one-liner against GHCR:
+The same one-liner against GHCR:
 
 ```bash
-docker run --rm -v "$PWD:/work:ro" ghcr.io/<org>/euvd-watch match /work/sbom.cdx.json
+docker run --rm -v "$PWD:/work:ro" ghcr.io/caisarus/euvd-watch:latest match /work/sbom.cdx.json
 ```
 
 Persistence: the HTTP cache lives in `/home/euvd/.cache/euvd-watch` and durable state
@@ -69,7 +67,7 @@ jobs:
         with:
           format: cyclonedx-json
           output-file: sbom.cdx.json
-      - uses: <org>/euvd-watch@v1
+      - uses: caisarus/euvd@v0.3.1
         with:
           sbom-path: sbom.cdx.json
           fail-on: exploited
@@ -99,7 +97,7 @@ earlier job (Syft shown), then:
 
 ```yaml
 include:
-  - remote: 'https://raw.githubusercontent.com/<org>/euvd-watch/main/templates/euvd-watch.gitlab-ci.yml'
+  - remote: 'https://raw.githubusercontent.com/caisarus/euvd/main/templates/euvd-watch.gitlab-ci.yml'
 
 sbom:
   stage: build
@@ -143,7 +141,15 @@ schemas); the same file pins the action's published input/output surface.
 ## Copy-paste verification (acceptance)
 
 The 5.3 acceptance criterion — "copy-paste snippet from README works in a fresh repo,
-verified once manually" — **cannot be executed yet**: it needs the public repo (for
-`uses:`/`include: remote:`) and the first PyPI release (for the default install path).
-Tracked as an open item in `tasks/todo.md`; everything verifiable without those two
-owner actions is verified by the dogfood job and the image workflow described above.
+verified once manually" — was exercised on **2026-08-08** in a fresh repository
+(`euvd-action-smoke`) containing nothing but a `requirements.txt` and the README
+snippet verbatim. Verified end-to-end: the action resolves at `caisarus/euvd@v0.3.1`,
+installs `euvd-watch==0.3.1` from PyPI, receives the `anchore/sbom-action` SBOM, and
+runs `match`. One caveat from the live runs: ENISA's EUVD API rate-limits GitHub's
+shared runner IPs during EU business hours (HTTP 429 after all retries), in which case
+euvd-watch exits `2` with *"Refusing to report 'no findings' on missing data"* — the
+designed no-silent-suppression behaviour — while the same query answers instantly from
+other networks, and this repo's nightly off-peak live job passes daily. If your
+`fail-on` gate must tolerate EUVD downtime windows, schedule the workflow off-peak
+(early UTC morning). The GitLab template's `include: remote:` URL is verified to serve
+anonymously; a full GitLab pipeline run has not been exercised (no GitLab project yet).

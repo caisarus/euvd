@@ -44,20 +44,15 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
       first run 14 new (exit 1), identical second run 0 notifications (exit 0) — the
       literal test_plan.md 5.4 / implementation_plan.md acceptance criterion. docs/watch.md
       written; READMEs (EN+RO) flipped to ✅.
-- [~] Step 5.1 PyPI packaging & release automation — IN PROGRESS 2026-07-14. Owner
-      configured the PyPI pending publisher (project euvd-watch, repo caisarus/euvd,
-      workflow **workflow.yaml**, environment **pypi** — the filename is load-bearing).
-      Built: `.github/workflows/workflow.yaml` (tag → build+twine check with
-      tag/pyproject/__init__ version-agreement guard → rc tags publish to TestPyPI +
-      clean-venv install check; final tags publish to PyPI + install check + GitHub
-      release), `scripts/extract_changelog.py` + unit tests (test-plan 5.1),
-      `docs/release.md` (process + version/deprecation policy — a §18 DoD item),
-      SECURITY.md (REQ-NF-009). GitHub environments `pypi`/`testpypi` + private
-      vulnerability reporting set up via gh api.
-      REMAINING: (owner) add the **TestPyPI** pending publisher on test.pypi.org — same
-      values, environment `testpypi`; then bump 0.3.1rc1 → tag `v0.3.1rc1` (exercises the
-      full TestPyPI path, test-plan 5.1 exit criterion) → bump 0.3.1 → tag `v0.3.1`
-      (first real PyPI release) → verify 5.3's copy-paste-in-fresh-repo acceptance.
+- [x] Step 5.1 PyPI packaging & release automation — DONE 2026-08-08. Owner added the
+      TestPyPI pending publisher; `v0.3.1rc1` then exercised the full TestPyPI path
+      green (publish via OIDC + clean-venv install check — the test-plan 5.1 exit
+      criterion), and `v0.3.1` shipped as the **first real PyPI release**: publish +
+      clean-venv `pip install euvd-watch==0.3.1` + GitHub release with changelog notes,
+      all in one green `workflow.yaml` run. image.yml published GHCR `:0.3.1`+`:latest`
+      on the same tag. Infra (built 2026-07-14): workflow.yaml (filename load-bearing
+      for trusted publishing), version-agreement guard, `scripts/extract_changelog.py`
+      (rc→base-section fallback), docs/release.md, SECURITY.md.
 - [x] Step 5.2 Docker image: `docker/Dockerfile` (multi-stage, python:3.12-slim, non-root
       uid 1000, entrypoint `euvd-watch`, ~152 MB) + `.dockerignore`;
       `.github/workflows/image.yml` runs the four test-plan assertions on PRs and
@@ -74,10 +69,14 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
       `tests/fixtures/euvd/dogfood-seeded-exploited.json`, asserts exactly one
       EUVD-DOGFOOD-0001 finding); offline schema lint of template+workflows+action in
       `tests/integration/test_ci_templates.py` (new dev dep check-jsonschema). Offline
-      flow verified locally through a dead proxy. REMAINING (owner-gated): the literal
-      acceptance criterion "copy-paste snippet works in a fresh repo" needs the public
-      repo + first PyPI release; dogfood/image CI runs on GitHub not yet observed (no
-      gh/token in the sandbox — owner to relay).
+      flow verified locally through a dead proxy. Fresh-repo acceptance exercised
+      2026-08-08 (`caisarus/euvd-action-smoke`, README snippet verbatim): action
+      resolves at caisarus/euvd@v0.3.1, installs 0.3.1 from PyPI, SBOM handoff works —
+      but EUVD 429s GitHub's shared runner IPs during EU hours, so euvd-watch honestly
+      exits 2 ("Refusing to report 'no findings' on missing data"). Smoke repo now
+      retries itself at 03:45 UTC (nightly live.yml passes at 03:17 daily, so off-peak
+      is clean); REMAINING: observe one green run, then delete the smoke repo and drop
+      the caveat status here. Noted in docs/integrations.md §Copy-paste verification.
 
 ## Cross-cutting sweep (2026-07-13, after 5.2/5.3)
 

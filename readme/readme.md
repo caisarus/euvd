@@ -4,9 +4,9 @@
 
 > ⚠️ **Status: work in progress.** APIs and structure may change until `1.0.0`.
 > The Commands table below marks what is **✅ available today** versus **🚧 planned** —
-> milestones M0–M4 (scan, match, VEX, the CRA workflow) and M5's `watch` mode, Docker
-> image, GitHub Action and GitLab template are implemented and tested; PyPI release
-> automation is the rest of M5 (blocked on the PyPI name). The dashboard ships in `1.1`.
+> milestones M0–M5 (scan, match, VEX, the CRA workflow, `watch` mode, Docker image,
+> GitHub Action, GitLab template, PyPI releases) are implemented and tested.
+> The dashboard ships in `1.1`.
 
 `euvd-watch` connects software supply-chain transparency to **Europe's own vulnerability infrastructure** and to the concrete reporting duties of the **EU Cyber Resilience Act**.
 
@@ -36,8 +36,7 @@ flowchart LR
 ## Quickstart (everything below works today)
 
 ```bash
-# Not yet on PyPI - install from a clone until the first release:
-pip install -e .
+pip install euvd-watch
 euvd-watch version
 
 # 1. Generate an SBOM for your project (using Syft, or bring your own)
@@ -77,20 +76,19 @@ euvd-watch watch sbom.cdx.json --interval 6h
 All implemented commands support `--output json|table` and CI-friendly exit codes
 (`0` clean, `1` findings, `2` error). Unimplemented commands exit `2` with a clear message.
 
-## Using it in CI (✅ implemented — published coordinates pending)
+## Using it in CI
 
 The GitHub Action (`action.yml` at the repo root), the GitLab include-template
 (`templates/euvd-watch.gitlab-ci.yml`) and the Docker image (`docker/Dockerfile`) are
 implemented, schema-linted, and dogfooded by this repository's own CI — see
-`docs/integrations.md` for the full reference. The `<org>` placeholders below become real
-coordinates once the public repository home and the first PyPI release exist.
+`docs/integrations.md` for the full reference.
 
 GitHub Actions:
 
 ```yaml
 - uses: anchore/sbom-action@v0          # generate SBOM with Syft
   with: { format: cyclonedx-json, output-file: sbom.cdx.json }
-- uses: <org>/euvd-watch@v1             # 🚧 public coordinates pending
+- uses: caisarus/euvd@v0.3.1
   with:
     sbom-path: sbom.cdx.json
     fail-on: exploited
@@ -99,18 +97,19 @@ GitHub Actions:
 GitLab CI:
 
 ```yaml
-include:  # 🚧 public coordinates pending
-  - remote: 'https://raw.githubusercontent.com/<org>/euvd-watch/main/templates/euvd-watch.gitlab-ci.yml'
+include:
+  - remote: 'https://raw.githubusercontent.com/caisarus/euvd/main/templates/euvd-watch.gitlab-ci.yml'
 
 euvd-watch:
   variables: { EUVDWATCH_SBOM: "sbom.cdx.json", EUVDWATCH_FAIL_ON: "exploited" }
 ```
 
-Docker (build locally today; `ghcr.io/<org>/euvd-watch` once published):
+Docker (`ghcr.io/caisarus/euvd-watch`, or build locally):
 
 ```bash
+docker run --rm -v "$PWD:/work:ro" ghcr.io/caisarus/euvd-watch:latest match /work/sbom.cdx.json
+# or build from a clone:
 docker build -f docker/Dockerfile -t euvd-watch .
-docker run --rm -v "$PWD:/work:ro" euvd-watch match /work/sbom.cdx.json
 ```
 
 ## Configuration
