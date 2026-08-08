@@ -13,3 +13,5 @@ htmlcov/
 .pytest_cache/
 *.sqlite
 *.sqlite-*
+# ...except the committed per-version migration fixtures (kept forever)
+!tests/fixtures/db/**/*.sqlite
