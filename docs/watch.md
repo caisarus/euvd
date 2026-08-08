@@ -41,11 +41,14 @@ finding is:
 
 ## Where the snapshot lives
 
-One JSON snapshot per watched SBOM, in `state_dir/watch/<hash-of-resolved-path>.json`
-(same durable `state_dir` the CRA workflow uses - not the purgeable HTTP cache). It reuses
-the same minimal shape `match --save-findings`/`cra check --findings` already read
-(`schema_version` + `findings`), so nothing new needs learning. A missing snapshot means
-"first run" - every current finding reports as `new`, which is correct, not a bug.
+One snapshot row per watched SBOM (keyed by the hash of its resolved path) in the
+consolidated state DB, `state_dir/euvd-watch.sqlite` (see `docs/storage.md` - same
+durable `state_dir` the CRA workflow uses, not the purgeable HTTP cache). The stored
+artifact reuses the same minimal shape `match --save-findings`/`cra check --findings`
+already read (`schema_version` + `findings`), so nothing new needs learning. A missing
+snapshot means "first run" - every current finding reports as `new`, which is correct,
+not a bug. (Before 0.4 snapshots were files under `state_dir/watch/`; they are imported
+automatically and the originals kept with a `.migrated-<timestamp>` suffix.)
 
 ## Sinks
 

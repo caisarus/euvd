@@ -1,5 +1,34 @@
 # euvd-watch — current plan (post-audit, owner-approved 2026-07-10)
 
+## M6 — Self-hostable dashboard (started 2026-08-08; decisions in AUDIT §17)
+
+- [x] Step 6.1 storage consolidation: `web/store.py` — one WAL-mode SQLite file
+      (`state_dir/euvd-watch.sqlite`), numbered SQL migrations
+      (`web/migrations/0001_initial.sql`: events, watch_snapshots, plus the 6.2 read
+      models vex_status_cache/audit_log_refs) applied transparently by every
+      state-touching command; `euvd-watch db migrate` runs them explicitly (json|table
+      output). Pre-6.1 layout (cra-events.sqlite + watch/*.json) auto-imported,
+      originals renamed `.migrated-<stamp>` (never deleted; stale legacy copies never
+      overwrite consolidated rows — INSERT OR IGNORE); corruption quarantine pattern
+      carried over from EventStore. Audit log + vex-decisions.yaml stay files
+      (§17 carve-outs). Per-version fixture DBs committed under tests/fixtures/db/
+      (kept forever) + scripts/make_db_fixtures.py. Tests: empty/v1/legacy migrations,
+      idempotency, WAL read-during-write, quarantine, loud failure on unreadable or
+      schema-mismatched legacy events; CLI e2e incl. transparent migration via
+      `cra status`. 482 tests / 94.49%, ruff+mypy clean; demo.sh + dead-proxy watch
+      cycle verified (snapshot row lands in DB, WAL, exit codes 1 then 0).
+      docs/storage.md written; cra.md/watch.md storage sections updated; README EN+RO
+      `db migrate` row.
+- [ ] Step 6.2 web application (FastAPI + Jinja2, [web] extra, basic auth, paginated
+      findings + CLI table cap per M0/M1 review 3.7); populate vex_status_cache +
+      audit_log_refs read models.
+- [ ] Revisit parked feedback_m2 3.4 small items with 6.2 storage work: cache purge
+      sweep, get_by_cve page cap, fixture annotations.
+- [ ] Step 6.3 accessibility (WCAG 2.1 AA; pa11y CI gate zero serious/critical;
+      docs/accessibility.md keyboard checklist).
+- [ ] Step 6.4 deployment docs (docs/deploy.md: compose, Caddy TLS, backup, upgrade;
+      cold-start < 15 min test).
+
 Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §17.
 
 ## R1 — hardening quick wins on committed code

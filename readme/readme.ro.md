@@ -82,6 +82,7 @@ euvd-watch watch sbom.cdx.json --interval 6h
 | `cra status` / `cra draft <id>` / `cra mark <id>` | ✅ | Urmărește ceasurile pe stagii (24 h / 72 h / raport final), redă un draft de notificare precompletat cu marcaje `TODO-HUMAN`, înregistrează finalizarea umană. |
 | `cra verify-log` | ✅ | Verifică jurnalul de audit tamper-evident (hash-chained); numește prima intrare ruptă. |
 | `watch <sbom>` | ✅ | Re-corelează programat (`--interval 6h`) sau o singură dată (`--once`, implicit) și notifică **doar finding-urile noi/rezolvate/schimbate** (stdout, și `--webhook URL`). Vezi `docs/watch.md`. |
+| `db migrate` | ✅ | Aplică migrările de schemă pe baza de date de stare consolidată (`state_dir/euvd-watch.sqlite`) și importă fișierele de stare pre-0.4. Rulează transparent la fiecare comandă care atinge starea; comanda o face explicit. Vezi `docs/storage.md`. |
 | `web serve` | 🚧 post-1.0 (planificat pentru `1.1`) | Dashboard self-hostable, conform WCAG: finding-uri, statusuri VEX, countdown-uri CRA, audit log. |
 
 Toate comenzile implementate suportă `--output json|table` și coduri de ieșire prietenoase

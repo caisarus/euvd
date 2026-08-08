@@ -7,6 +7,17 @@ breaking changes (each one listed explicitly below).
 
 ## [Unreleased]
 
+### Added
+- **Consolidated state DB (milestone M6, Step 6.1)**: all operational state now lives in
+  one WAL-mode SQLite file, `state_dir/euvd-watch.sqlite` — CRA trigger events and watch
+  snapshots included. Schema changes ship as numbered SQL migrations applied
+  transparently by every state-touching command; the new `euvd-watch db migrate` runs
+  them explicitly and reports what happened. State from the pre-0.4 layout
+  (`cra-events.sqlite`, `state_dir/watch/*.json`) is imported automatically; originals
+  are renamed `.migrated-<timestamp>`, never deleted. The audit log and
+  `vex-decisions.yaml` deliberately stay files (tamper-evidence / human input of
+  record). See `docs/storage.md`.
+
 ## [0.3.1] — 2026-08-08
 
 First PyPI release: `pip install euvd-watch` now works. Functionally identical to

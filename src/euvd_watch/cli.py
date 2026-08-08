@@ -57,12 +57,15 @@ from euvd_watch.vex.model import Status
 from euvd_watch.vex.write import render
 from euvd_watch.watch.differ import DiffResult, diff_findings
 from euvd_watch.watch.sinks import NotificationSink, StdoutSink, WebhookSink
+from euvd_watch.web.store import Store, StoreError
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 vex_app = typer.Typer(no_args_is_help=True)
 cra_app = typer.Typer(no_args_is_help=True)
+db_app = typer.Typer(no_args_is_help=True)
 app.add_typer(vex_app, name="vex", help="OpenVEX statement generation.")
 app.add_typer(cra_app, name="cra", help="CRA Article 14 reporting workflow.")
+app.add_typer(db_app, name="db", help="Consolidated state database maintenance.")
 
 
 class OutputFormat(StrEnum):
@@ -97,6 +100,9 @@ def cli_command(func: Callable[_P, None]) -> Callable[_P, None]:
             func(*args, **kwargs)
         except typer.Exit:
             raise
+        except StoreError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(code=2) from exc
         except OSError as exc:
             typer.echo(f"Unexpected I/O error: {exc}", err=True)
             raise typer.Exit(code=2) from exc
@@ -388,23 +394,28 @@ class FindingsArtifactError(Exception):
 
 def _load_findings_artifact(path: Path) -> list[Finding]:
     raw = path.read_text(encoding="utf-8")  # OSError -> caught by the cli_command boundary
+    return _parse_findings_artifact(raw, str(path))
+
+
+def _parse_findings_artifact(raw: str, source: str) -> list[Finding]:
+    """Parse a findings artifact from JSON text; `source` names it in error messages."""
     try:
         data = json.loads(raw)
     except json.JSONDecodeError as exc:
-        raise FindingsArtifactError(f"{path} is not valid JSON: {exc}") from exc
+        raise FindingsArtifactError(f"{source} is not valid JSON: {exc}") from exc
     if not isinstance(data, dict) or "findings" not in data:
         raise FindingsArtifactError(
-            f"{path} does not look like a findings artifact (missing 'findings')."
+            f"{source} does not look like a findings artifact (missing 'findings')."
         )
     if data.get("schema_version") != 1:
         raise FindingsArtifactError(
-            f"{path} has schema_version={data.get('schema_version')!r}, expected 1. "
+            f"{source} has schema_version={data.get('schema_version')!r}, expected 1. "
             f"This build of euvd-watch only understands schema_version 1."
         )
     try:
         return [Finding.model_validate(f) for f in data["findings"]]
     except Exception as exc:  # pydantic.ValidationError, kept generic to avoid a new import
-        raise FindingsArtifactError(f"{path} contains invalid finding data: {exc}") from exc
+        raise FindingsArtifactError(f"{source} contains invalid finding data: {exc}") from exc
 
 
 def _evaluations_for(
@@ -615,8 +626,21 @@ def vex_init_decisions(
     typer.echo(f"Wrote {len(entries)} decision stub(s) to {out}", err=True)
 
 
+def _state_store(settings: Settings) -> Store:
+    """Open the consolidated state DB, applying pending migrations and legacy imports.
+
+    Every state-touching command goes through here, so users on a pre-6.1 layout are
+    migrated transparently on first contact - `db migrate` exists to do it explicitly.
+    """
+    store = Store(settings.state_dir)
+    store.migrate()
+    return store
+
+
 def _event_store(settings: Settings) -> EventStore:
-    return EventStore(settings.state_dir / "cra-events.sqlite")
+    store = _state_store(settings)
+    store.close()
+    return EventStore(store.path)
 
 
 def _audit_log(settings: Settings) -> AuditLog:
@@ -997,31 +1021,33 @@ def _parse_interval(text: str) -> float:
     return int(value) * _INTERVAL_UNITS[unit]
 
 
-def _watch_snapshot_path(settings: Settings, sbom: str) -> Path:
-    """One snapshot file per watched SBOM, keyed by its resolved path so re-runs from a
-    different working directory still hit the same snapshot."""
-    key = hashlib.sha256(str(Path(sbom).resolve()).encode("utf-8")).hexdigest()[:16]
-    return settings.state_dir / "watch" / f"{key}.json"
+def _watch_snapshot_key(sbom: str) -> str:
+    """One snapshot row per watched SBOM, keyed by its resolved path so re-runs from a
+    different working directory still hit the same snapshot. Same key derivation as the
+    pre-6.1 per-file layout, so migrated rows keep matching their SBOMs."""
+    return hashlib.sha256(str(Path(sbom).resolve()).encode("utf-8")).hexdigest()[:16]
 
 
-def _load_watch_snapshot(path: Path) -> list[Finding]:
+def _load_watch_snapshot(store: Store, sbom_key: str) -> list[Finding]:
     """The previous run's findings, or an empty list on the very first run."""
-    if not path.exists():
+    raw = store.load_watch_snapshot(sbom_key)
+    if raw is None:
         return []
-    return _load_findings_artifact(path)
+    return _parse_findings_artifact(raw, f"watch snapshot {sbom_key!r}")
 
 
-def _save_watch_snapshot(path: Path, findings: list[Finding], generated_at: str) -> None:
-    # Deliberately the same minimal shape `_load_findings_artifact` already understands
+def _save_watch_snapshot(
+    store: Store, sbom_key: str, findings: list[Finding], generated_at: str
+) -> None:
+    # Deliberately the same minimal shape `_parse_findings_artifact` already understands
     # (schema_version + findings) - a watch snapshot has no SBOM/data-freshness of its own
     # to report, unlike `match --save-findings`'s fuller artifact.
-    path.parent.mkdir(parents=True, exist_ok=True)
     artifact = {
         "schema_version": 1,
         "generated_at": generated_at,
         "findings": [f.model_dump(mode="json") for f in findings],
     }
-    path.write_text(json.dumps(artifact, indent=2) + "\n", encoding="utf-8")
+    store.save_watch_snapshot(sbom_key, json.dumps(artifact, indent=2) + "\n")
 
 
 def _echo_cycle_summary(diff: DiffResult, output: OutputFormat) -> None:
@@ -1050,16 +1076,20 @@ def _run_watch_cycle(
     """One check-and-diff cycle: load the previous snapshot, match+enrich, diff, notify,
     persist the new snapshot - always, even when the diff is empty, so the next cycle
     compares against the latest data."""
-    snapshot_path = _watch_snapshot_path(settings, sbom)
-    previous = _load_watch_snapshot(snapshot_path)
-    current = _compute_findings(settings, sbom, no_enrich=no_enrich, findings_path=None)
-    diff = diff_findings(previous, current)
+    sbom_key = _watch_snapshot_key(sbom)
+    store = _state_store(settings)
+    try:
+        previous = _load_watch_snapshot(store, sbom_key)
+        current = _compute_findings(settings, sbom, no_enrich=no_enrich, findings_path=None)
+        diff = diff_findings(previous, current)
 
-    generated_at = datetime.now(UTC).isoformat()
-    resolved_sbom = str(Path(sbom).resolve())
-    for sink in sinks:
-        sink.notify(diff, sbom=resolved_sbom, generated_at=generated_at)
-    _save_watch_snapshot(snapshot_path, current, generated_at)
+        generated_at = datetime.now(UTC).isoformat()
+        resolved_sbom = str(Path(sbom).resolve())
+        for sink in sinks:
+            sink.notify(diff, sbom=resolved_sbom, generated_at=generated_at)
+        _save_watch_snapshot(store, sbom_key, current, generated_at)
+    finally:
+        store.close()
     return diff
 
 
@@ -1140,6 +1170,42 @@ def watch(
     finally:
         if api is not None:
             api.close()
+
+
+@db_app.command("migrate")
+@cli_command
+def db_migrate(ctx: typer.Context) -> None:
+    """Apply pending schema migrations to the consolidated state DB.
+
+    Also imports state from the pre-6.1 layout (`cra-events.sqlite`, `watch/*.json`)
+    and renames the imported originals with a `.migrated-<stamp>` suffix. Safe to run
+    any number of times: an up-to-date store is a no-op. Every state-touching command
+    migrates transparently anyway; this command exists to do it explicitly (e.g. right
+    after an upgrade) and to show what happened.
+    """
+    state: GlobalState = ctx.obj
+    store = Store(state.settings.state_dir)
+    try:
+        report = store.migrate()
+    finally:
+        store.close()
+
+    if state.output is OutputFormat.JSON:
+        typer.echo(report.model_dump_json())
+        return
+    if report.is_noop:
+        typer.echo(f"State DB {store.path} is up to date; nothing to migrate.")
+        return
+    typer.echo(f"State DB: {store.path}")
+    if report.applied_versions:
+        typer.echo(f"Applied migration(s): {', '.join(map(str, report.applied_versions))}")
+    if report.renamed_legacy:
+        typer.echo(
+            f"Imported {report.imported_events} event(s) and {report.imported_snapshots} "
+            f"watch snapshot(s) from the pre-6.1 layout."
+        )
+        for renamed in report.renamed_legacy:
+            typer.echo(f"  original kept as: {renamed}")
 
 
 if __name__ == "__main__":

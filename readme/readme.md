@@ -71,6 +71,7 @@ euvd-watch watch sbom.cdx.json --interval 6h
 | `cra status` / `cra draft <id>` / `cra mark <id>` | ✅ | Track the staged deadline clocks (24 h / 72 h / final report), render a prefilled notification draft with `TODO-HUMAN` markers, record human completion. |
 | `cra verify-log` | ✅ | Verify the tamper-evident (hash-chained) audit log; names the first broken entry. |
 | `watch <sbom>` | ✅ | Re-match on a schedule (`--interval 6h`) or once (`--once`, the default) and notify **only new/resolved/changed findings** (stdout, and `--webhook URL`). See `docs/watch.md`. |
+| `db migrate` | ✅ | Apply pending schema migrations to the consolidated state DB (`state_dir/euvd-watch.sqlite`) and import pre-0.4 state files. Runs transparently on every state-touching command; this makes it explicit. See `docs/storage.md`. |
 | `web serve` | 🚧 post-1.0 (planned for `1.1`) | Self-hostable, WCAG-compliant dashboard: findings, VEX statuses, CRA countdowns, audit log. |
 
 All implemented commands support `--output json|table` and CI-friendly exit codes

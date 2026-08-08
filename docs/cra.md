@@ -90,10 +90,15 @@ done. Add or remove stages freely - only renaming an in-use name is unsafe.
 Durable records live in `state_dir` (default `~/.local/share/euvd-watch`) — deliberately
 **not** in `cache_dir`, which is purgeable at will:
 
-- `cra-events.sqlite` — the event store. On corruption it is **quarantined by renaming**
+- `euvd-watch.sqlite` — the consolidated state DB (see `docs/storage.md`); the event
+  store is its `events` table. On corruption the file is **quarantined by renaming**
   (`.corrupt-<timestamp>` suffix), never deleted, and a fresh store is created so new
-  awareness can still be recorded. Keep quarantined files: they are evidence.
-- `cra-audit.jsonl` — the hash-chained audit log (below).
+  awareness can still be recorded. Keep quarantined files: they are evidence. (Before
+  0.4 events lived in their own `cra-events.sqlite`; it is imported automatically and
+  the original kept with a `.migrated-<timestamp>` suffix.)
+- `cra-audit.jsonl` — the hash-chained audit log (below). Deliberately **not** in the
+  DB: append-only hash chaining is the tamper-evidence claim, and a mutable DB row
+  can't make it.
 
 Back up `state_dir` like the legal record it is. There is no retention/expiry logic and
 none is planned: these records must outlive the vulnerability.
