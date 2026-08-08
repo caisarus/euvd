@@ -1,5 +1,10 @@
 # euvd-watch — current plan (post-audit, owner-approved 2026-07-10)
 
+> **Forward plan:** `plans/next_steps_plan.md` (2026-08-08) sequences everything from
+> here — M6 completion, docs debt, 0.4.0→1.0.0→1.1 releases (1.0.0 targeted before
+> the CRA Art. 14 applicability date 2026-09-11), publication, NLnet funding, and
+> community mechanics. Execute it phase by phase.
+
 ## M6 — Self-hostable dashboard (started 2026-08-08; decisions in AUDIT §17)
 
 - [x] Step 6.1 storage consolidation: `web/store.py` — one WAL-mode SQLite file
