@@ -7,6 +7,11 @@ breaking changes (each one listed explicitly below).
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-08-08
+
+First PyPI release: `pip install euvd-watch` now works. Functionally identical to
+`0.3.0` plus the release automation itself and the security policy.
+
 ### Added
 - **Release automation (milestone M5, Step 5.1)**: pushing a `vX.Y.Z` tag now builds
   sdist+wheel, publishes to PyPI via trusted publishing (OIDC, no tokens), verifies a
