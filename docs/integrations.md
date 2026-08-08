@@ -141,15 +141,15 @@ schemas); the same file pins the action's published input/output surface.
 ## Copy-paste verification (acceptance)
 
 The 5.3 acceptance criterion — "copy-paste snippet from README works in a fresh repo,
-verified once manually" — was exercised on **2026-08-08** in a fresh repository
+verified once manually" — **passed on 2026-08-08** in a throwaway repository
 (`euvd-action-smoke`) containing nothing but a `requirements.txt` and the README
-snippet verbatim. Verified end-to-end: the action resolves at `caisarus/euvd@v0.3.1`,
-installs `euvd-watch==0.3.1` from PyPI, receives the `anchore/sbom-action` SBOM, and
-runs `match`. One caveat from the live runs: ENISA's EUVD API rate-limits GitHub's
+snippet verbatim: the action resolved at `caisarus/euvd@v0.3.1`, installed
+`euvd-watch==0.3.1` from PyPI, received the `anchore/sbom-action` SBOM, matched it
+against the live EUVD, and the `fail-on: exploited` gate exited green. One operational
+caveat surfaced along the way: ENISA's EUVD API intermittently rate-limits GitHub's
 shared runner IPs during EU business hours (HTTP 429 after all retries), in which case
 euvd-watch exits `2` with *"Refusing to report 'no findings' on missing data"* — the
-designed no-silent-suppression behaviour — while the same query answers instantly from
-other networks, and this repo's nightly off-peak live job passes daily. If your
-`fail-on` gate must tolerate EUVD downtime windows, schedule the workflow off-peak
-(early UTC morning). The GitLab template's `include: remote:` URL is verified to serve
-anonymously; a full GitLab pipeline run has not been exercised (no GitLab project yet).
+designed no-silent-suppression behaviour. If your gate must avoid those windows,
+schedule the workflow off-peak (early UTC morning) or re-run the job. The GitLab
+template's `include: remote:` URL is verified to serve anonymously; a full GitLab
+pipeline run has not been exercised (no GitLab project yet).

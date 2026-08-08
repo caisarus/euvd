@@ -72,11 +72,12 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
       flow verified locally through a dead proxy. Fresh-repo acceptance exercised
       2026-08-08 (`caisarus/euvd-action-smoke`, README snippet verbatim): action
       resolves at caisarus/euvd@v0.3.1, installs 0.3.1 from PyPI, SBOM handoff works —
-      but EUVD 429s GitHub's shared runner IPs during EU hours, so euvd-watch honestly
-      exits 2 ("Refusing to report 'no findings' on missing data"). Smoke repo now
-      retries itself at 03:45 UTC (nightly live.yml passes at 03:17 daily, so off-peak
-      is clean); REMAINING: observe one green run, then delete the smoke repo and drop
-      the caveat status here. Noted in docs/integrations.md §Copy-paste verification.
+      first four attempts hit EUVD 429ing GitHub's shared runner IPs during EU hours
+      (euvd-watch honestly exits 2, "Refusing to report 'no findings' on missing
+      data"), then a rerun went **green end-to-end** the same day — snippet fetched,
+      0.3.1 from PyPI, live EUVD match, gate exit 0. ACCEPTANCE MET. Noted in
+      docs/integrations.md §Copy-paste verification. (Owner: delete the throwaway
+      repo caisarus/euvd-action-smoke — gh token here lacks the delete_repo scope.)
 
 ## Cross-cutting sweep (2026-07-13, after 5.2/5.3)
 
