@@ -35,6 +35,12 @@ def load_json(path_or_bytes: str | Path | bytes) -> tuple[dict[str, Any], str]:
         raise SbomParseError(
             f"Malformed JSON in {ref} at line {exc.lineno}, column {exc.colno}: {exc.msg}"
         ) from exc
+    except RecursionError as exc:
+        # json.loads is recursive: a pathologically nested document (an untrusted SBOM
+        # nested past the interpreter's recursion limit) blows the stack here, before any
+        # parser code runs. Treat it as malformed input - a clean SbomParseError (stderr +
+        # exit 2) - never an uncaught traceback with the wrong exit code.
+        raise SbomParseError(f"{ref} is nested too deeply to parse safely.") from exc
 
     if not isinstance(data, dict):
         raise SbomParseError(f"{ref} does not contain a JSON object at the top level.")
