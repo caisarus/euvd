@@ -43,6 +43,21 @@ breaking changes (each one listed explicitly below).
   violations) are in the new `docs/accessibility.md`.
 
 ### Fixed
+- **Security/robustness (untrusted-input hardening, from a dedicated audit).** Four
+  ways a crafted SBOM or EUVD response could crash or hang the tool are closed; each
+  was reproduced end-to-end before its fix:
+  - **Version-comparator ReDoS**: a crafted EUVD version-range string caused quadratic
+    backtracking in the internal "looks like a version?" regex (40 KB hung ~6 s). The
+    redundant regex group was removed (proven to accept an identical language); now
+    linear.
+  - **Version-comparator crash on oversized numeric segments**: a component version
+    with a >4300-digit numeric run (e.g. `"9"*5000`) raised an uncaught `ValueError`
+    (Python 3.11's int-conversion guard), aborting the *entire* `match` run and
+    suppressing findings for every other component. All numeric conversions in the
+    comparator are now guarded; such a run is treated as a low-trust opaque token.
+  - **`RecursionError` on pathologically nested JSON**, in both the SBOM loader and the
+    `--findings` artifact loader (`json.loads` is itself recursive). Both now fail as a
+    clean parse error with exit code `2` instead of a traceback with exit `1`.
 - The Overview page's "recent findings" row rendered with a **solid filled severity
   background** instead of a thin left-border stripe — a CSS class name
   (`s-crit`/`s-warn`/etc.) was shared between two different components (the findings
