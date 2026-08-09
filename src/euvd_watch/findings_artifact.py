@@ -24,6 +24,12 @@ def parse_findings_artifact(raw: str, source: str) -> list[Finding]:
         data = json.loads(raw)
     except json.JSONDecodeError as exc:
         raise FindingsArtifactError(f"{source} is not valid JSON: {exc}") from exc
+    except RecursionError as exc:
+        # json.loads is recursive: a pathologically nested findings file (--findings can
+        # point at any file, and CI systems pass artifacts between jobs) blows the stack
+        # here. Treat it as a malformed artifact - clean error + exit 2 - never an uncaught
+        # traceback. Mirrors sbom/_load.py's handling of the same class of untrusted input.
+        raise FindingsArtifactError(f"{source} is nested too deeply to parse safely.") from exc
     if not isinstance(data, dict) or "findings" not in data:
         raise FindingsArtifactError(
             f"{source} does not look like a findings artifact (missing 'findings')."
