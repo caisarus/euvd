@@ -163,3 +163,26 @@ def test_confidence_at_least() -> None:
     assert confidence_at_least(Confidence.HIGH, Confidence.MEDIUM)
     assert confidence_at_least(Confidence.MEDIUM, Confidence.MEDIUM)
     assert not confidence_at_least(Confidence.LOW, Confidence.MEDIUM)
+
+
+def test_match_component_survives_oversized_numeric_version() -> None:
+    """Regression: a component version with a numeric run past Python's int-string
+    conversion limit (an untrusted/poisoned SBOM value) must not crash the matcher with
+    an uncaught ValueError - which previously aborted the *entire* scan, suppressing
+    findings for every other component too."""
+    poison = _component({"name": "poison", "version": "9" * 5000, "purl": "pkg:pypi/poison@1"})
+    record = _record([{"product": "poison", "version_range": "<2.0"}])
+    findings = match_component(poison, [record])  # must not raise
+    assert isinstance(findings, list)
+
+
+def test_one_poisoned_component_does_not_suppress_the_rest() -> None:
+    """The whole inventory must still be matched when one component has a pathological
+    version - the poisoned entry must not take the real finding down with it."""
+    poison = _component({"name": "poison", "version": "9" * 5000, "purl": "pkg:pypi/poison@1"})
+    real = _component(
+        {"name": "widget", "version": "1.0", "cpe": "cpe:2.3:a:acme:widget:1.0:*:*:*:*:*:*:*"}
+    )
+    record = _record([{"vendor": "acme", "product": "widget", "version_range": "<2.0"}])
+    findings = match_inventory(Inventory(components=[poison, real]), [record])
+    assert any(f.component.name == "widget" for f in findings), "real finding must survive"

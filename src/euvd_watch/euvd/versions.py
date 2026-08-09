@@ -16,7 +16,7 @@ from __future__ import annotations
 import re
 from enum import StrEnum
 
-from packaging.version import InvalidVersion, Version
+from packaging.version import Version
 
 
 class Scheme(StrEnum):
@@ -38,14 +38,30 @@ def _semver_key(match: re.Match[str]) -> tuple[int, int, int, tuple[str, ...]]:
     return (major, minor, patch, pre_key)
 
 
+def _safe_int(token: str) -> int | None:
+    """int(token), or None if it can't be converted.
+
+    Guards Python 3.11's int-string-conversion limit (default 4300 digits): a numeric
+    run longer than that raises ValueError, and a version segment that long is not a real
+    version anyway - never crash on it (that limit exists precisely to stop the O(n^2)
+    int-parse of a hostile digit run, so we must not raise the cap; we skip instead).
+    """
+    try:
+        return int(token)
+    except ValueError:
+        return None
+
+
 def _token_key(version: str) -> tuple[tuple[int, str], ...]:
     tokens: list[tuple[int, str]] = []
     for token in _TOKEN_SPLIT.split(version.strip().lower()):
         # isdigit() alone is unsafe: it is True for e.g. superscript digits that int()
         # rejects (found by hypothesis). ascii-only digits are what versions actually use.
-        if token.isdigit() and token.isascii():
-            tokens.append((int(token), ""))
+        numeric = _safe_int(token) if token.isdigit() and token.isascii() else None
+        if numeric is not None:
+            tokens.append((numeric, ""))
         else:
+            # Non-numeric, or an oversized numeric run: sort as an opaque string token.
             tokens.append((-1, token))
     return tuple(tokens)
 
@@ -59,17 +75,24 @@ def compare(a: str, b: str) -> tuple[int, Scheme]:
     """
     try:
         va, vb = Version(a), Version(b)
-    except InvalidVersion:
+    except ValueError:
+        # InvalidVersion (a ValueError subclass) for unparseable input, or a bare
+        # ValueError when a numeric segment exceeds Python's int-string limit (a hostile
+        # 4300+-digit version) - either way, PEP 440 can't handle it; fall through.
         pass
     else:
         return ((va > vb) - (va < vb), Scheme.PEP440)
 
     ma, mb = _SEMVER.match(a.strip()), _SEMVER.match(b.strip())
     if ma and mb:
-        ka, kb = _semver_key(ma), _semver_key(mb)
-        return ((ka > kb) - (ka < kb), Scheme.SEMVER)
+        try:
+            ka, kb = _semver_key(ma), _semver_key(mb)
+        except ValueError:
+            pass  # oversized numeric segment: fall through to the tokenwise fallback
+        else:
+            return ((ka > kb) - (ka < kb), Scheme.SEMVER)
 
-    ka2, kb2 = _token_key(a), _token_key(b)
+    ka2, kb2 = _token_key(a), _token_key(b)  # never raises: _safe_int handles oversized runs
     return ((ka2 > kb2) - (ka2 < kb2), Scheme.TOKENWISE)
 
 
@@ -89,7 +112,13 @@ _BOUND = re.compile(r"^\s*(<=|>=|<|>|=)\s*(\S+)\s*$")
 _COMPOUND = re.compile(r"^\s*(>=|>)\s*(\S+)\s+(<=|<)\s*(\S+)\s*$")
 # "0.40.0, < 0.46.2": inclusive introduced-at, explicit upper bound (M2 review 3.1).
 _COMMA_RANGE = re.compile(r"^\s*(\S+?)\s*,\s*(<=|<)\s*(\S+)\s*$")
-_VERSIONISH = re.compile(r"^\d[\w.+]*(\.\w+)*$")
+# NB: no trailing `(\.\w+)*` group. Every character that group could match (`.` and
+# word chars) is already in the preceding `[\w.+]*`, so it accepted an identical
+# language while introducing quadratic backtracking on crafted range text from the
+# (untrusted, beta) EUVD API - a ReDoS: 40 KB hung for ~6 s. This single greedy
+# quantifier is linear and accepts exactly the same strings (proven by exhaustive
+# equivalence check over the version alphabet).
+_VERSIONISH = re.compile(r"^\d[\w.+]*$")
 
 
 def _looks_versionish(text: str) -> bool:

@@ -89,3 +89,39 @@ def test_compare_is_antisymmetric(a: str, b: str) -> None:
     result_ba, scheme_ba = compare(b, a)
     assert result_ab == -result_ba
     assert scheme_ab == scheme_ba
+
+
+def test_evaluate_range_is_linear_on_adversarial_range_text() -> None:
+    """ReDoS guard: `range_text` comes from the external (beta) EUVD API. The
+    versionish check must not backtrack catastrophically on a crafted range string -
+    the original `^\\d[\\w.+]*(\\.\\w+)*$` was ~O(n^2) (40 KB -> ~6 s). A pathological
+    input must complete near-instantly."""
+    import time
+
+    adversarial = "1" + ".a" * 40000 + "-"  # ~80 KB; the old regex took >10 s here
+    start = time.perf_counter()
+    result, _scheme = evaluate_range("1.0.0", adversarial)
+    elapsed = time.perf_counter() - start
+    assert result in set(RangeResult)
+    assert elapsed < 1.0, f"evaluate_range took {elapsed:.2f}s on adversarial range text (ReDoS)"
+
+
+def test_compare_survives_oversized_numeric_versions() -> None:
+    """A version segment past Python's int-string conversion limit (~4300 digits) must
+    compare deterministically, never raise ValueError. Reachable from an untrusted SBOM
+    component version and from EUVD range text - all three schemes (PEP440 Version(),
+    semver, tokenwise) do int() on numeric runs and must each tolerate this."""
+    huge = "9" * 5000
+    for a, b in [(huge, "2.0"), (huge + ".0.0", "1.0.0"), (huge + "-x", "1-x"), (huge, huge)]:
+        result, scheme = compare(a, b)
+        assert result in (-1, 0, 1)
+        assert scheme in set(Scheme)
+
+
+def test_evaluate_range_survives_oversized_numeric() -> None:
+    huge = "9" * 5000
+    # oversized component version against a normal range
+    assert evaluate_range(huge, "<2.0")[0] in set(RangeResult)
+    # oversized numeric inside the range text itself (EUVD-supplied)
+    assert evaluate_range("1.0.0", huge + "-2.0")[0] in set(RangeResult)
+    assert evaluate_range("1.0.0", "<" + huge)[0] in set(RangeResult)
