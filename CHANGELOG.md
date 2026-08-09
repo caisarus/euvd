@@ -32,6 +32,23 @@ breaking changes (each one listed explicitly below).
 - The CLI's human-readable tables (`scan`, `match`) now cap at 50 rows with an
   "… and N more" footer instead of printing unbounded output (M0/M1 review 3.7);
   `--output json` is unaffected.
+- **Accessibility gate (milestone M6, Step 6.3)**: `scripts/run_a11y_check.sh` runs
+  axe-core (via Puppeteer, `scripts/a11y_check.mjs`) against every dashboard page
+  using the same offline demo scenario as `examples/demo.sh`; new CI job `a11y` gates
+  on zero serious/critical violations (PRs touching the dashboard + nightly). Fixed
+  two real WCAG defects the gate caught: a disclaimer link distinguishable only by
+  color, and three scrollable `<pre>` blocks unreachable by keyboard. Manual
+  keyboard-pass checklist and the automated gate's design rationale (including two
+  documented, investigated axe "incomplete"/indeterminate results that are not real
+  violations) are in the new `docs/accessibility.md`.
+
+### Fixed
+- The Overview page's "recent findings" row rendered with a **solid filled severity
+  background** instead of a thin left-border stripe — a CSS class name
+  (`s-crit`/`s-warn`/etc.) was shared between two different components (the findings
+  table's stripe cell and the row-link) without being scoped, so the stripe cell's
+  `background` rule leaked onto the row. Found by the Step 6.3 accessibility gate's
+  screenshot, not by code review.
 
 ## [0.3.1] — 2026-08-08
 

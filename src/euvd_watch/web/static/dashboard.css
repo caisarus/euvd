@@ -248,6 +248,7 @@ nav.sidebar {
   padding: 0.55rem 0.7rem;
   border-radius: 7px;
   color: var(--text);
+  background: var(--surface);
   font-size: 0.9rem;
   border-left: 3px solid transparent;
 }
@@ -264,7 +265,6 @@ nav.sidebar {
 .navlink .ic {
   width: 17px;
   text-align: center;
-  opacity: 0.8;
 }
 .navlink .badge {
   margin-left: auto;
@@ -739,19 +739,25 @@ td.stripecell > i {
   height: 100%;
   min-height: 2.4rem;
 }
-.s-crit {
+/* Scoped to the table stripe cell only: `.s-crit` etc. are the same severity-class
+   names dashboard.py hands to .rowitem (Overview's recent-findings list) for its
+   border-left-color-only styling below. An unscoped `.s-crit { background: ... }`
+   here would leak a full red background onto a .rowitem sharing the class name -
+   found by an axe contrast scan against the real running server, not by reading the
+   code (docs/dashboard-design.md's own "verify by running the real server" rule). */
+td.stripecell > i.s-crit {
   background: var(--crit-fg);
 }
-.s-warn {
+td.stripecell > i.s-warn {
   background: var(--warn-fg);
 }
-.s-ok {
+td.stripecell > i.s-ok {
   background: var(--ok-fg);
 }
-.s-neutral {
+td.stripecell > i.s-neutral {
   background: var(--neutral-fg);
 }
-.s-done {
+td.stripecell > i.s-done {
   background: var(--done-fg);
 }
 .tbl-mono {
@@ -829,6 +835,12 @@ pre.snippet {
   padding: 0.8rem 1rem;
   font-size: 0.86rem;
   color: var(--text);
+}
+/* A link embedded in running prose must be distinguishable by more than color alone
+   (WCAG 1.4.1, axe rule link-in-text-block) - the disclaimer is the one place a link
+   sits inline in a sentence rather than as its own button/nav/heading element. */
+.disclaimer a {
+  text-decoration: underline;
 }
 .banner-warn {
   display: flex;

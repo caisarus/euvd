@@ -1,0 +1,12 @@
+{
+  "name": "euvd-watch-a11y",
+  "private": true,
+  "description": "Accessibility tooling only (Step 6.3) - the project itself is pure Python; see pyproject.toml. Not published.",
+  "scripts": {
+    "a11y": "node scripts/a11y_check.mjs"
+  },
+  "devDependencies": {
+    "axe-core": "^4.8.4",
+    "puppeteer": "^22.15.0"
+  }
+}

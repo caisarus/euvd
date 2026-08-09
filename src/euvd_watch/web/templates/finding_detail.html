@@ -59,9 +59,9 @@
     {% if not view.vex_is_human %}
     <p class="eyebrow section-label">Record a human decision</p>
     <p>euvd-watch never sets <span class="mono">affected</span>/<span class="mono">fixed</span> automatically. To record your own judgment, add this entry to <span class="mono">vex-decisions.yaml</span>:</p>
-    <pre class="snippet">{{ view.vex_snippet }}</pre>
+    <pre class="snippet" tabindex="0">{{ view.vex_snippet }}</pre>
     <p>Then re-generate the OpenVEX document:</p>
-    <pre class="snippet">{{ view.vex_cli_hint }}</pre>
+    <pre class="snippet" tabindex="0">{{ view.vex_cli_hint }}</pre>
     {% endif %}
   </div>
 </div>

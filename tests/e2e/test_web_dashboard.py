@@ -356,6 +356,36 @@ def test_no_inline_styles_or_event_handlers_anywhere(settings: Settings) -> None
         assert not _INLINE_HANDLER.search(response.text), f"inline event handler on {path}"
 
 
+def test_scrollable_snippet_blocks_are_keyboard_focusable(settings: Settings) -> None:
+    """Regression test for a real axe finding (Step 6.3, scrollable-region-focusable,
+    WCAG 2.1.1): `<pre class="snippet">` blocks can overflow-scroll and must be
+    reachable by keyboard, not just a mouse wheel."""
+    finding = _seed_demo_scenario(settings)
+    client = _client(settings)
+    from euvd_watch.web.dashboard import comp_hash
+
+    h = comp_hash(finding.component.dedupe_key)
+    detail = client.get(f"/findings/{h}/{finding.record.euvd_id}", auth=AUTH)
+    assert detail.text.count('class="snippet" tabindex="0"') == 2  # vex snippet + cli hint
+
+    from euvd_watch.cra.state import Event
+    from euvd_watch.web.dashboard import event_url_id
+
+    event_id = Event.make_id(finding.component.dedupe_key, finding.record.euvd_id)
+    draft = client.get(f"/cra/{event_url_id(event_id)}/draft", auth=AUTH)
+    assert 'class="snippet" id="draft-text" tabindex="0"' in draft.text
+
+
+def test_disclaimer_link_is_not_color_only(settings: Settings) -> None:
+    """Regression test for a real axe finding (Step 6.3, link-in-text-block, WCAG
+    1.4.1): a link embedded in the disclaimer sentence must be distinguishable from
+    the surrounding text by more than color alone (underlined via CSS `.disclaimer a`,
+    checked here at the CSS-source level since the property isn't visible in HTML)."""
+    css = Path("src/euvd_watch/web/static/dashboard.css").read_text(encoding="utf-8")
+    assert ".disclaimer a" in css
+    assert "text-decoration: underline" in css.split(".disclaimer a")[1].split("}")[0]
+
+
 def test_findings_filters_and_pagination_query_params(settings: Settings) -> None:
     _seed_demo_scenario(settings)
     client = _client(settings)

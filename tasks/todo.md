@@ -59,8 +59,34 @@
       guide.
 - [ ] Revisit parked feedback_m2 3.4 small items: cache purge sweep, get_by_cve page
       cap, fixture annotations.
-- [ ] Step 6.3 accessibility (WCAG 2.1 AA; pa11y CI gate zero serious/critical;
-      docs/accessibility.md keyboard checklist).
+- [x] Step 6.3 accessibility — DONE 2026-08-09. Automated gate:
+      `scripts/a11y_check.mjs` (axe-core direct via Puppeteer, NOT the `pa11y` CLI —
+      pa11y's own axe runner collapses `incomplete` and `violation` into the same
+      severity, which would make the gate permanently red for a documented axe
+      heuristic limitation; see the script's header + docs/accessibility.md) +
+      `scripts/run_a11y_check.sh` (seeds the demo scenario offline exactly like
+      examples/demo.sh, serves the real dashboard, runs the check against all 7
+      pages) + new CI job `a11y` (`.github/workflows/a11y.yml`, PRs touching web/ +
+      nightly). New root `package.json` (puppeteer+axe-core devDeps, committed
+      package-lock.json); `node_modules/` gitignored.
+      Gate found and fixed two REAL WCAG defects (only by running the real page, not
+      by reading templates): `link-in-text-block` on Finding detail's CRA-event
+      disclaimer (link distinguishable only by color — now underlined via
+      `.disclaimer a`) and `scrollable-region-focusable` on all three `<pre
+      class="snippet">` blocks (VEX snippet/CLI hint/CRA draft — now
+      `tabindex="0"`), both with regression tests. Also found and fixed a real CSS
+      bug the gate's screenshot surfaced: `.s-crit`/`.s-warn`/etc. severity classes
+      were unscoped, so Overview's "recent findings" row (which reuses the same
+      class name for its left-border stripe) got a solid filled background instead
+      of a thin stripe — scoped to `td.stripecell > i.s-crit` etc. Zero
+      serious/critical axe violations across all 7 pages, confirmed offline.
+      docs/accessibility.md: the gate's design rationale, the documented/investigated
+      axe `incomplete` cases (nav icons + audit checkmark — confirmed via direct
+      axe.run() to be indeterminate, not failing; verified by eye), and a manual
+      keyboard-pass checklist executed via Puppeteer-driven real Tab-key navigation
+      (skip link first, every control gets a visible focus ring, logical order, the
+      mark-stage form fully keyboard-operable, no traps) — dated, to be re-run per
+      release. 570 tests (was 568)/94.34%, ruff+mypy clean.
 - [ ] Step 6.4 deployment docs (docs/deploy.md: compose, Caddy TLS, backup, upgrade;
       cold-start < 15 min test).
 

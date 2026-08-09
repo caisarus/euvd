@@ -1,0 +1,38 @@
+# Dashboard accessibility gate (M6 Step 6.3, plans/test_plan.md §M6 6.3 / CI matrix
+# "a11y | PRs touching web/ + nightly | pa11y zero serious/critical | yes"). Offline:
+# scripts/run_a11y_check.sh seeds the demo scenario from the committed dogfood fixture
+# exactly like examples/demo.sh, no network needed. See scripts/a11y_check.mjs and
+# docs/accessibility.md for why this runs axe-core directly rather than the `pa11y`
+# CLI (it collapses axe's "incomplete" and "violation" severities together).
+name: Accessibility
+
+on:
+  pull_request:
+    paths:
+      - "src/euvd_watch/web/**"
+      - "scripts/a11y_check.mjs"
+      - "scripts/run_a11y_check.sh"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/a11y.yml"
+  schedule:
+    - cron: "42 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  a11y:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pip install --quiet -e ".[web]"
+      - run: npm ci
+      - run: ./scripts/run_a11y_check.sh
