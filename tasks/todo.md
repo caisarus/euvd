@@ -87,8 +87,30 @@
       (skip link first, every control gets a visible focus ring, logical order, the
       mark-stage form fully keyboard-operable, no traps) — dated, to be re-run per
       release. 570 tests (was 568)/94.34%, ruff+mypy clean.
-- [ ] Step 6.4 deployment docs (docs/deploy.md: compose, Caddy TLS, backup, upgrade;
-      cold-start < 15 min test).
+- [x] Step 6.4 deployment docs — DONE 2026-08-10. **M6 COMPLETE.** docs/deploy.md +
+      examples/deploy/ (compose.yaml watch+web+caddy, Caddyfile, euvd-watch.example.yaml):
+      shared state named-volume, SBOM at an identical path in both services (snapshot key
+      is a hash of the resolved path), web bound 0.0.0.0 internal-only with Caddy as sole
+      TLS ingress. Backup (stop+tar OR python-sqlite online backup since the slim image
+      has NO sqlite3 CLI + append-only audit-log copy) and upgrade (pull + db-migrate-
+      transparent) procedures. TESTED end-to-end on a real compose stack: cold-start ~13s
+      (<<15min), 401-without-auth / 200-with-auth / exploited finding shown through Caddy
+      TLS, watch wrote the shared state volume as uid 1000. **3 REAL DEPLOY BLOCKERS found
+      + fixed by testing** (Dockerfile): (1) image didn't install the [web] extra → web
+      serve exited 2; now `pip install "${wheel}[web]"`, still 155MB<200MB; (2) state/cache
+      dirs not pre-created euvd-owned → named volume mounted ROOT-owned → non-root EACCES;
+      now mkdir+chown in the image so the volume inherits euvd ownership; (3) documented
+      local-TLS Caddy block `:443 { tls internal }` can't provision a cert (no hostname,
+      TLS internal-error alert) → fixed to `localhost { tls internal }`. Added image.yml
+      assertions 5 (web extra reaches password check) + 6 (non-root named-volume write).
+      NOTE: fixes reach GHCR `:latest` only on the 0.4.0 tag (`:edge` on next main push);
+      doc notes this. Docs updated: web.md/README EN+RO status (M6 fully implemented, beta
+      = surface may change pre-1.1), CHANGELOG.
+- [ ] Revisit parked feedback_m2 3.4 small items: cache purge sweep, get_by_cve page
+      cap, fixture annotations (carry into a future cleanup).
+- [ ] NEXT: cut **0.4.0** (M6 storage+dashboard+a11y+deploy, audit hardening fixes, cra
+      indeterminate exit 3). Rebuilds GHCR `:latest`/`:0.4.0` with the web-capable image,
+      making docs/deploy.md's `:latest` correct. Then M6 dashboard GA is `1.1`.
 
 Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §17.
 

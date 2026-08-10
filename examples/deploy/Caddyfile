@@ -1,0 +1,19 @@
+# Caddy reverse proxy for the euvd-watch dashboard (docs/deploy.md).
+#
+# PUBLIC DOMAIN (recommended): Caddy fetches and renews a real Let's Encrypt certificate
+# automatically. Point euvd.example.com's DNS A/AAAA record at this host and open 80+443.
+euvd.example.com {
+    reverse_proxy web:8642
+}
+
+# LOCAL / INTERNAL (no public domain): comment out the block above and use this instead.
+# The site MUST name a host - `tls internal` needs a hostname to issue its certificate for
+# (a bare `:443` cannot, and the TLS handshake fails). Use `localhost` for same-machine
+# access, or your server's LAN hostname/IP for internal access; Caddy serves an
+# internally-trusted cert (browsers warn until you trust Caddy's local CA - `curl -k` for a
+# quick check). Verified end-to-end for `docs/deploy.md`.
+#
+# localhost {
+#     tls internal
+#     reverse_proxy web:8642
+# }

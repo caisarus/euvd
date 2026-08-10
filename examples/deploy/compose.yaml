@@ -1,0 +1,57 @@
+# euvd-watch self-hosted deployment (M6 Step 6.4). See docs/deploy.md for the walkthrough.
+#
+#   watch  - re-matches your SBOM against fresh EUVD data on a schedule, writing findings
+#            into the shared state volume.
+#   web    - serves the read-only dashboard over that same state (HTTP, internal only).
+#   caddy  - terminates TLS and reverse-proxies to web; the only service exposed to the host.
+#
+# Before `docker compose up -d`, in this directory:
+#   1. cp euvd-watch.example.yaml euvd-watch.yaml   and fill in web.password_hash + org
+#      (generate the hash: docker run --rm -it ghcr.io/caisarus/euvd-watch:latest \
+#       web hash-password)
+#   2. put your SBOM here as sbom.cdx.json (e.g. syft dir:/your/project -o cyclonedx-json)
+#   3. set your domain in Caddyfile (or use the :443 + `tls internal` block for local TLS)
+name: euvd-watch
+
+services:
+  watch:
+    image: ghcr.io/caisarus/euvd-watch:latest
+    restart: unless-stopped
+    # The SBOM path MUST be identical here and in `web` - the dashboard finds the watch
+    # snapshot by a hash of the SBOM's resolved path.
+    command: ["--config", "/work/euvd-watch.yaml", "watch", "/work/sbom.cdx.json", "--interval", "6h"]
+    volumes:
+      - state:/home/euvd/.local/share/euvd-watch
+      - cache:/home/euvd/.cache/euvd-watch
+      - ./euvd-watch.yaml:/work/euvd-watch.yaml:ro
+      - ./sbom.cdx.json:/work/sbom.cdx.json:ro
+
+  web:
+    image: ghcr.io/caisarus/euvd-watch:latest
+    restart: unless-stopped
+    # --host 0.0.0.0 is safe ONLY because this port is never published to the host below;
+    # Caddy on the internal network is the sole ingress. Do not add a `ports:` here.
+    command: ["--config", "/work/euvd-watch.yaml", "web", "serve", "/work/sbom.cdx.json", "--host", "0.0.0.0", "--port", "8642"]
+    volumes:
+      - state:/home/euvd/.local/share/euvd-watch
+      - cache:/home/euvd/.cache/euvd-watch
+      - ./euvd-watch.yaml:/work/euvd-watch.yaml:ro
+      - ./sbom.cdx.json:/work/sbom.cdx.json:ro
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [web]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  state:
+  cache:
+  caddy_data:
+  caddy_config:

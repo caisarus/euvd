@@ -6,11 +6,11 @@ statuses, CRA countdowns, the audit log. Implemented in `src/euvd_watch/web/`
 `docs/dashboard-design.md` (the visual/interaction spec — read that first if you're
 changing anything user-facing).
 
-> **Status: beta.** Step 6.2 (the app itself, all five pages, the one write action) is
-> done and tested end-to-end, including against a real running server. Step 6.3
-> (WCAG 2.1 AA verification via the pa11y CI gate) and Step 6.4 (a timed cold-start
-> deployment guide, `docs/deploy.md`) are still open — this doc covers running it
-> locally/behind your own proxy today, not a full production deployment story yet.
+> **Status: beta.** The whole of M6 is implemented and tested end-to-end: the app and all
+> five pages (Step 6.2), the WCAG 2.1 AA accessibility gate (Step 6.3, `docs/accessibility.md`),
+> and a tested Docker Compose + Caddy deployment (Step 6.4, `docs/deploy.md`). "Beta" now
+> means the surface may still change before the `1.1` GA release — not that pieces are
+> missing. For a production deployment, follow `docs/deploy.md`.
 
 ## Install
 
@@ -61,7 +61,7 @@ watch first" state instead of an error.
 `--host`/`--port` default to `127.0.0.1:8642`. **Bind only to localhost** and put a
 real reverse proxy (Caddy, nginx, Traefik) in front for TLS and any network exposure
 — the CLI says so on startup, and it's said again here because it matters. A full
-example lands in Step 6.4's `docs/deploy.md`.
+example is in `docs/deploy.md`.
 
 ## What's on each page
 

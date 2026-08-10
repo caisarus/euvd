@@ -48,6 +48,19 @@ jobs:
           echo "image size: $size bytes"
           [ "$size" -lt 209715200 ]
 
+      - name: "Assert 5: image ships the [web] extra (dashboard deployable)"
+        # `web serve` must get PAST the extra-import check (to the password-hash check) -
+        # proves fastapi/uvicorn are present. Guards the deploy story (docs/deploy.md).
+        run: |
+          out="$(docker run --rm euvd-watch:ci web serve /tmp/nope.json 2>&1 || true)"
+          echo "$out"
+          echo "$out" | grep -q "password hash"
+
+      - name: "Assert 6: a named volume is writable by the non-root user"
+        # State/cache dirs are pre-created euvd-owned so a persisted named volume inherits
+        # that ownership - otherwise the volume mounts root-owned and every write EACCESs.
+        run: docker run --rm -v euvd-ci-voltest:/home/euvd/.local/share/euvd-watch euvd-watch:ci db migrate
+
       - name: Publish to GHCR
         if: github.event_name == 'push'
         run: |

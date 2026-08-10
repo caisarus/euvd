@@ -6,9 +6,10 @@
 > Tabelul de comenzi de mai jos marchează ce este **✅ disponibil azi** față de **🧪
 > beta** față de **🚧 planificat** — milestone-urile M0–M5 (scan, match, VEX, fluxul
 > CRA, modul `watch`, imaginea Docker, GitHub Action-ul, template-ul GitLab,
-> release-urile PyPI) sunt implementate și testate. Dashboard-ul (M6) este implementat
-> și utilizabil azi (`web serve`), dar încă **beta**: verificarea de accesibilitate și
-> un ghid de desfășurare apar înaintea versiunii `1.1` GA.
+> release-urile PyPI) sunt implementate și testate. Dashboard-ul (M6) este complet
+> implementat — aplicația, gate-ul de accesibilitate și un ghid de desfășurare testat
+> (`docs/deploy.md`) — și marcat **beta** doar pentru că suprafața se mai poate schimba
+> înaintea versiunii `1.1` GA.
 >
 > *Această traducere urmează [README-ul în engleză](README.md); în caz de divergență,
 > versiunea engleză este cea de referință.*
@@ -85,7 +86,7 @@ euvd-watch watch sbom.cdx.json --interval 6h
 | `cra verify-log` | ✅ | Verifică jurnalul de audit tamper-evident (hash-chained); numește prima intrare ruptă. |
 | `watch <sbom>` | ✅ | Re-corelează programat (`--interval 6h`) sau o singură dată (`--once`, implicit) și notifică **doar finding-urile noi/rezolvate/schimbate** (stdout, și `--webhook URL`). Vezi `docs/watch.md`. |
 | `db migrate` | ✅ | Aplică migrările de schemă pe baza de date de stare consolidată (`state_dir/euvd-watch.sqlite`) și importă fișierele de stare pre-0.4. Rulează transparent la fiecare comandă care atinge starea; comanda o face explicit. Vezi `docs/storage.md`. |
-| `web serve` | 🧪 beta (țintă `1.1`) | Dashboard self-hostable: finding-uri, statusuri VEX, countdown-uri CRA, audit log, o singură acțiune de scriere protejată prin parolă. `web hash-password` generează credențiala. Verificarea de accesibilitate (WCAG 2.1 AA) și un ghid de desfășurare rămân deschise — vezi `docs/web.md`. |
+| `web serve` | 🧪 beta (țintă `1.1`) | Dashboard self-hostable: finding-uri, statusuri VEX, countdown-uri CRA, audit log, o singură acțiune de scriere protejată prin parolă. `web hash-password` generează credențiala. WCAG 2.1 AA verificat în CI; desfășurare Docker Compose + Caddy în `docs/deploy.md`. Vezi `docs/web.md`. |
 
 Toate comenzile implementate suportă `--output json|table` și coduri de ieșire prietenoase
 cu CI (`0` curat, `1` finding-uri, `2` eroare; `cra check` adaugă `3` indeterminat).

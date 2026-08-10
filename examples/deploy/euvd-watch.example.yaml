@@ -1,0 +1,22 @@
+# euvd-watch configuration for the self-hosted deployment (docs/deploy.md).
+# Copy to euvd-watch.yaml and fill in the two required blocks below.
+
+web:
+  username: admin
+  # Generate with:  docker run --rm -it ghcr.io/caisarus/euvd-watch:latest web hash-password
+  # (PBKDF2-SHA256; the plaintext password never lands in this file or your shell history.)
+  password_hash: "REPLACE-ME-WITH-A-HASH-FROM-web-hash-password"
+
+# Used to prefill CRA Article 14 notification drafts (the dashboard's "View draft").
+organization:
+  name: "Example S.R.L."
+  contact_email: "security@example.com"
+  product_name: "Example Product"
+
+# Optional: tune the CRA trigger policy (defaults shown). See docs/cra.md.
+# cra_trigger:
+#   euvd_exploited: true
+#   cisa_kev: true
+#   epss_over_threshold: true
+#   min_confidence: medium
+#   require_all: false

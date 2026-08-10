@@ -24,7 +24,20 @@ LABEL org.opencontainers.image.source="${SOURCE_URL}" \
 
 RUN useradd --create-home --uid 1000 euvd
 COPY --from=build /dist/*.whl /tmp/dist/
-RUN pip install --no-cache-dir /tmp/dist/*.whl && rm -rf /tmp/dist
+# Install WITH the [web] extra: the image is the deployment vehicle for the self-hostable
+# dashboard (docs/deploy.md), so `euvd-watch web serve` must work out of the box. The
+# `[web]` extra keeps the *pip* install lean for CLI-only users; the all-in-one image
+# deliberately includes it. Extra applied to the local wheel (not `euvd-watch[web]` from
+# an index) so the image always ships the code that was just built.
+RUN wheel="$(ls /tmp/dist/*.whl)" && pip install --no-cache-dir "${wheel}[web]" && rm -rf /tmp/dist
+
+# Pre-create the cache and durable-state dirs owned by euvd. A Docker *named volume*
+# mounted over an existing image directory inherits that directory's ownership, so this
+# is what lets the non-root euvd user write to a persisted `-v euvd-state:...` volume
+# (docs/deploy.md, docs/integrations.md). Without it the volume mounts root-owned and
+# every write fails with EACCES.
+RUN mkdir -p /home/euvd/.local/share/euvd-watch /home/euvd/.cache/euvd-watch \
+    && chown -R euvd:euvd /home/euvd/.local /home/euvd/.cache
 
 USER euvd
 WORKDIR /work

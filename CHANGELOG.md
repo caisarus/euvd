@@ -8,6 +8,16 @@ breaking changes (each one listed explicitly below).
 ## [Unreleased]
 
 ### Added
+- **Deployment guide + deployable image (milestone M6, Step 6.4)**: `docs/deploy.md` with
+  a tested Docker Compose stack (`examples/deploy/`) — a `watch` service, the dashboard
+  `web` service, and Caddy terminating TLS — plus backup and upgrade procedures. Exercised
+  end-to-end (cold-start to a running, authenticated dashboard over TLS in well under the
+  15-minute target). Testing it caught and fixed three real deployment blockers: the
+  Docker image now installs the `[web]` extra (so `web serve` runs out of the box; still
+  < 200 MB), the image pre-creates its cache/state dirs owned by the non-root user (so a
+  persisted named volume is writable rather than root-owned), and the documented local-TLS
+  Caddy block now names a host (a bare `:443 { tls internal }` cannot provision a cert).
+  Two new image-CI assertions guard the `[web]` extra and non-root volume writability.
 - **`cra check` now distinguishes "signal unavailable" from "signal absent" (indeterminate
   state + exit code 3).** For a CRA gate, a required trigger signal whose data source was
   unavailable (KEV/EPSS feed down, or `--no-enrich`) must not read as a confirmed all-clear

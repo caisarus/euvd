@@ -6,9 +6,9 @@
 > The Commands table below marks what is **✅ available today** versus **🧪 beta**
 > versus **🚧 planned** — milestones M0–M5 (scan, match, VEX, the CRA workflow, `watch`
 > mode, Docker image, GitHub Action, GitLab template, PyPI releases) are implemented
-> and tested. The dashboard (M6) is implemented and usable today (`web serve`) but
-> still **beta**: accessibility verification and a deployment guide land before its
-> `1.1` GA.
+> and tested. The dashboard (M6) is fully implemented — app, accessibility gate, and a
+> tested deployment guide (`docs/deploy.md`) — and marked **beta** only because its
+> surface may still change before the `1.1` GA.
 
 `euvd-watch` connects software supply-chain transparency to **Europe's own vulnerability infrastructure** and to the concrete reporting duties of the **EU Cyber Resilience Act**.
 
@@ -74,7 +74,7 @@ euvd-watch watch sbom.cdx.json --interval 6h
 | `cra verify-log` | ✅ | Verify the tamper-evident (hash-chained) audit log; names the first broken entry. |
 | `watch <sbom>` | ✅ | Re-match on a schedule (`--interval 6h`) or once (`--once`, the default) and notify **only new/resolved/changed findings** (stdout, and `--webhook URL`). See `docs/watch.md`. |
 | `db migrate` | ✅ | Apply pending schema migrations to the consolidated state DB (`state_dir/euvd-watch.sqlite`) and import pre-0.4 state files. Runs transparently on every state-touching command; this makes it explicit. See `docs/storage.md`. |
-| `web serve` | 🧪 beta (`1.1` target) | Self-hostable dashboard: findings, VEX statuses, CRA countdowns, audit log, one password-gated write action. `web hash-password` sets the credential. Accessibility (WCAG 2.1 AA) verification and a deployment guide are still open — see `docs/web.md`. |
+| `web serve` | 🧪 beta (`1.1` target) | Self-hostable dashboard: findings, VEX statuses, CRA countdowns, audit log, one password-gated write action. `web hash-password` sets the credential. WCAG 2.1 AA gated in CI; Docker Compose + Caddy deployment in `docs/deploy.md`. See `docs/web.md`. |
 
 All implemented commands support `--output json|table` and CI-friendly exit codes
 (`0` clean, `1` findings, `2` error; `cra check` adds `3` indeterminate). Unimplemented
