@@ -33,7 +33,7 @@ from euvd_watch.cra.audit import verify as verify_audit_log
 from euvd_watch.cra.clock import ClockState, compute_all, is_event_open
 from euvd_watch.cra.report import DraftError, render_json, render_markdown
 from euvd_watch.cra.state import Event, EventStore, StateError
-from euvd_watch.cra.trigger import evaluate_all
+from euvd_watch.cra.trigger import evaluate_run
 from euvd_watch.enrich import enrich
 from euvd_watch.euvd.client import EuvdClient
 from euvd_watch.euvd.match import (
@@ -80,6 +80,13 @@ app.add_typer(web_app, name="web", help="Self-hostable dashboard.")
 class OutputFormat(StrEnum):
     TABLE = "table"
     JSON = "json"
+
+
+# `cra check` exit codes extend the standard 0/1/2 contract: 3 = INDETERMINATE - the
+# trigger policy could not be fully evaluated because a required signal's data source
+# (KEV/EPSS) was unavailable this run, so a "no new events" result must not read as a
+# green all-clear. New events (1) take precedence over indeterminate (3).
+EXIT_INDETERMINATE = 3
 
 
 @dataclass
@@ -722,18 +729,24 @@ def cra_check(
         False, "--no-enrich", help="Skip EPSS/KEV enrichment (their trigger signals stay unknown)."
     ),
 ) -> None:
-    """Evaluate the CRA reporting trigger; persist events; exit 1 when NEW events opened."""
+    """Evaluate the CRA reporting trigger; persist events.
+
+    Exit codes: 0 clean (no new events, all signals evaluable), 1 a NEW event opened,
+    2 execution error, 3 INDETERMINATE - a required trigger signal's source (KEV/EPSS)
+    was unavailable this run, so a "no new events" result cannot be trusted. New events
+    (1) take precedence over indeterminate (3).
+    """
     state: GlobalState = ctx.obj
     settings = state.settings
     found = _compute_findings(settings, sbom, no_enrich=no_enrich, findings_path=findings)
-    results = evaluate_all(found, settings)
+    run = evaluate_run(found, settings)
 
     now = datetime.now(UTC)
     store = _event_store(settings)
     log = _audit_log(settings)
     events: list[tuple[Event, bool]] = []
     try:
-        for result in results:
+        for result in run.triggered:
             event, created = store.get_or_create(
                 result.finding,
                 result.fired_rules,
@@ -762,10 +775,23 @@ def cra_check(
         store.close()
 
     new_count = sum(1 for _, created in events if created)
+    indeterminate = run.indeterminate
     summary = (
         f"{len(events)} trigger event(s) ({new_count} new) from {len(found)} findings; "
         f"state: {settings.state_dir}"
     )
+
+    # Loud, always-printed (stderr) warning when findings could not be evaluated because a
+    # required signal source was down - never let unavailability read as a clean all-clear.
+    if indeterminate:
+        typer.echo(
+            f"INDETERMINATE: {len(indeterminate)} finding(s) could not be evaluated against "
+            f"the CRA trigger because required signal source(s) were unavailable this run: "
+            f"{', '.join(run.unavailable_signals)}. A 'no new events' result cannot be "
+            f"trusted; re-run with those sources reachable (or disable those signals in "
+            f"cra_trigger config if that is intended).",
+            err=True,
+        )
 
     if state.output is OutputFormat.JSON:
         typer.echo(summary, err=True)
@@ -775,6 +801,15 @@ def cra_check(
             "events": [
                 {**_event_as_json(e, settings, now), "new": created} for e, created in events
             ],
+            "indeterminate": [
+                {
+                    "euvd_id": item.finding.record.euvd_id,
+                    "component": item.finding.component.dedupe_key,
+                    "unknown_signals": item.unknown_signals,
+                }
+                for item in indeterminate
+            ],
+            "unavailable_signals": run.unavailable_signals,
         }
         typer.echo(json.dumps(payload))
     else:
@@ -797,6 +832,8 @@ def cra_check(
 
     if new_count:
         raise typer.Exit(code=1)
+    if indeterminate:
+        raise typer.Exit(code=EXIT_INDETERMINATE)
 
 
 @cra_app.command("status")

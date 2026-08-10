@@ -201,3 +201,104 @@ def test_mark_and_draft_argument_errors_exit_two(tmp_path: Path) -> None:
     result = runner.invoke(app, ["cra", "mark", "x", "--stage", "bogus"], env=env)
     assert result.exit_code == 2
     assert "early_warning" in result.output  # lists the valid stage names
+
+
+# A NON-exploited jinja2 record (no exploitedSince) returned by product search (tier 2),
+# used to exercise the trigger without euvd_exploited firing.
+NONEXPLOITED_JINJA = {
+    "id": "EUVD-TEST-0002",
+    "description": "Non-exploited jinja2 finding for indeterminacy tests.",
+    "aliases": "CVE-2099-0002\n",
+    "enisaIdProduct": [{"product": {"name": "jinja2"}, "product_version": "<3.1.7"}],
+}
+
+
+def _mock_apis_kev_unavailable() -> None:
+    """No exploited catalog; product search returns a non-exploited jinja2 record; EPSS
+    below threshold; KEV feed returns a malformed body -> ApiError -> KEV unavailable
+    (fast: a 200 body is not retried)."""
+
+    def route(request: httpx.Request) -> httpx.Response:
+        if request.url.params.get("exploited") == "true":
+            return httpx.Response(200, json={"items": [], "total": 0})
+        return httpx.Response(200, json={"items": [NONEXPLOITED_JINJA], "total": 1})
+
+    respx.get(f"{BASE}/search").mock(side_effect=route)
+    respx.get(EPSS).mock(
+        return_value=httpx.Response(200, json={"data": [{"cve": "CVE-2099-0002", "epss": "0.10"}]})
+    )
+    respx.get(KEV).mock(return_value=httpx.Response(200, json={"broken": "not a kev catalog"}))
+
+
+@respx.mock
+def test_cra_check_exits_indeterminate_when_a_required_signal_source_is_unavailable(
+    tmp_path: Path,
+) -> None:
+    """Audit follow-up: a required trigger signal (KEV) being UNAVAILABLE must not read as
+    a clean all-clear. The finding didn't fire euvd_exploited (not exploited) or EPSS
+    (below threshold), and KEV couldn't be checked -> indeterminate -> exit 3, loudly."""
+    _mock_apis_kev_unavailable()
+    result = runner.invoke(
+        app, ["--output", "json", "cra", "check", str(DEMO)], env=_env(tmp_path)
+    )
+    assert result.exit_code == 3, result.output
+    assert "INDETERMINATE" in result.stderr
+    assert "cisa_kev" in result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["new_events"] == 0
+    assert payload["unavailable_signals"] == ["cisa_kev"]
+    assert len(payload["indeterminate"]) >= 1
+    assert payload["indeterminate"][0]["unknown_signals"] == ["cisa_kev"]
+
+
+def _findings_artifact(tmp_path: Path) -> Path:
+    """A crafted findings artifact with one exploited finding (will fire euvd_exploited)
+    and one non-exploited finding carrying no KEV/EPSS data (in_kev/epss null -> those
+    sources read as unavailable -> that finding is indeterminate). Deterministic: it
+    doesn't depend on live matching or the demo SBOM's contents."""
+    from euvd_watch.euvd.match import Confidence, Finding, Strategy
+    from euvd_watch.euvd.models import EuvdRecord
+    from euvd_watch.models import Component, SourceFormat
+
+    def _finding(name: str, euvd_id: str, exploited: bool) -> Finding:
+        return Finding(
+            component=Component(
+                name=name, version="1.0.0", source_format=SourceFormat.CYCLONEDX, raw_ref="r"
+            ),
+            record=EuvdRecord(euvd_id=euvd_id, exploited=exploited),
+            confidence=Confidence.HIGH,
+            strategy=Strategy.STRUCTURED,
+            explanation="x",
+        )
+
+    artifact = tmp_path / "findings.json"
+    artifact.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "findings": [
+                    _finding("exploited-pkg", "EUVD-A", True).model_dump(mode="json"),
+                    _finding("quiet-pkg", "EUVD-B", False).model_dump(mode="json"),
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return artifact
+
+
+def test_cra_check_new_event_takes_precedence_over_indeterminate(tmp_path: Path) -> None:
+    """When a real event fires AND other findings are indeterminate, the confirmed new
+    event (exit 1) dominates the indeterminate exit (3) - but the indeterminacy is still
+    surfaced loudly on stderr so it is never silently lost."""
+    artifact = _findings_artifact(tmp_path)
+    result = runner.invoke(
+        app,
+        ["--output", "json", "cra", "check", str(DEMO), "--findings", str(artifact)],
+        env=_env(tmp_path),
+    )
+    assert result.exit_code == 1, result.output  # new event dominates
+    assert "INDETERMINATE" in result.stderr  # but the indeterminacy is still surfaced
+    payload = json.loads(result.stdout)
+    assert payload["new_events"] == 1
+    assert len(payload["indeterminate"]) >= 1

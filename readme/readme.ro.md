@@ -80,7 +80,7 @@ euvd-watch watch sbom.cdx.json --interval 6h
 | `match <sbom>` | ✅ | Corelează componentele cu EUVD, cu scor de încredere și îmbogățire EPSS/KEV. Flag-uri: `--exploited-only`, `--min-confidence`, `--fail-on`, `--no-enrich`, `--save-findings`, `--timestamp`. |
 | `vex generate <sbom>` | ✅ | Redactează declarații OpenVEX. Doar finding-urile probabil sigure devin `not_affected`; tot ce e incert rămâne `under_investigation`. Îmbină `vex-decisions.yaml` (`--fail-on-conflict` pentru CI). |
 | `vex init-decisions <sbom>` | ✅ | Generează scheletul unui `vex-decisions.yaml` din finding-urile curente, pentru completare umană. |
-| `cra check <sbom>` | ✅ | Evaluează trigger-ul configurabil de raportare (EUVD exploited / CISA KEV / prag EPSS) și deschide evenimente. Iese cu 1 când se deschide un eveniment **nou**. |
+| `cra check <sbom>` | ✅ | Evaluează trigger-ul configurabil de raportare (EUVD exploited / CISA KEV / prag EPSS) și deschide evenimente. Iese cu `1` când se deschide un eveniment **nou**; iese cu `3` **indeterminat** când sursa unui semnal necesar (KEV/EPSS) a fost indisponibilă, deci un rezultat curat nu poate fi de încredere (vezi `docs/cra.md`). |
 | `cra status` / `cra draft <id>` / `cra mark <id>` | ✅ | Urmărește ceasurile pe stagii (24 h / 72 h / raport final), redă un draft de notificare precompletat cu marcaje `TODO-HUMAN`, înregistrează finalizarea umană. |
 | `cra verify-log` | ✅ | Verifică jurnalul de audit tamper-evident (hash-chained); numește prima intrare ruptă. |
 | `watch <sbom>` | ✅ | Re-corelează programat (`--interval 6h`) sau o singură dată (`--once`, implicit) și notifică **doar finding-urile noi/rezolvate/schimbate** (stdout, și `--webhook URL`). Vezi `docs/watch.md`. |
@@ -88,8 +88,8 @@ euvd-watch watch sbom.cdx.json --interval 6h
 | `web serve` | 🧪 beta (țintă `1.1`) | Dashboard self-hostable: finding-uri, statusuri VEX, countdown-uri CRA, audit log, o singură acțiune de scriere protejată prin parolă. `web hash-password` generează credențiala. Verificarea de accesibilitate (WCAG 2.1 AA) și un ghid de desfășurare rămân deschise — vezi `docs/web.md`. |
 
 Toate comenzile implementate suportă `--output json|table` și coduri de ieșire prietenoase
-cu CI (`0` curat, `1` finding-uri, `2` eroare). Comenzile neimplementate ies cu `2` și un
-mesaj clar.
+cu CI (`0` curat, `1` finding-uri, `2` eroare; `cra check` adaugă `3` indeterminat).
+Comenzile neimplementate ies cu `2` și un mesaj clar.
 
 ## Folosire în CI
 

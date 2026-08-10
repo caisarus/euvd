@@ -14,7 +14,7 @@ report, audit); exercised end-to-end by scenario S3 in `tests/e2e/test_cra_comma
 ## The operational flow
 
 ```
-euvd-watch cra check sbom.cdx.json   # evaluate the trigger; open events; exit 1 if NEW
+euvd-watch cra check sbom.cdx.json   # evaluate the trigger; open events (see exit codes)
 euvd-watch cra status                # one countdown per configured stage, all UTC
 euvd-watch cra draft <event-id>      # prefilled Markdown draft (JSON with --output json)
 euvd-watch cra mark <event-id> --stage early_warning --note "filed ref #123"
@@ -23,8 +23,29 @@ euvd-watch cra verify-log            # verify the hash-chained audit log
 ```
 
 `cra check` also accepts `--findings findings.json` (from `match --save-findings`) to
-evaluate a saved artifact instead of re-querying the EUVD, and `--no-enrich` (the KEV and
-EPSS trigger signals then stay unknown and cannot fire).
+evaluate a saved artifact instead of re-querying the EUVD, and `--no-enrich` (skips KEV
+and EPSS enrichment — see the indeterminate exit code below).
+
+### `cra check` exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | clean — no new events, and every enabled signal could be evaluated |
+| `1` | a **new** trigger event opened |
+| `2` | execution error |
+| `3` | **indeterminate** — a required trigger signal's data source (KEV/EPSS) was unavailable this run, so a "no new events" result cannot be trusted |
+
+Exit `3` is the honest answer to a **false-negative-by-omission**: if the trigger policy
+enables `cisa_kev` but the KEV feed was down (or `--no-enrich` skipped it), a finding that
+did not otherwise fire is **not** confirmed clear — we simply could not check. Rather than
+report a green all-clear, `cra check` marks such findings *indeterminate*, warns loudly on
+stderr naming the unavailable signal(s), and exits `3` (machine-readable as the
+`indeterminate` / `unavailable_signals` fields under `--output json`). A confirmed **new
+event still takes precedence** — exit `1` — but the indeterminacy is always surfaced. For
+CI, treat exit `3` as "couldn't fully evaluate — investigate," never as a pass. If you
+deliberately run without a signal's data (e.g. `--no-enrich` in an offline pipeline),
+disable that signal in `cra_trigger` so its absence is intentional rather than
+indeterminate.
 
 ## The trigger policy (`cra_trigger` in euvd-watch.yaml)
 
@@ -41,6 +62,13 @@ with `require_all: true`, every) enabled signal is present:
 review, not for starting legal clocks. The tool records *which* rules fired and keeps
 that record immutable (below); drafts always attribute each signal to its source and
 never collapse "EPSS over threshold" into an exploitation claim.
+
+Each enabled signal is evaluated as **fired**, **confirmed absent**, or **unknown** (its
+data source was unavailable this run). "Unknown" is never silently treated as "absent":
+if a finding does not fire but an enabled signal could not be checked, the finding is
+*indeterminate* and `cra check` exits `3` (above) rather than reporting a false all-clear.
+With `require_all: true`, a required signal being unknown likewise blocks the conjunction
+as indeterminate rather than as a silent non-fire.
 
 A trigger event is a **signal that human evaluation is needed** — not a determination
 that a notification is legally required. That determination is yours.

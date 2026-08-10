@@ -69,7 +69,7 @@ euvd-watch watch sbom.cdx.json --interval 6h
 | `match <sbom>` | ✅ | Match components against the EUVD, with confidence scoring and EPSS/KEV enrichment. Flags: `--exploited-only`, `--min-confidence`, `--fail-on`, `--no-enrich`, `--save-findings`, `--timestamp`. |
 | `vex generate <sbom>` | ✅ | Draft OpenVEX statements. Only provably safe findings become `not_affected`; everything uncertain stays `under_investigation`. Merges your `vex-decisions.yaml` (`--fail-on-conflict` for CI). |
 | `vex init-decisions <sbom>` | ✅ | Scaffold a `vex-decisions.yaml` from current findings for humans to fill in. |
-| `cra check <sbom>` | ✅ | Evaluate the configurable reporting trigger (EUVD exploited / CISA KEV / EPSS threshold) and open events. Exit 1 when a **new** event opens. |
+| `cra check <sbom>` | ✅ | Evaluate the configurable reporting trigger (EUVD exploited / CISA KEV / EPSS threshold) and open events. Exit `1` when a **new** event opens; exit `3` **indeterminate** when a required signal's source (KEV/EPSS) was unavailable so a clean result can't be trusted (see `docs/cra.md`). |
 | `cra status` / `cra draft <id>` / `cra mark <id>` | ✅ | Track the staged deadline clocks (24 h / 72 h / final report), render a prefilled notification draft with `TODO-HUMAN` markers, record human completion. |
 | `cra verify-log` | ✅ | Verify the tamper-evident (hash-chained) audit log; names the first broken entry. |
 | `watch <sbom>` | ✅ | Re-match on a schedule (`--interval 6h`) or once (`--once`, the default) and notify **only new/resolved/changed findings** (stdout, and `--webhook URL`). See `docs/watch.md`. |
@@ -77,7 +77,8 @@ euvd-watch watch sbom.cdx.json --interval 6h
 | `web serve` | 🧪 beta (`1.1` target) | Self-hostable dashboard: findings, VEX statuses, CRA countdowns, audit log, one password-gated write action. `web hash-password` sets the credential. Accessibility (WCAG 2.1 AA) verification and a deployment guide are still open — see `docs/web.md`. |
 
 All implemented commands support `--output json|table` and CI-friendly exit codes
-(`0` clean, `1` findings, `2` error). Unimplemented commands exit `2` with a clear message.
+(`0` clean, `1` findings, `2` error; `cra check` adds `3` indeterminate). Unimplemented
+commands exit `2` with a clear message.
 
 ## Using it in CI
 

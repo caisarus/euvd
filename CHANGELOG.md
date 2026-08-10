@@ -8,6 +8,16 @@ breaking changes (each one listed explicitly below).
 ## [Unreleased]
 
 ### Added
+- **`cra check` now distinguishes "signal unavailable" from "signal absent" (indeterminate
+  state + exit code 3).** For a CRA gate, a required trigger signal whose data source was
+  unavailable (KEV/EPSS feed down, or `--no-enrich`) must not read as a confirmed all-clear
+  — that is a false-negative-by-omission. The trigger engine now evaluates each signal as
+  fired / confirmed-absent / **unknown**; a finding that does not fire but has an
+  unevaluable enabled signal is **indeterminate**. `cra check` warns loudly on stderr,
+  reports `indeterminate`/`unavailable_signals` under `--output json`, and **exits `3`**
+  instead of `0` (a confirmed new event still takes precedence with exit `1`). Applies to
+  both trigger modes; with `require_all: true`, an unknown required signal blocks the
+  conjunction as indeterminate rather than as a silent non-fire. See `docs/cra.md`.
 - **Consolidated state DB (milestone M6, Step 6.1)**: all operational state now lives in
   one WAL-mode SQLite file, `state_dir/euvd-watch.sqlite` — CRA trigger events and watch
   snapshots included. Schema changes ship as numbered SQL migrations applied
