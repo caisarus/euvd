@@ -7,6 +7,16 @@ breaking changes (each one listed explicitly below).
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-08-11
+
+**Security release. Upgrade if you rely on euvd-watch as a CI gate or as your CRA
+Article 14 trigger.** Every earlier release (`0.3.0`, `0.3.1`, `0.4.0`) could report *no
+findings, with a success exit code*, for a component affected by an actively exploited
+vulnerability — and in one case publish a high-confidence OpenVEX `not_affected` claiming
+the opposite. A previously clean run is not evidence of a clean result. After upgrading,
+re-run `match` against your current SBOMs, re-check any OpenVEX documents you distributed,
+and re-run `cra check`: a trigger that never fired may fire now.
+
 ### Fixed
 - **Two false negatives in the matcher, both of which hid an actively exploited
   vulnerability completely** (found in the pre-1.0 audit; each reproduced end to end
