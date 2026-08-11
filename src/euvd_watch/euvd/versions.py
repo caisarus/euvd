@@ -125,6 +125,18 @@ def _looks_versionish(text: str) -> bool:
     return bool(_VERSIONISH.match(text.strip()))
 
 
+def _is_inverted(low: str, high: str) -> bool:
+    """True when a parsed range's lower bound is above its upper bound.
+
+    An inverted range contains nothing, so evaluating it reports *every* version as
+    "outside" - a proof of safety manufactured out of range text we misread. Two real
+    sources: a distro-style exact version claimed by the hyphen-range parser ("2.4.0-2"
+    splits to low="2.4.0", high="2"), and genuinely malformed EUVD entries (">=2.0 <1.0").
+    Neither may ever suppress a finding, so callers treat inversion as "not evaluable".
+    """
+    return compare(low, high)[0] > 0
+
+
 def _check_bound(version: str, op: str, boundary: str) -> tuple[bool, Scheme]:
     result, scheme = compare(version, boundary)
     inside = {
@@ -150,6 +162,8 @@ def evaluate_range(version: str, range_text: str) -> tuple[RangeResult, Scheme]:
 
     compound = _COMPOUND.match(text)
     if compound:
+        if _is_inverted(compound.group(2), compound.group(4)):
+            return (RangeResult.AMBIGUOUS, Scheme.TOKENWISE)
         low_in, scheme_low = _check_bound(version, compound.group(1), compound.group(2))
         high_in, scheme_high = _check_bound(version, compound.group(3), compound.group(4))
         scheme = _weakest(scheme_low, scheme_high)
@@ -157,6 +171,8 @@ def evaluate_range(version: str, range_text: str) -> tuple[RangeResult, Scheme]:
 
     comma = _COMMA_RANGE.match(text)
     if comma and _looks_versionish(comma.group(1)):
+        if _is_inverted(comma.group(1), comma.group(3)):
+            return (RangeResult.AMBIGUOUS, Scheme.TOKENWISE)
         low_in, scheme_low = _check_bound(version, ">=", comma.group(1))
         high_in, scheme_high = _check_bound(version, comma.group(2), comma.group(3))
         scheme = _weakest(scheme_low, scheme_high)
@@ -170,6 +186,15 @@ def evaluate_range(version: str, range_text: str) -> tuple[RangeResult, Scheme]:
     hyphen = _HYPHEN_RANGE.match(text)
     if hyphen and _looks_versionish(hyphen.group(1)) and _looks_versionish(hyphen.group(2)):
         low, high = hyphen.group(1), hyphen.group(2)
+        if _is_inverted(low, high):
+            # Not a range: one version carrying a distro/release suffix ("2.4.0-2",
+            # "1.2.3-1ubuntu2"), which docs/euvd-api.md lists as an observed exact-version
+            # shape. Read it as exactly that - equality means affected. Never OUTSIDE: a
+            # suffixed exact version says nothing trustworthy about any other version.
+            result, scheme = compare(version, text)
+            if result == 0:
+                return (RangeResult.INSIDE, scheme)
+            return (RangeResult.AMBIGUOUS, Scheme.TOKENWISE)
         cmp_low, scheme_low = compare(version, low)
         cmp_high, scheme_high = compare(version, high)
         scheme = _weakest(scheme_low, scheme_high)

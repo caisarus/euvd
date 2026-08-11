@@ -181,3 +181,38 @@
   component: {name: core, version: "7.24.0", purl: "pkg:npm/%40babel/core@7.24.0"}
   affected: [{vendor: babel, product: core, version_range: "<7.25.0"}]
   expect: {matched: true, confidence: high, strategy: structured}
+
+# 1.0-audit CRITICAL finding: a distro-style *exact* version ("2.4.0-2") is also a valid
+# hyphen-RANGE shape, and _HYPHEN_RANGE claimed it unconditionally -> low="2.4.0",
+# high="2". That range is INVERTED (low > high), so it contains nothing and every version
+# read as "provably outside" with a trusted pep440 scheme. Effect: a component sitting on
+# exactly the affected (and actively exploited) version produced ZERO findings and a
+# HIGH-confidence not_affected for the VEX engine to auto-draft - a silent suppression and
+# a missed CRA Art. 14 trigger. An inverted range is never trusted again.
+- id: distro-release-exact-version-is-affected
+  component: {name: widget, version: "2.4.0-2", cpe: "cpe:2.3:a:acme:widget:2.4.0-2:*:*:*:*:*:*:*", purl: "pkg:generic/widget@2.4.0-2"}
+  affected: [{vendor: acme, product: widget, version_range: "2.4.0-2"}]
+  expect: {matched: true, confidence: high, strategy: structured}
+
+# The safety half of the same fix: a *different* distro revision must never be asserted
+# safe off an inverted-range read. Uncertain -> a medium finding for a human, never
+# not_affected.
+- id: distro-release-other-revision-is-not-provably-safe
+  component: {name: widget, version: "2.4.0-3", cpe: "cpe:2.3:a:acme:widget:2.4.0-3:*:*:*:*:*:*:*", purl: "pkg:generic/widget@2.4.0-3"}
+  affected: [{vendor: acme, product: widget, version_range: "2.4.0-2"}]
+  expect: {matched: true, confidence: medium, strategy: partial}
+
+# Same class, ubuntu/alpine spellings - these split into a non-versionish high bound and
+# were only saved from suppression by the tokenwise scheme guard. Pinned so the exact
+# reading keeps them visible.
+- id: ubuntu-release-exact-version-is-affected
+  component: {name: widget, version: "1.2.3-1ubuntu2", cpe: "cpe:2.3:a:acme:widget:1.2.3-1ubuntu2:*:*:*:*:*:*:*", purl: "pkg:generic/widget@1.2.3-1ubuntu2"}
+  affected: [{vendor: acme, product: widget, version_range: "1.2.3-1ubuntu2"}]
+  expect: {matched: true, confidence: high, strategy: structured}
+
+# An explicitly inverted compound range is malformed EUVD data, not a statement of safety:
+# it must go AMBIGUOUS (medium finding), never "outside" for every version on earth.
+- id: inverted-compound-range-is-never-proof-of-safety
+  component: {name: widget, version: "1.5.0", cpe: "cpe:2.3:a:acme:widget:1.5.0:*:*:*:*:*:*:*", purl: "pkg:generic/widget@1.5.0"}
+  affected: [{vendor: acme, product: widget, version_range: ">=2.0 <1.0"}]
+  expect: {matched: true, confidence: medium, strategy: partial}
