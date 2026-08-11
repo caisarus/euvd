@@ -344,19 +344,32 @@ def _evaluate_pair(
     return None
 
 
+# Vendor sources trusted enough to *contradict* a product-name match and erase a finding.
+# A purl namespace is deliberately absent: derive_candidates calls it "a weak vendor hint",
+# and it is reverse-DNS or a scope ("org.apache.logging.log4j", "@babel"), not a vendor
+# name, so it disagrees with EUVD's prose vendor text ("Apache Software Foundation") for
+# reasons that have nothing to do with the component being unaffected. Letting it veto
+# erased real findings for every namespaced ecosystem (maven, scoped npm, golang, composer)
+# while the same component without a namespace was reported. It remains a positive signal:
+# when it *agrees* it still earns structured/high via the normal path.
+_VETO_VENDOR_SOURCES = frozenset({"cpe", "alias"})
+
+
 def _evaluate_affected(
     component: Component, candidates: list[Candidate], affected: AffectedProduct
 ) -> _Evaluation | None:
     """Best evaluation of one affected entry, letting informed candidates be decisive.
 
-    If any candidate *knows* its vendor and its product equals the affected product, only
-    those candidates decide the outcome: a vendor-less fallback (e.g. the bare component
-    name) must not resurrect a match the known vendor already contradicted.
+    If any candidate carries a *trustworthy* vendor and its product equals the affected
+    product, only those candidates decide the outcome: a vendor-less fallback (e.g. the
+    bare component name) must not resurrect a match the known vendor already contradicted.
     """
     informed = [
         c
         for c in candidates
-        if c.vendor and normalize_text(c.product) == normalize_text(affected.product)
+        if c.vendor
+        and c.source in _VETO_VENDOR_SOURCES
+        and normalize_text(c.product) == normalize_text(affected.product)
     ]
     pool = informed or candidates
     best: _Evaluation | None = None
