@@ -1,6 +1,7 @@
 """Covers implementation_plan.md Step 2.1: politeness and resilience of the HTTP layer."""
 
 import json
+import logging
 import time
 from pathlib import Path
 
@@ -225,3 +226,37 @@ def test_post_json_non_retryable_4xx_raises_immediately(tmp_path: Path) -> None:
     with pytest.raises(ApiError, match="403"):
         client.post_json("https://hooks.example/x", {"a": 1})
     assert len(calls) == 1  # not retried - 403 isn't in RETRYABLE_STATUSES
+
+
+def test_webhook_url_is_redacted_in_logs_and_errors(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """1.0-audit: a webhook URL IS the credential - it must never reach a log line.
+
+    Slack/Discord/Teams put the secret in the URL path, so the retry warnings and the
+    final ApiError used to print it in full. Six lines carrying a live token, straight
+    into CI output that is public for most open-source projects, on nothing worse than a
+    transient delivery failure.
+    """
+    secret = "https://hooks.slack.com/services/T00000000/B00000000/SUPERSECRETTOKEN123"
+    transport = httpx.MockTransport(lambda request: httpx.Response(500))
+    client = ApiClient(tmp_path, transport=transport, sleep=lambda _: None)
+    with caplog.at_level(logging.WARNING), pytest.raises(ApiError) as excinfo:
+        client.post_json(secret, {"a": 1})
+
+    assert "SUPERSECRETTOKEN123" not in str(excinfo.value)
+    assert "T00000000" not in str(excinfo.value)
+    for record in caplog.records:
+        assert "SUPERSECRETTOKEN123" not in record.getMessage()
+        assert "T00000000" not in record.getMessage()
+    # Still useful for debugging: the operator must be able to tell WHICH service failed.
+    assert "hooks.slack.com" in str(excinfo.value)
+
+
+def test_non_webhook_urls_keep_their_path_in_logs(tmp_path: Path) -> None:
+    """The EUVD path is not a secret and stays readable - redaction is POST-scoped."""
+    transport = httpx.MockTransport(lambda request: httpx.Response(500))
+    client = ApiClient(tmp_path, transport=transport, sleep=lambda _: None)
+    with pytest.raises(ApiError) as excinfo:
+        client.get_json("https://euvdservices.enisa.europa.eu/api/search", {"exploited": "true"})
+    assert "/api/search" in str(excinfo.value)

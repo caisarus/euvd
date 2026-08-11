@@ -116,6 +116,20 @@ class Cache:
             self._conn.close()
 
 
+def redact_url(url: str) -> str:
+    """Keep scheme and host, drop everything that can carry a secret.
+
+    Webhook URLs *are* credentials - Slack, Discord and Teams all put the token in the
+    path - so a delivery failure must not print one into a CI log. The host survives
+    because an operator still needs to know which service failed.
+    """
+    scheme, _, rest = url.partition("://")
+    if not rest:
+        return "<redacted>"
+    host = rest.split("/", 1)[0].split("?", 1)[0]
+    return f"{scheme}://{host}/<redacted>"
+
+
 def _cache_key(url: str, params: dict[str, Any] | None) -> str:
     canonical = url + "?" + json.dumps(params or {}, sort_keys=True)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
@@ -212,10 +226,11 @@ class ApiClient:
         """POST a JSON payload with the same retry/backoff as GET. Raises ApiError on
         failure. Never cached - a POST (e.g. a webhook delivery) is not an idempotent GET.
         """
-        response = self._request_with_retries("POST", url, json_body=payload)
+        safe_url = redact_url(url)
+        response = self._request_with_retries("POST", url, json_body=payload, log_url=safe_url)
         if response.status_code >= 400:
             raise ApiError(
-                f"POST to {url} failed: HTTP {response.status_code}: {response.text[:200]!r}"
+                f"POST to {safe_url} failed: HTTP {response.status_code}: {response.text[:200]!r}"
             )
 
     def _request_with_retries(
@@ -226,7 +241,11 @@ class ApiClient:
         params: dict[str, Any] | None = None,
         json_body: dict[str, Any] | None = None,
         etag: str | None = None,
+        log_url: str | None = None,
     ) -> httpx.Response:
+        # log_url is what may be printed; `url` is what is actually requested. They differ
+        # only for secret-bearing URLs (webhooks), which post_json redacts before calling.
+        shown = log_url if log_url is not None else url
         headers = {"If-None-Match": etag} if etag else {}
         last_error: str = "unknown"
         for attempt in range(MAX_RETRIES):
@@ -237,12 +256,12 @@ class ApiClient:
                 )
             except httpx.HTTPError as exc:
                 last_error = str(exc)
-                logger.warning("request error url=%s attempt=%d error=%s", url, attempt + 1, exc)
+                logger.warning("request error url=%s attempt=%d error=%s", shown, attempt + 1, exc)
             else:
                 duration_ms = (time.monotonic() - started) * 1000
                 logger.debug(
                     "request url=%s status=%d cache=miss duration_ms=%.0f",
-                    url,
+                    shown,
                     response.status_code,
                     duration_ms,
                 )
@@ -251,14 +270,14 @@ class ApiClient:
                 last_error = f"HTTP {response.status_code}"
                 logger.warning(
                     "retryable status url=%s attempt=%d status=%d",
-                    url,
+                    shown,
                     attempt + 1,
                     response.status_code,
                 )
             if attempt < MAX_RETRIES - 1:
                 backoff = (2**attempt) + random.uniform(0, 1)
                 self._sleep(backoff)
-        raise ApiError(f"Request to {url} failed after {MAX_RETRIES} attempts: {last_error}")
+        raise ApiError(f"Request to {shown} failed after {MAX_RETRIES} attempts: {last_error}")
 
     def close(self) -> None:
         self._client.close()
