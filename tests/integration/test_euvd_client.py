@@ -186,3 +186,62 @@ def test_fetch_latest_parses_array(api_client: ApiClient, euvd_fixture: Any) -> 
     )
     records = _client(api_client).fetch_latest()
     assert len(records) == 4
+
+
+# --- 1.0-audit: a shape change must fail loudly, exactly like the 4xx case above ---
+# The EUVD API is beta and docs/euvd-api.md records its shape as verified-at-a-point-in-
+# time, so an envelope change is a realistic event. _search_pages used to `break` on any
+# non-dict page and return whatever it had, so the CLI printed "0 findings" and exited 0 -
+# a clean CI gate built on no data at all. Same failure class as finding 1.1, different door.
+
+
+@respx.mock
+def test_search_raises_when_response_is_not_an_object(api_client: ApiClient) -> None:
+    respx.get(f"{BASE}/search").mock(return_value=httpx.Response(200, json=[]))
+    with pytest.raises(ApiError, match="unexpected shape"):
+        _client(api_client).fetch_exploited()
+
+
+@respx.mock
+def test_search_raises_when_items_key_is_missing(api_client: ApiClient) -> None:
+    # The nastiest shape: the body even says there are 1742 records to fetch.
+    respx.get(f"{BASE}/search").mock(
+        return_value=httpx.Response(200, json={"total": 1742, "results": []})
+    )
+    with pytest.raises(ApiError, match="unexpected shape"):
+        _client(api_client).fetch_exploited()
+
+
+@respx.mock
+def test_search_raises_on_empty_204_body(api_client: ApiClient) -> None:
+    respx.get(f"{BASE}/search").mock(return_value=httpx.Response(204))
+    with pytest.raises(ApiError, match="unexpected shape"):
+        _client(api_client).fetch_exploited()
+
+
+@respx.mock
+def test_search_raises_when_items_is_not_a_list(api_client: ApiClient) -> None:
+    respx.get(f"{BASE}/search").mock(
+        return_value=httpx.Response(200, json={"items": {"0": {}}, "total": 1})
+    )
+    with pytest.raises(ApiError, match="unexpected shape"):
+        _client(api_client).fetch_exploited()
+
+
+@respx.mock
+def test_pagination_raises_instead_of_returning_a_partial_catalog(
+    api_client: ApiClient, euvd_fixture: Any
+) -> None:
+    # Page 0 is full and `total` promises more, so page 1 going bad is an anomaly, not the
+    # end of the data. Returning page 0 alone would silently halve the catalog.
+    page0 = euvd_fixture("search-exploited-page0")
+    page0["total"] = 200
+
+    def route(request: httpx.Request) -> httpx.Response:
+        if request.url.params.get("page") == "0":
+            return httpx.Response(200, json=page0)
+        return httpx.Response(200, json={"unexpected": "envelope"})
+
+    respx.get(f"{BASE}/search").mock(side_effect=route)
+    with pytest.raises(ApiError, match="unexpected shape"):
+        _client(api_client).fetch_exploited()

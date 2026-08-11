@@ -13,7 +13,7 @@ import logging
 from typing import Any
 
 from euvd_watch.euvd.models import EuvdRecord, parse_record, parse_records
-from euvd_watch.http import ApiClient
+from euvd_watch.http import ApiClient, ApiError
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +44,19 @@ class EuvdClient:
             data = self._api.get_json(
                 f"{self._base}/search", {**params, "page": page, "size": PAGE_SIZE}
             )
-            if not isinstance(data, dict):
-                break
-            items = data.get("items") or []
+            # An unreadable page is missing data, never "no results". This used to `break`
+            # and return whatever had accumulated, so a beta-API envelope change (or a 204)
+            # surfaced as a confident "0 findings", exit 0 - a green CI gate built on
+            # nothing. Same rule as a 4xx body (feedback_m2.md finding 1.1): fail loudly and
+            # let the caller decide. The legitimately-empty shape is {"items": [], ...}.
+            if not isinstance(data, dict) or not isinstance(data.get("items"), list):
+                raise ApiError(
+                    f"unexpected shape from {self._base}/search (page {page}, params "
+                    f"{params!r}): expected an object with an 'items' list, got "
+                    f"{type(data).__name__}"
+                    + (f" with keys {sorted(data)!r}" if isinstance(data, dict) else "")
+                )
+            items = data["items"]
             for record in parse_records(items):
                 if record.euvd_id not in seen:
                     seen.add(record.euvd_id)
