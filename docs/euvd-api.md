@@ -43,6 +43,15 @@
   server ever supports it.
 - The client retries 429/5xx with exponential backoff + jitter (max 5 attempts) and
   identifies itself with a `euvd-watch/<version>` User-Agent.
+- **`Retry-After` wins over that schedule** (RFC 9110 §10.2.3, both the delay-seconds and
+  HTTP-date forms). When the server states a wait, guessing is pointless — and retrying
+  sooner than asked just earns another 429. A cooldown longer than 60 s stops the run
+  immediately with the requested wait in the message (exit `2`) instead of sleeping
+  through it or hammering: a scan that silently hangs for an hour is worse than one that
+  fails with a number you can schedule around. An unparseable header is ignored and the
+  normal backoff applies — a malformed value must never stop us retrying. Relevant in
+  practice: ENISA has been observed returning 429 to shared CI runner IPs during EU
+  working hours.
 - Responses are cached on disk (SQLite, TTL from `cache_ttl_hours`) so repeated runs and
   tier-2 per-product queries don't hammer the beta service.
 

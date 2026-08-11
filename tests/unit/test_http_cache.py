@@ -3,6 +3,7 @@
 import json
 import logging
 import time
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import httpx
@@ -260,3 +261,98 @@ def test_non_webhook_urls_keep_their_path_in_logs(tmp_path: Path) -> None:
     with pytest.raises(ApiError) as excinfo:
         client.get_json("https://euvdservices.enisa.europa.eu/api/search", {"exploited": "true"})
     assert "/api/search" in str(excinfo.value)
+
+
+# --- Retry-After (RFC 9110 §10.2.3) ---------------------------------------------------
+# The EUVD API is beta with unknown rate limits and is already observed returning 429 to
+# shared CI runner IPs during EU working hours. Ignoring the server's own "come back in N"
+# meant hammering it on a fixed exponential schedule and then failing anyway.
+
+
+def _recording_client(handler, tmp_path: Path):  # type: ignore[no-untyped-def]
+    slept: list[float] = []
+    client = ApiClient(
+        cache_dir=tmp_path,
+        transport=httpx.MockTransport(handler),
+        sleep=slept.append,
+    )
+    return client, slept
+
+
+def test_retry_after_seconds_is_honoured_instead_of_exponential_backoff(tmp_path: Path) -> None:
+    calls = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return httpx.Response(429, headers={"Retry-After": "7"})
+        return httpx.Response(200, json={"ok": True})
+
+    client, slept = _recording_client(handler, tmp_path)
+    assert client.get_json("https://api.example/x") == {"ok": True}
+    # exactly the server's number, not 2**0 + jitter
+    assert slept == [7.0]
+
+
+def test_retry_after_http_date_is_honoured(tmp_path: Path) -> None:
+    from email.utils import format_datetime
+
+    when = datetime.now(UTC) + timedelta(seconds=12)
+    calls = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return httpx.Response(429, headers={"Retry-After": format_datetime(when)})
+        return httpx.Response(200, json={"ok": True})
+
+    client, slept = _recording_client(handler, tmp_path)
+    assert client.get_json("https://api.example/x") == {"ok": True}
+    assert len(slept) == 1 and 9.0 <= slept[0] <= 13.0
+
+
+def test_retry_after_beyond_the_cap_fails_fast_without_burning_retries(tmp_path: Path) -> None:
+    """An hour-long cooldown is not something a CLI should sit through, and retrying
+    sooner than asked would just earn another 429. Stop immediately and say when."""
+    calls = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        return httpx.Response(429, headers={"Retry-After": "3600"})
+
+    client, slept = _recording_client(handler, tmp_path)
+    with pytest.raises(ApiError, match="3600"):
+        client.get_json("https://api.example/x")
+    assert calls["n"] == 1, "must not keep hammering a server that asked for an hour"
+    assert slept == []
+
+
+def test_unparseable_retry_after_falls_back_to_exponential_backoff(tmp_path: Path) -> None:
+    calls = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return httpx.Response(503, headers={"Retry-After": "whenever"})
+        return httpx.Response(200, json={"ok": True})
+
+    client, slept = _recording_client(handler, tmp_path)
+    assert client.get_json("https://api.example/x") == {"ok": True}
+    assert len(slept) == 1 and 1.0 <= slept[0] <= 2.0  # 2**0 + jitter
+
+
+def test_retry_after_in_the_past_is_treated_as_no_delay(tmp_path: Path) -> None:
+    from email.utils import format_datetime
+
+    past = datetime.now(UTC) - timedelta(seconds=30)
+    calls = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return httpx.Response(429, headers={"Retry-After": format_datetime(past)})
+        return httpx.Response(200, json={"ok": True})
+
+    client, slept = _recording_client(handler, tmp_path)
+    assert client.get_json("https://api.example/x") == {"ok": True}
+    assert slept == [0.0]

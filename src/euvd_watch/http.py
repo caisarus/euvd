@@ -16,6 +16,8 @@ import logging
 import random
 import sqlite3
 import time
+from datetime import UTC
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Any
 
@@ -28,10 +30,56 @@ logger = logging.getLogger(__name__)
 USER_AGENT = f"euvd-watch/{__version__} (+https://github.com/euvd-watch/euvd-watch)"
 MAX_RETRIES = 5
 RETRYABLE_STATUSES = {429, 500, 502, 503, 504}
+# Longest server-requested cooldown worth waiting out inside a single CLI invocation.
+# Past this we stop rather than retry early: coming back sooner than asked just earns
+# another 429, and a scan that silently hangs for an hour is worse than one that fails
+# with a number the operator can schedule around.
+RETRY_AFTER_MAX_SECONDS = 60.0
 
 
 class ApiError(Exception):
     """Raised when a request ultimately fails (after retries) or returns unusable data."""
+
+
+class RateLimited(ApiError):
+    """A server asked us to wait longer than RETRY_AFTER_MAX_SECONDS.
+
+    An ApiError subclass on purpose: every caller already treats ApiError as "no usable
+    data, fail loudly", which is exactly right here - being rate limited must never be
+    mistaken for an empty result.
+    """
+
+    def __init__(self, seconds: float) -> None:
+        super().__init__(f"server asked for a {seconds:.0f}s cooldown")
+        self.seconds = seconds
+
+
+def parse_retry_after(value: str | None, *, now: float | None = None) -> float | None:
+    """RFC 9110 §10.2.3 Retry-After: delay-seconds or an HTTP-date. None if unusable.
+
+    A value in the past (or a negative delay) means "retry now", i.e. 0 - not an error.
+    Anything unparseable returns None so the caller keeps its own backoff schedule; a
+    malformed header must never be a reason to stop retrying.
+    """
+    if value is None:
+        return None
+    text = value.strip()
+    if not text:
+        return None
+    try:
+        return max(0.0, float(int(text)))
+    except ValueError:
+        pass
+    try:
+        when = parsedate_to_datetime(text)
+    except (TypeError, ValueError):
+        return None
+    if when is None:
+        return None
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=UTC)
+    reference = time.time() if now is None else now
+    return max(0.0, when.timestamp() - reference)
 
 
 class Cache:
@@ -250,6 +298,7 @@ class ApiClient:
         last_error: str = "unknown"
         for attempt in range(MAX_RETRIES):
             started = time.monotonic()
+            retry_after: float | None = None  # set only when a response carried the header
             try:
                 response = self._client.request(
                     method, url, params=params, json=json_body, headers=headers
@@ -268,14 +317,31 @@ class ApiClient:
                 if response.status_code not in RETRYABLE_STATUSES:
                     return response
                 last_error = f"HTTP {response.status_code}"
+                retry_after = parse_retry_after(response.headers.get("Retry-After"))
+                if retry_after is not None and retry_after > RETRY_AFTER_MAX_SECONDS:
+                    logger.warning(
+                        "rate limited url=%s status=%d retry_after=%.0fs (over the %.0fs cap)",
+                        shown,
+                        response.status_code,
+                        retry_after,
+                        RETRY_AFTER_MAX_SECONDS,
+                    )
+                    raise RateLimited(retry_after)
                 logger.warning(
-                    "retryable status url=%s attempt=%d status=%d",
+                    "retryable status url=%s attempt=%d status=%d retry_after=%s",
                     shown,
                     attempt + 1,
                     response.status_code,
+                    "-" if retry_after is None else f"{retry_after:.0f}s",
                 )
             if attempt < MAX_RETRIES - 1:
-                backoff = (2**attempt) + random.uniform(0, 1)
+                # The server's own number wins when it gave one; our exponential schedule
+                # is only a guess about a service that just told us the answer.
+                backoff = (
+                    retry_after
+                    if retry_after is not None
+                    else (2**attempt) + random.uniform(0, 1)
+                )
                 self._sleep(backoff)
         raise ApiError(f"Request to {shown} failed after {MAX_RETRIES} attempts: {last_error}")
 
