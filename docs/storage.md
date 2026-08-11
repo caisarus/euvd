@@ -37,6 +37,29 @@ with a `.migrated-<UTC timestamp>` suffix, **never deleted**: CRA events are a l
 record. An event already present in the consolidated DB is never overwritten by a
 stale legacy copy.
 
+## Downgrading (read before you roll back)
+
+**A `0.3.x` binary run against a migrated state directory reports "0 open event(s) of
+0 total" and exits `0`.** It is not lying on purpose: it looks for `cra-events.sqlite`,
+finds only the renamed `cra-events.sqlite.migrated-<timestamp>`, and creates a fresh
+empty store — while your real events, deadlines and running 24-hour clocks sit in
+`euvd-watch.sqlite`, untouched and invisible to it. On a CRA reporting surface that
+green "nothing open" is the most expensive output this tool can produce, so treat a
+downgrade as a deliberate, checked operation:
+
+1. Stop every writer (`watch`, the dashboard, any scheduled `cra check`).
+2. Rename the originals back — drop the `.migrated-<timestamp>` suffix from
+   `cra-events.sqlite` and from each `watch/*.json` — and move the consolidated
+   `euvd-watch.sqlite` aside rather than deleting it.
+3. Know what you lose: those originals are a **point-in-time snapshot from the moment
+   of migration**. Any event recorded, stage marked, or snapshot taken since then
+   exists only in `euvd-watch.sqlite`, and `0.3.x` cannot read it. Reconcile against
+   `cra-audit.jsonl`, which is append-only, format-stable across both versions, and
+   therefore the authoritative record of what actually happened.
+
+The audit log needs no downgrade handling: both versions append to the same
+`cra-audit.jsonl` and `cra verify-log` validates the same hash chain either way.
+
 ## Corruption and backup
 
 On corruption the DB file is quarantined by renaming (`.corrupt-<timestamp>` suffix),
