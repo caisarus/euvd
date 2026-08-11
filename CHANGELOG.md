@@ -7,6 +7,57 @@ breaking changes (each one listed explicitly below).
 
 ## [Unreleased]
 
+### Fixed
+- **Two false negatives in the matcher, both of which hid an actively exploited
+  vulnerability completely** (found in the pre-1.0 audit; each reproduced end to end
+  before its fix, each pinned by new truth-table rows):
+  - **An inverted version range is no longer proof of safety.** A distro-style exact
+    version is also a valid hyphen-range shape, and the range parser claimed it
+    unconditionally: `2.4.0-2` became low=`2.4.0`, high=`2`. That range contains nothing,
+    so *every* version read as "provably outside" with a trusted pep440 comparison. A
+    component sitting on exactly the affected, actively exploited version produced **zero
+    findings** and a **high-confidence `not_affected`** for the VEX engine to auto-draft —
+    a silent suppression plus a missed CRA Article 14 trigger. Inverted ranges are now
+    never trusted: the hyphen form is re-read as the exact version it is (equal ⇒
+    affected), and inverted compound/comma ranges are treated as unevaluable, which keeps
+    the finding alive at `medium` for a human.
+  - **A purl namespace no longer vetoes a product-name match.** The namespace is a weak
+    vendor hint (reverse-DNS or a scope), but it could contradict EUVD's prose vendor text
+    and erase the finding: `pkg:maven/org.apache.logging.log4j/log4j-core` reported
+    nothing where the identical component without a namespace reported normally, making
+    every namespaced ecosystem (maven, scoped npm, golang, composer) systematically
+    blinder. Veto power now belongs only to the CPE and the curated alias table; an
+    authoritative vendor contradiction still vetoes.
+- **An unreadable EUVD search page is treated as missing data, not "no results".** The
+  paginator used to stop on any unexpected response and return what it had, so a beta-API
+  envelope change produced a confident `0 findings` and **exit 0** — a green CI gate built
+  on no vulnerability data at all, including for a body that said `"total": 1742`. Any page
+  that is not an object with an `items` list now raises, which the CLI already surfaces as
+  exit `2` and *"Refusing to report 'no findings' on missing data."* The legitimately empty
+  `{"items": [], "total": 0}` is unchanged.
+- **Webhook URLs are redacted in logs.** Slack/Discord/Teams put the secret in the URL
+  path, and a failed delivery printed it in full across six retry/error log lines — into
+  CI output that is public for most open-source projects. Webhook lines now read
+  `https://hooks.slack.com/<redacted>`; EUVD paths stay readable for debugging.
+- `examples/demo.sh` and `scripts/run_a11y_check.sh` tolerated only exit `1` from
+  `cra check`, so 0.4.0's new exit `3` would abort both CI jobs under `set -e`. Both ran in
+  exactly the enrichment-less conditions that produce `3`, and passed only because the
+  seeded demo record fires the exploited signal first.
+
+### Changed
+- `ci.yml` now declares `permissions: contents: read` like every other workflow, instead of
+  inheriting the repository default into a workflow that runs on fork pull requests.
+
+### Documentation
+- `docs/storage.md` documents what a **downgrade** to `0.3.x` actually does: it reports
+  "0 open event(s) of 0 total" and exits `0` against a migrated state directory, because it
+  cannot see `euvd-watch.sqlite` — with the stop-writers/rename-back procedure and the
+  warning that the restored originals are only a point-in-time snapshot.
+- The README shows that `--output` is a **global** option (`euvd-watch --output json match
+  …`, not `… match --output json`, which exits `2`), and states the stdout-purity
+  guarantee. `web hash-password`'s docstring no longer claims the plaintext "never lands in
+  shell history" when `--password` is passed.
+
 ## [0.4.0] — 2026-08-11
 
 Milestone **M6** in full: all operational state consolidated into one migrating SQLite
