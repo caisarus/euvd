@@ -108,9 +108,8 @@
       = surface may change pre-1.1), CHANGELOG.
 - [ ] Revisit parked feedback_m2 3.4 small items: cache purge sweep, get_by_cve page
       cap, fixture annotations (carry into a future cleanup).
-- [ ] NEXT: cut **0.4.0** (M6 storage+dashboard+a11y+deploy, audit hardening fixes, cra
-      indeterminate exit 3). Rebuilds GHCR `:latest`/`:0.4.0` with the web-capable image,
-      making docs/deploy.md's `:latest` correct. Then M6 dashboard GA is `1.1`.
+- [x] **0.4.0 RELEASED 2026-08-11** (M6 storage+dashboard+a11y+deploy, audit hardening
+      fixes, cra indeterminate exit 3) — see "Release 0.4.0" below.
 
 Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §17.
 
@@ -211,6 +210,37 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
       failure opens a deduplicated drift issue; never blocks PRs.
 - Deliberately not done: feedback_m2 3.4 "smaller items" (cache purge sweep, get_by_cve
   page cap, fixture annotations) — unchanged priority, revisit with M6's storage work.
+
+## Release 0.4.0 (2026-08-11) — M6 in full, on PyPI + GHCR
+
+- [x] CHANGELOG `## [0.4.0] — 2026-08-11` cut from `[Unreleased]`, with a new **Changed**
+      section making the two breaking items explicit (docs/release.md's version policy
+      requires pre-1.0 breaking changes under **Changed** with a `Breaking` prefix, and
+      the Added prose alone didn't satisfy it): (1) `cra check`'s new exit code `3` —
+      scripts treating any non-`1` exit as an all-clear must fail closed on `3`; (2) the
+      on-disk state move to `state_dir/euvd-watch.sqlite` — auto-migrated and originals
+      renamed not deleted, but direct readers/backup scripts must follow docs/storage.md,
+      and downgrading to `0.3.x` requires restoring the renamed files.
+- [x] `4916d1a` `chore(release): 0.4.0rc1` → CI + Image green → tag `v0.4.0rc1` →
+      Release workflow green in 57s with exactly the rc job set (`build`,
+      `publish-testpypi`, `verify-testpypi` success; the three PyPI/GitHub-release jobs
+      skipped).
+- [x] `71c66e8` `chore(release): 0.4.0` → CI + Image green → tag `v0.4.0` → Release
+      workflow green (`build`, `publish-pypi`, `verify-pypi` clean-venv install check,
+      `github-release` all success).
+- [x] Published artifacts verified independently of the workflow's own reporting: PyPI
+      `euvd-watch` latest = `0.4.0` (wheel + sdist); GitHub release `v0.4.0` published
+      (not draft/prerelease) with both assets; GHCR **anonymous** pull of `:latest` and
+      `:0.4.0` OK and **identical digest** `sha256:ba9420e8…aeb2e`, 163 MB, `version`
+      prints `0.4.0`, and `import fastapi, uvicorn, jinja2` succeeds inside the image —
+      i.e. `:latest` is now web-capable, so docs/deploy.md's `:latest` references are
+      correct (this was the 6.4 blocker-fix's whole point).
+- Gate before the rc commit: 588 tests pass, coverage 94.50%, ruff clean, mypy strict
+  clean, `scripts/extract_changelog.py 0.4.0rc1` resolves via the rc→base fallback.
+- NEXT per `plans/next_steps_plan.md`: Phase 2 documentation debt (ARCHITECTURE.md,
+  CONTRIBUTING.md incl. alias-table governance, Romanian glossary, asciinema cast,
+  README traceability sweep, CRA disclaimer on the web surface), then the §18 DoD audit
+  gating `1.0.0` — targeted before 2026-09-11. Dashboard GA stays `1.1`.
 
 ## Release 0.3.0 (2026-07-13)
 
