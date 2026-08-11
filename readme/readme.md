@@ -80,6 +80,17 @@ All implemented commands support `--output json|table` and CI-friendly exit code
 (`0` clean, `1` findings, `2` error; `cra check` adds `3` indeterminate). Unimplemented
 commands exit `2` with a clear message.
 
+`--output` is a **global** option, so it goes before the command, not after it:
+
+```bash
+euvd-watch --output json match sbom.cdx.json --exploited-only   # correct
+euvd-watch match sbom.cdx.json --exploited-only --output json   # exits 2: "No such option"
+```
+
+In JSON mode stdout carries only the JSON document — summaries and warnings go to
+stderr — so `euvd-watch --output json match sbom.cdx.json > findings.json` is safe to
+pipe straight into `jq`.
+
 ## Using it in CI
 
 The GitHub Action (`action.yml` at the repo root), the GitLab include-template

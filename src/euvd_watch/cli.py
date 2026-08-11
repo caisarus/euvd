@@ -1301,8 +1301,12 @@ def web_hash_password(
         ..., prompt=True, hide_input=True, confirmation_prompt=True, help="The dashboard password."
     ),
 ) -> None:
-    """Hash a password for `web.password_hash` in euvd-watch.yaml. Prompts interactively
-    (hidden input) so the plaintext password never lands in shell history."""
+    """Hash a password for `web.password_hash` in euvd-watch.yaml.
+
+    Prompts interactively with hidden input when `--password` is omitted, which is the
+    way to keep the plaintext out of shell history and out of `ps`. Passing `--password`
+    on the command line is supported for automation and puts it in both.
+    """
     from euvd_watch.web.auth import hash_password
 
     typer.echo(hash_password(password))
