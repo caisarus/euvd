@@ -59,5 +59,11 @@ euvd-watch first recorded this event at **2026-01-01T00:00:00+00:00** (event id
 ---
 
 Before filing: verify the currently required notification fields against ENISA/CSIRT
-guidance, complete every TODO-HUMAN item, and submit through the official channel.
-euvd-watch has NOT submitted anything.
+guidance and complete every TODO-HUMAN item.
+
+Where this goes, per Article 14(1): simultaneously to **the CSIRT designated as
+coordinator** and to **ENISA**, via the **single reporting platform established pursuant
+to Article 16** — not to either recipient alone, and not by ad-hoc e-mail. Confirm the
+current platform endpoint and your designated coordinating CSIRT before submitting.
+
+euvd-watch has NOT submitted anything and never will.

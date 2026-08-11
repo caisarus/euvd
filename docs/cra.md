@@ -76,15 +76,39 @@ that a notification is legally required. That determination is yours.
 ## Deadlines: configurable stages (`cra_stages`)
 
 Deadline stages are **config, not code** — a change in law or guidance must never require
-a code change. The shipped defaults reflect our reading of **Regulation (EU) 2024/2847,
-Article 14** as verified on 2026-07-10 (re-verify against the current text and ENISA
-guidance before relying on them):
+a code change. The shipped defaults come from **Regulation (EU) 2024/2847, Article 14(2)**,
+re-verified on **2026-08-11** against the consolidated text on EUR-Lex
+([CELEX 32024R2847](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R2847)):
 
-| Stage (default) | Window | Anchor |
-|---|---|---|
-| `early_warning` | 24 h | `first_seen` |
-| `vulnerability_notification` | 72 h | `first_seen` |
-| `final_report` | 14 days | `remediation_available` |
+| Stage (default) | Window | Anchor | Source |
+|---|---|---|---|
+| `early_warning` | 24 h | `first_seen` | Art. 14(2)(a) |
+| `vulnerability_notification` | 72 h | `first_seen` | Art. 14(2)(b) |
+| `final_report` | 14 days | `remediation_available` | Art. 14(2)(c) |
+
+The wording each one implements, quoted verbatim:
+
+> **(a)** an early warning notification of an actively exploited vulnerability, without
+> undue delay and in any event **within 24 hours** of the manufacturer becoming aware of it […]
+>
+> **(b)** […] a vulnerability notification, without undue delay and in any event **within
+> 72 hours** of the manufacturer becoming aware of the actively exploited vulnerability […]
+>
+> **(c)** […] a final report, **no later than 14 days after a corrective or mitigating
+> measure is available** […]
+
+Note the asymmetry the anchors encode: (a) and (b) run from *awareness*, while (c) runs
+from *remediation availability* — which is why `final_report` shows `awaiting_anchor`
+rather than a deadline until a human records that measure.
+
+Article 14 itself applies from **11 September 2026**: *"However, Article 14 shall apply
+from 11 September 2026"* (Art. 71(2)) — the rest of the Regulation applies from
+11 December 2027.
+
+**Out of scope:** Article 14(3)–(4) imposes a parallel 24 h / 72 h track for **severe
+incidents**, with a final report one month after the incident notification. euvd-watch
+covers only the actively-exploited-**vulnerability** track; nothing here detects or times
+an incident.
 
 Stages anchored on `remediation_available` show `awaiting_anchor` (no deadline at all)
 until a human records availability via `cra mark --remediation-available`. Per stage, the
