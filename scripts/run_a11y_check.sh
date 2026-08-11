@@ -34,8 +34,11 @@ PASSWORD="a11y-check-only-$$"
 
 echo "==> Seed the demo scenario offline (same fixture as examples/demo.sh)"
 python scripts/prime_cache.py
+# Seeding only needs state on disk; 1 (findings/new event) and 3 (indeterminate, because
+# --no-enrich leaves KEV/EPSS unevaluable) are both normal here. Under `set -e` any code
+# not listed aborts the whole a11y run, so 3 must be spelled out.
 euvd-watch watch "$SBOM" --once --no-enrich || [ "$?" -eq 1 ]
-euvd-watch cra check "$SBOM" --no-enrich || [ "$?" -eq 1 ]
+euvd-watch cra check "$SBOM" --no-enrich || { code=$?; [ "$code" -eq 1 ] || [ "$code" -eq 3 ]; }
 
 echo "==> Configure the dashboard"
 HASH="$(printf '%s\n%s\n' "$PASSWORD" "$PASSWORD" | euvd-watch web hash-password | grep -o 'pbkdf2_sha256\$[^[:space:]]*')"

@@ -40,8 +40,12 @@ echo "wrote $WORKDIR/openvex.json"
 echo
 echo "==> 4. cra check: did anything cross the CRA reporting trigger?"
 # Exit 1 means a NEW event opened - expected here, the demo catalog is seeded with an
-# actively exploited record that matches the demo SBOM.
-euvd-watch cra check "$SBOM" --findings "$WORKDIR/findings.json" || [ "$?" -eq 1 ]
+# actively exploited record that matches the demo SBOM. Exit 3 (indeterminate) is also a
+# success for a demo: these findings carry no enrichment, so KEV/EPSS are unevaluable and
+# only the seeded exploited record fires. Accepting 3 keeps this script from breaking the
+# moment the seeded record stops firing - under `set -e`, an unlisted code aborts the run.
+euvd-watch cra check "$SBOM" --findings "$WORKDIR/findings.json" \
+  || { code=$?; [ "$code" -eq 1 ] || [ "$code" -eq 3 ]; }
 
 echo
 echo "==> 5. cra status: the running deadline clocks"
