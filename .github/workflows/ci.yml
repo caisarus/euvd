@@ -5,6 +5,15 @@ on:
     branches: [main]
   pull_request:
 
+# Every job here only reads the repo (lint, typecheck, test, dogfood, demo, build), so say
+# so rather than inheriting whatever the repository default happens to be. The default is
+# "read" today, which is why this changes nothing now - but it is a repository setting, not
+# a reviewed file, and this workflow runs on pull_request from forks. Flipping that setting
+# would silently hand a read/write token to every fork PR. a11y/image/live/workflow already
+# declare theirs; this was the only one that did not.
+permissions:
+  contents: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
