@@ -7,6 +7,14 @@ breaking changes (each one listed explicitly below).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-08-11
+
+Milestone **M6** in full: all operational state consolidated into one migrating SQLite
+database, a self-hostable web dashboard (beta) behind the `[web]` extra, an accessibility
+gate (WCAG 2.1 AA) in CI, and a tested Docker Compose + Caddy deployment guide. Plus a
+round of untrusted-input hardening from a dedicated security audit, and a CRA correctness
+fix: an unavailable trigger signal no longer reads as an all-clear.
+
 ### Added
 - **Deployment guide + deployable image (milestone M6, Step 6.4)**: `docs/deploy.md` with
   a tested Docker Compose stack (`examples/deploy/`) — a `watch` service, the dashboard
@@ -61,6 +69,19 @@ breaking changes (each one listed explicitly below).
   keyboard-pass checklist and the automated gate's design rationale (including two
   documented, investigated axe "incomplete"/indeterminate results that are not real
   violations) are in the new `docs/accessibility.md`.
+
+### Changed
+- **Breaking (CLI contract): `cra check` has a new exit code `3`.** Previously every
+  non-firing check exited `0`; a check whose required trigger signals could not all be
+  evaluated now exits `3` (indeterminate). Scripts that treated any non-`1` exit as an
+  all-clear must be updated to fail closed on `3`. Rationale and the full state machine
+  are in `docs/cra.md`; the `0` (clear) and `1` (new event) meanings are unchanged.
+- **Breaking (on-disk layout): operational state moved into `state_dir/euvd-watch.sqlite`.**
+  `cra-events.sqlite` and `state_dir/watch/*.json` are imported automatically on first
+  run of any state-touching command and the originals renamed `.migrated-<timestamp>`
+  (never deleted), so no action is required — but anything reading those paths directly,
+  or backing them up individually, must follow `docs/storage.md` instead. Downgrading to
+  `0.3.x` after the migration requires restoring the renamed files.
 
 ### Fixed
 - **Security/robustness (untrusted-input hardening, from a dedicated audit).** Four
