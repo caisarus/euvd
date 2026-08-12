@@ -211,6 +211,40 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
 - Deliberately not done: feedback_m2 3.4 "smaller items" (cache purge sweep, get_by_cve
   page cap, fixture annotations) — unchanged priority, revisit with M6's storage work.
 
+## Release 0.4.1 (2026-08-12) — security release, on PyPI + GHCR
+
+- [x] Pushed the 11 audit commits that had been sitting unpushed on `main`
+      (`cfd1a31..c645a7d`). Full local gate first: 601 passed / 94.54%, ruff + mypy
+      strict clean. CI green on all 11 jobs (the `dogfood (any, 1)` job's "exit code 1"
+      is that job's *expected* exit code — findings above threshold, not a failure).
+- [x] Tagged `v0.4.1`. Release workflow green: build → publish-pypi → verify-pypi →
+      github-release. Image workflow green.
+- [x] **`v0.4.1rc1` was tagged first and failed**, then deleted (nothing published — the
+      run died at the version guard, all publish jobs skipped). Cause worth remembering:
+      the Release workflow requires the tag to equal the version in `pyproject.toml` +
+      `__init__.py`, so an rc needs **its own `chore(release): X.Y.Zrc1` commit** setting
+      the version to the rc (that is how `v0.4.0rc1` was done — `4916d1a`, then `71c66e8`
+      bumped to final). The `0.4.1` commit already carried the final version. Owner
+      decision: skip the rc for this one — packaging inputs are byte-identical to
+      `v0.4.0` except the version string (`release.yml` untouched), so the rc would only
+      re-test a path `v0.4.0rc1` validated the day before, and the security fix ships now.
+- [x] Verified independently, not just via the workflow's own check: PyPI `latest` =
+      0.4.1 (wheel + sdist), fresh-venv `pip install euvd-watch==0.4.1` → `version`
+      prints `0.4.1`, GitHub release `v0.4.1` published (not draft/prerelease), GHCR
+      `:0.4.1` and `:latest` share the new digest `sha256:f613ca8e…3aea54` (distinct
+      from 0.4.0's `sha256:ba9420e8…aeb2e`).
+- [x] **The fix proven against the published artifacts**, both bug and fix reproduced
+      from PyPI rather than from the working tree:
+      `evaluate_range('2.4.0-2', '2.4.0-2')` → 0.4.0 gives `OUTSIDE`/`pep440` (a
+      high-confidence "provably safe" for a component sitting on exactly the affected
+      version), 0.4.1 gives `INSIDE` (finding survives). A genuinely inverted
+      `>=2.0 <1.0` → 0.4.0 `OUTSIDE`/`pep440`, 0.4.1 `AMBIGUOUS` (unevaluable, kept for
+      a human).
+- [ ] **Security advisory still to publish** — affects every release `< 0.4.1`
+      (`0.3.0`, `0.3.1`, `0.4.0`). The draft written during the audit lived in a session
+      scratchpad and is gone; re-draft from the CHANGELOG `[0.4.1]` section, which
+      carries the full text. Owner call on GHSA vs. release-note only.
+
 ## Release 0.4.0 (2026-08-11) — M6 in full, on PyPI + GHCR
 
 - [x] CHANGELOG `## [0.4.0] — 2026-08-11` cut from `[Unreleased]`, with a new **Changed**
