@@ -240,10 +240,22 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
       version), 0.4.1 gives `INSIDE` (finding survives). A genuinely inverted
       `>=2.0 <1.0` → 0.4.0 `OUTSIDE`/`pep440`, 0.4.1 `AMBIGUOUS` (unevaluable, kept for
       a human).
-- [ ] **Security advisory still to publish** — affects every release `< 0.4.1`
-      (`0.3.0`, `0.3.1`, `0.4.0`). The draft written during the audit lived in a session
-      scratchpad and is gone; re-draft from the CHANGELOG `[0.4.1]` section, which
-      carries the full text. Owner call on GHSA vs. release-note only.
+- [x] **Advisory re-drafted 2026-08-13 and committed** (the first draft died in a session
+      scratchpad, so these live in the repo): `docs/advisories/draft-ghsa-01-silent-false-negatives.md`
+      (the three false negatives — inverted range, purl-namespace veto, unreadable search
+      page; High, CWE-697 + CWE-754) and `docs/advisories/draft-ghsa-02-webhook-url-in-logs.md`
+      (webhook credential in logs; Moderate, CWE-532). Split in two because the impacts and
+      remediations differ — the second needs webhook **rotation**, which upgrading does not do.
+      Each file leads with the GHSA form fields (ecosystem pip, `euvd-watch`, affected
+      `< 0.4.1`, patched `0.4.1`, suggested CVSS vector) and a paste-ready body.
+      Affected-version claim verified against the tags, not just the CHANGELOG: `v0.3.0`,
+      `v0.3.1` and `v0.4.0` each carry all four defects. PyPI holds only `0.3.1`/`0.4.0`
+      (`0.3.0` was git tag + GHCR only), so `< 0.4.1` is right for the pip ecosystem and
+      the GHCR tags are called out in prose.
+- [ ] **Owner to publish** — paste both at
+      https://github.com/caisarus/euvd/security/advisories/new; decide GHSA vs.
+      release-note only, and whether to request CVEs. Replace each draft file with its
+      published GHSA link afterwards.
 
 ## Release 0.4.0 (2026-08-11) — M6 in full, on PyPI + GHCR
 
