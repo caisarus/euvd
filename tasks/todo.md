@@ -211,6 +211,46 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
 - Deliberately not done: feedback_m2 3.4 "smaller items" (cache purge sweep, get_by_cve
   page cap, fixture annotations) — unchanged priority, revisit with M6's storage work.
 
+## 1.0 gate work (2026-08-18) — INV-8 + traceability refresh
+
+- [x] **INV-8 now has a test** (`tests/invariants/test_m5_invariants.py`, 5 AST tests) —
+      it was the only one of the ten invariants never written, deferred to "M5, when
+      webhooks add POST" and then forgotten when M5 shipped the webhook sink. Walls:
+      (1) only GET/POST reach the transport, only from `get_json`/`post_json`;
+      (2) no HTTP verb called on a client receiver directly — the receiver check matches
+      `httpx`/`requests`, anything named `client` or `*_client`, so the plausible
+      reach-around `self._api._client.post(...)` is caught too, while FastAPI's *inbound*
+      `@app.post` route decorator deliberately is not; (3) `post_json` has exactly one
+      caller — `("watch/sinks.py", "WebhookSink")`, an exact-set assertion;
+      (4) `cra/*` holds no `://` string at all, so the module that drafts Article 14
+      notifications has nowhere to file one; (5) config's URL defaults are exactly the
+      three read-only data sources, so no deployment can configure a submission target
+      (the webhook is a per-run `--webhook` flag only).
+- [x] **Each test proven to fail against a real mutation** before being kept — added a
+      `put_json`, swapped `self._client.request` → `.post`, added
+      `self._api._client.post(...)` in the sink, added a second `post_json` caller in
+      `vex/write.py`, added `SUBMIT_ENDPOINT = "https://…"` to `cra/report.py`, added a
+      `cra_submit_url` config field. Six mutations, six red tests, tree reverted clean.
+- [x] **§4 traceability matrix refreshed** — it was a 2026-07-10 snapshot (said `watch`
+      was a stub, `web serve` didn't exist, PyPI was unreserved). All 19 rows re-verified
+      against `v0.4.1`; evidence now cites `module::function`, not line numbers that drift.
+- [x] **§18 DoD checked off against evidence**: 7 of 9 done. Verified rather than
+      assumed — coverage 94.54 % and the trust-critical five all ≥95 % (`models.py`,
+      `vex/rules.py`, `cra/trigger.py` 100 %, `match.py` 99 %, `audit.py` 95 %); SEC-002
+      bounds present with rejection tests; pip-audit in the `security` job; SPDX headers
+      enforced by `tests/unit/test_spdx_headers.py` (a test, not the separate job the DoD
+      line imagined — noted in the doc).
+- Gate: 606 tests (was 601), 94.54 % coverage, ruff clean, mypy strict clean.
+- **The 1.0 gate is now exactly two items, both documentation**: (1) no root `README.md`
+  — `gh api repos/caisarus/euvd/readme` returns 404 — plus the missing `ARCHITECTURE.md`,
+  `CONTRIBUTING.md`, and the `GLOSSARY.md`/`README.simple.md` link targets that exist only
+  under `readme/`; (2) the Romanian glossary. `docs/vex.md` is the third, smaller gap.
+- Found while verifying, NOT fixed (out of scope, no ticket yet): `http.py::USER_AGENT`
+  advertises `https://github.com/euvd-watch/euvd-watch`, which does not exist — the repo
+  is `github.com/caisarus/euvd`. It goes out on every request to ENISA/FIRST/CISA.
+  README + `docs/integrations.md` also still pin `uses: caisarus/euvd@v0.3.1`; harmless
+  (the tag pins the action YAML, and `version: ""` installs latest from PyPI) but stale.
+
 ## Release 0.4.1 (2026-08-12) — security release, on PyPI + GHCR
 
 - [x] Pushed the 11 audit commits that had been sitting unpushed on `main`

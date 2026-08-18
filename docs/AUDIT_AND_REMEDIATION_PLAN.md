@@ -117,30 +117,40 @@ rejected (`extra="forbid"`), invalid values exit 2 naming the field.
 
 ## 4. README ↔ implementation traceability matrix
 
-Source of truth: `readme/readme.md` (the README is honest about "work in progress" at the
-top, but its Commands table and Quickstart present unbuilt features without status).
+Source of truth: `readme/readme.md`. Its Commands table now carries an explicit
+✅ / 🧪 beta / 🚧 planned status column, so the "unbuilt features presented without
+status" problem this section originally recorded is closed.
+
+> **Refreshed 2026-08-18** against `v0.4.1` (M0–M6 shipped). The original table was a
+> 2026-07-10 snapshot taken when M4–M6 did not exist; every row below was re-verified
+> against the code, the test suite (601 passing, 94.54 % coverage) and the published
+> artifacts rather than carried forward. Evidence now cites `module::function` instead
+> of line numbers, which drifted. §18's DoD item requires every row to read
+> IMPLEMENTAT ȘI VERIFICAT or be removed — **three rows still do not**, and they are the
+> remaining 1.0 blockers: the docs-links row, the EN+RO row, and the `docs/vex.md` gap
+> noted inside the `vex generate` row.
 
 | Funcționalitate promisă | Dovezi în cod | Status | Probleme/gap-uri | Teste existente | Documentație necesară |
 |---|---|---|---|---|---|
-| `scan` CycloneDX/SPDX → inventory | `sbom/*`, `cli.py:126` | IMPLEMENTAT ȘI VERIFICAT | JSON-only; README doesn't say so | unit+integration+e2e+golden | clarify JSON-only, versions |
-| `match` + confidence + EPSS/KEV, all 4 flags | `euvd/*`, `enrich/*`, `cli.py:271` | IMPLEMENTAT ȘI VERIFICAT | purl-qualifier candidate bug (TECH-001) | truth table 25+ cases, 9-cell fail-on matrix, invariants | docs/matching.md exists ✔ |
-| `vex generate` conservative + decisions merge | `vex/*`, `cli.py:450` | IMPLEMENTAT ȘI VERIFICAT | — | schema+golden+adversarial+merge matrix | docs/vex.md to write |
-| `--output json\|table`, exit 0/1/2 everywhere | `cli.py:57,101-116` | IMPLEMENTAT PARȚIAL | holds for built commands; stubs exit 2; `scan` never exits 1 (nothing to find) | e2e exit-code tests | README nuance |
-| `cra check` (trigger + events) | `cra/trigger.py`, `cra/state.py` (uncommitted); CLI stub `cli.py:577` | IMPLEMENTAT PARȚIAL | engine tested, zero CLI wiring | trigger truth table (16 cases), state idempotence, clock matrix | docs/cra.md missing |
-| `cra status` / `cra draft` / `cra mark` | `cra/clock.py` only | IMPLEMENTAT PARȚIAL | clock math done; renderer (`cra/report.py`) and commands absent | clock transition tests | docs/cra.md |
-| `cra verify-log` + tamper-evident audit log | none (`cra/audit.py` absent) | DECLARAT, DAR NEIMPLEMENTAT | headline feature; README states it as present-tense | none | docs/cra.md + security.md (limits of "tamper-evident") |
-| `watch` (diff, notify new/changed, webhook) | stub `cli.py:354` | DECLARAT, DAR NEIMPLEMENTAT | M5 | none | docs later |
-| `web serve` WCAG dashboard | none | DECLARAT, DAR NEIMPLEMENTAT | M6 | none | docs/deploy.md |
-| `pip install euvd-watch` | `pyproject.toml` valid | DECLARAT, DAR NEIMPLEMENTAT | **PyPI name unreserved — squatting risk** (flagged since M1 review, `implementation_plan.md:461`) | build job in CI (never ran) | release docs |
-| GitHub Action `euvd-watch-action@v1` | none | DECLARAT, DAR NEIMPLEMENTAT | M5.3 | none | ci-cd docs |
-| GitLab CI user template | `.gitlab-ci.yml` is self-CI only | DECLARAT, DAR NEIMPLEMENTAT | `templates/euvd-watch.gitlab-ci.yml` absent | none | ci-cd docs |
-| Deterministic byte-identical outputs | `vex/write.py`, `models.py:72-74`, pinnable `--timestamp` | IMPLEMENTAT PARȚIAL | `match --output json` embeds `generated_at` (now) with no pin flag → two identical runs differ on stdout (`cli.py:208-218`) | determinism tests for scan/vex | document; add pin (TECH-003) |
-| Human-in-the-loop, never submits | no POST anywhere; `ApiClient` is GET-only (`http.py`) | IMPLEMENTAT ȘI VERIFICAT (by absence) | INV-8 AST test not yet written (planned M5, when webhooks add POST) | grep/inspection | keep prominent |
-| Hash-chained auditability of every decision | explanations exist on every Finding/statement; **log does not** | IMPLEMENTAT PARȚIAL | explanation plumbing done; the log itself is M4.4 | INV-10 explanation tests | docs/cra.md |
-| Config file/env/flags | `config.py` | IMPLEMENTAT ȘI VERIFICAT | unbounded numeric values (SEC-002) | precedence matrix tests | docs/configuration.md to write |
-| Docs links: ARCHITECTURE.md, docs/cra.md, docs/deploy.md, GLOSSARY.md, CONTRIBUTING.md | only `docs/matching.md`, `docs/euvd-api.md`, `readme/glossary` exist | DECLARAT, DAR NEIMPLEMENTAT | broken links when README ships | n/a | write them (§16) |
-| "Documentation provided in English and Romanian" (`readme/readme.md:139`) | no Romanian docs anywhere | DECLARAT, DAR NEIMPLEMENTAT | NECESITĂ CLARIFICARE: deliver RO or drop the claim | n/a | owner decision |
-| EUPL-1.2 license | `LICENSE` | IMPLEMENTAT ȘI VERIFICAT | SPDX headers on sources not yet added (planned X.3) | n/a | — |
+| `scan` CycloneDX/SPDX → inventory | `sbom/*`, `cli.py::scan` | IMPLEMENTAT ȘI VERIFICAT | JSON-only — the README now says so explicitly | unit+integration+e2e+golden, M1 invariants | docs/matching.md ✔ |
+| `match` + confidence + EPSS/KEV, all flags | `euvd/*`, `enrich/*`, `cli.py::match` | IMPLEMENTAT ȘI VERIFICAT | TECH-001 purl-qualifier defect closed (`bc52538`) | 38-row truth table, fail-on matrix, M2 invariants | docs/matching.md ✔ |
+| `vex generate` conservative + decisions merge | `vex/*`, `cli.py::vex_generate`, `cli.py::vex_init_decisions` | IMPLEMENTAT ȘI VERIFICAT | **`docs/vex.md` still unwritten** — VEX behaviour is documented only in the README and docs/matching.md | schema+golden+adversarial+merge matrix, M3 invariants | **docs/vex.md — remaining gap** |
+| `--output json\|table`, exit codes everywhere | `cli.py::main` (global `--output`), `cli.py::cli_command` | IMPLEMENTAT ȘI VERIFICAT | contract is `0`/`1`/`2` plus `cra check`'s `3` (indeterminate, 0.4.0); `--output` is global — the postfix form exits `2`, README corrected in `e73225a` | e2e exit-code tests per command | docs/cra.md exit-code table ✔ |
+| `cra check` (trigger + events) | `cra/trigger.py`, `cra/state.py`, `web/store.py`, `cli.py::cra_check` | IMPLEMENTAT ȘI VERIFICAT | three-valued since 0.4.0: an unavailable KEV/EPSS source is INDETERMINATE, never a clean result | 15-row trigger truth table + `evaluate_run` unit tests | docs/cra.md ✔ |
+| `cra status` / `cra draft` / `cra mark` | `cra/clock.py`, `cra/report.py`, `cra/actions.py` | IMPLEMENTAT ȘI VERIFICAT | draft is deliberately incomplete: `TODO-HUMAN` markers where only a human can answer | clock transition matrix, golden draft, e2e | docs/cra.md ✔ |
+| `cra verify-log` + tamper-evident audit log | `cra/audit.py`, `cli.py::cra_verify_log` | IMPLEMENTAT ȘI VERIFICAT | tamper-*evident*, not tamper-proof — limits documented, not defects | INV-7 tamper matrix, chain + JSON-line tests | docs/cra.md §threat model ✔ |
+| `watch` (diff, notify new/changed, webhook) | `watch/*`, `cli.py::watch` | IMPLEMENTAT ȘI VERIFICAT | webhook URLs redacted in logs since 0.4.1 (`e782fee`) — the URL is the credential | differ/sink units, e2e, offline dead-proxy run | docs/watch.md ✔ |
+| `web serve` WCAG dashboard | `web/*` (`app.py`, `dashboard.py`, `store.py`, `auth.py`) | IMPLEMENTAT — 🧪 BETA, GA at `1.1` | no CSRF token on the single write form (documented limitation, accepted threat model) | e2e dashboard tests + axe-core a11y CI gate on 7 pages | docs/web.md, docs/deploy.md, docs/accessibility.md ✔ |
+| `pip install euvd-watch` | PyPI `0.3.1`, `0.4.0`, `0.4.1` | IMPLEMENTAT ȘI VERIFICAT | PyPI name reserved 2026-07-14; squatting risk closed | release workflow's `verify-pypi` clean-venv install | docs/release.md ✔ |
+| GitHub Action | `action.yml` at the repo root; `uses: caisarus/euvd@vX.Y.Z` | IMPLEMENTAT ȘI VERIFICAT | README/docs snippets still pin `@v0.3.1`; harmless (the tag pins only the action YAML — `version: ""` installs latest from PyPI) but stale — bump in the Phase 2.5 sweep | ci.yml `dogfood` job (network-free) + 5.3 fresh-repo acceptance | docs/integrations.md ✔ |
+| GitLab CI user template | `templates/euvd-watch.gitlab-ci.yml` | IMPLEMENTAT ȘI VERIFICAT | raw.githubusercontent include verified reachable anonymously | manual fresh-repo acceptance | docs/integrations.md ✔ |
+| Deterministic byte-identical outputs | `vex/write.py`, `models.py`, `--timestamp` pin | IMPLEMENTAT ȘI VERIFICAT | TECH-003 closed (`4a79ace`) — `match --output json` pins `generated_at` | INV-9 double-run diff over the demo pipeline | docs ✔ |
+| Human-in-the-loop, never submits | POST exists but is confined: `http.py::post_json` ← only `watch/sinks.py::WebhookSink`; `cra/*` contains no URL at all | IMPLEMENTAT ȘI VERIFICAT | the row's old evidence ("no POST anywhere; ApiClient is GET-only") went stale when M5 added webhooks — the guarantee is now structural rather than incidental | **INV-8 AST tests — `tests/invariants/test_m5_invariants.py` (5 tests, each mutation-verified to fail)** | keep prominent ✔ |
+| Hash-chained auditability of every decision | explanation on every Finding/statement + `cra/audit.py` chain | IMPLEMENTAT ȘI VERIFICAT | — | INV-10 explanation assertion, INV-7 tamper matrix | docs/cra.md ✔ |
+| Config file/env/flags | `config.py` | IMPLEMENTAT ȘI VERIFICAT | SEC-002 closed — every numeric bounded (`epss_threshold` 0–1, `cache_ttl_hours` ≥ 0, stage `hours` > 0); no `docs/configuration.md`, reference lives in the README | precedence matrix + out-of-bounds rejection tests | README §Configuration (a dedicated page is optional) |
+| Docs links: ARCHITECTURE.md, GLOSSARY.md, CONTRIBUTING.md, README.simple.md | `docs/matching.md`, `cra.md`, `euvd-api.md`, `watch.md`, `web.md`, `storage.md`, `deploy.md`, `accessibility.md`, `integrations.md`, `release.md` all exist | **DECLARAT, DAR NEIMPLEMENTAT** | ARCHITECTURE.md and CONTRIBUTING.md do not exist; GLOSSARY.md and README.simple.md exist only as `readme/glossary` and `readme/readme.simple`; **and there is no `README.md` at the repo root at all — GitHub serves a 404**, so all four links are broken today | n/a | Phase 2.1/2.2 + README-to-root |
+| "Documentation provided in English and Romanian" | `readme/readme.ro.md` shipped 2026-07-10 | IMPLEMENTAT PARȚIAL | the Romanian glossary translation is still outstanding | n/a | Phase 2.3 |
+| EUPL-1.2 license | `LICENSE` + SPDX headers on every source | IMPLEMENTAT ȘI VERIFICAT | — | `tests/unit/test_spdx_headers.py` enforces the headers | — |
 
 ## 5. Feature inventory & status (by milestone)
 
@@ -630,17 +640,48 @@ All of the plan's own DoD (`implementation_plan.md:465-469`) — **minus the das
 items (axe zero-critical, self-host walkthrough), which move to the `1.1` gate per the
 owner's 2026-07-10 scope decision** — **plus**, from this audit:
 
+> **Verified 2026-08-18 against `v0.4.1`** — every box below was checked against the
+> code, a full suite run (606 passing, 94.54 % coverage, ruff + mypy strict clean) and
+> the published artifacts, not against memory. Seven of the nine items are done; the
+> two that remain are both documentation debt, and they are now the entire 1.0 gate.
+
 - [ ] Every README claim maps to a shipped, tested artifact (traceability matrix all
-      IMPLEMENTAT ȘI VERIFICAT or removed).
-- [ ] SEC-001..004, TECH-001..003, DOC-001..002 closed with regression tests.
-- [ ] Audit log shipped with the §10 threat-model documentation and tamper matrix green.
-- [ ] Config rejects out-of-bounds trigger-gating values (REQ-NF-001).
-- [ ] Hosted CI green including scenario, dogfood, pip-audit, SPDX-header jobs; coverage
-      gate ≥ 85% overall and ≥ 95% on the trust-critical five.
-- [ ] `pip install euvd-watch` from PyPI works; Docker image published; version/deprecation
-      policy in docs/release.md.
-- [ ] All ten invariants (INV-1..10) implemented and green.
-- [ ] CRA documentation carries the explicit disclaimer: the tool assists preparation and
-      record-keeping; legal validation and submission remain human responsibilities.
+      IMPLEMENTAT ȘI VERIFICAT or removed). — §4 refreshed 2026-08-18; **three rows are
+      still not green**: the docs-links row (ARCHITECTURE.md and CONTRIBUTING.md do not
+      exist, GLOSSARY.md / README.simple.md exist only under `readme/`, and there is no
+      root `README.md` at all — GitHub serves a 404), the EN+RO row (Romanian glossary
+      outstanding), and the `docs/vex.md` gap inside the `vex generate` row.
+- [ ] SEC-001..004, TECH-001..003, DOC-001..002 closed with regression tests. — all
+      closed **except DOC-001**, which is half-done: the README's per-command status
+      column shipped, but its acceptance also requires "fix/remove dead links", and five
+      README links still 404. Closes together with the item above.
+- [x] Audit log shipped with the §10 threat-model documentation and tamper matrix green.
+      — `cra/audit.py` + `cli.py::cra_verify_log`; threat model and the explicit limits of
+      "tamper-evident" in `docs/cra.md`; INV-7 tamper matrix and JSON-line tests green.
+- [x] Config rejects out-of-bounds trigger-gating values (REQ-NF-001). — SEC-002 closed:
+      `epss_threshold` `ge=0.0, le=1.0`, `cache_ttl_hours` `ge=0`, CRA stage `hours` `gt=0`,
+      `extra="forbid"`; rejection tests in `tests/unit/test_config.py`.
+- [x] Hosted CI green including scenario, dogfood, pip-audit, SPDX-header jobs; coverage
+      gate ≥ 85% overall and ≥ 95% on the trust-critical five. — `ci.yml` runs lint,
+      typecheck, test (3.11 + 3.12), `dogfood`, `security` (pip-audit), `self-sbom`, `demo`,
+      `build`; a11y and live-smoke run nightly, all green. Scenario and SPDX-header checks
+      are pytest tests inside the `test` job (`tests/unit/test_spdx_headers.py`), not
+      separate jobs — the intent is met, the job list in this line was aspirational.
+      Coverage: **94.54 %** overall; trust-critical five all ≥ 95 % — `models.py`,
+      `vex/rules.py`, `cra/trigger.py` at 100 %, `euvd/match.py` 99 %, `cra/audit.py` 95 %.
+- [x] `pip install euvd-watch` from PyPI works; Docker image published; version/deprecation
+      policy in docs/release.md. — PyPI `0.3.1`/`0.4.0`/`0.4.1`, each verified by the release
+      workflow's clean-venv install; GHCR `:0.4.1` == `:latest`; policy in `docs/release.md`.
+- [x] All ten invariants (INV-1..10) implemented and green. — INV-8 was the last one
+      outstanding (deferred to "M5, when webhooks add POST"); shipped 2026-08-18 as
+      `tests/invariants/test_m5_invariants.py`, five AST tests, each verified to fail
+      against a deliberate mutation (new verb, direct client call, reach-around client
+      call, a second `post_json` caller, a CRA endpoint constant, a configurable
+      submission URL).
+- [x] CRA documentation carries the explicit disclaimer: the tool assists preparation and
+      record-keeping; legal validation and submission remain human responsibilities. —
+      `docs/cra.md` opening note ("it does **not decide** whether something is legally
+      reportable, and it **never submits**") plus the disclaimer on both CRA dashboard
+      pages.
 - [x] Romanian-docs decision executed: deliver — `readme/readme.ro.md` shipped
       2026-07-10; glossary translation follows in the docs milestone.

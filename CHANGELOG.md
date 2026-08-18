@@ -7,6 +7,28 @@ breaking changes (each one listed explicitly below).
 
 ## [Unreleased]
 
+### Added
+- **INV-8 is now enforced, not just promised.** "Nothing is ever submitted or filed
+  automatically" was the one invariant of the ten with no test — it had been deferred to
+  "M5, when webhooks add POST", and M5 shipped the webhook sink without it.
+  `tests/invariants/test_m5_invariants.py` closes it with five AST tests over the package
+  source: only `GET` and `POST` reach the transport and only from `get_json`/`post_json`;
+  no HTTP verb is called on a client object directly (including a reach-around such as
+  `self._api._client.post(...)`); `post_json` has exactly one caller, `WebhookSink`; the
+  `cra/` module that drafts Article 14 notifications contains no URL to send one to; and
+  no submission endpoint can be introduced through configuration. Each test was verified
+  to fail against a deliberate mutation before being kept.
+
+### Documentation
+- The README ↔ implementation traceability matrix (`docs/AUDIT_AND_REMEDIATION_PLAN.md`
+  §4) was a 2026-07-10 snapshot describing `watch` as a stub, `web serve` as nonexistent
+  and PyPI as unreserved. Every row is re-verified against `v0.4.1` and now cites
+  `module::function` rather than line numbers, which had drifted.
+- §18's Definition of Done for `1.0.0` is checked off against evidence rather than
+  memory: seven of the nine items are verified done, and the remaining two are both
+  documentation debt — no root `README.md` (GitHub serves a 404), no `ARCHITECTURE.md`
+  or `CONTRIBUTING.md`, no `docs/vex.md`, and the Romanian glossary.
+
 ## [0.4.1] — 2026-08-11
 
 **Security release. Upgrade if you rely on euvd-watch as a CI gate or as your CRA
