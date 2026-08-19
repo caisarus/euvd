@@ -104,7 +104,7 @@ GitHub Actions:
 ```yaml
 - uses: anchore/sbom-action@v0          # generează SBOM cu Syft
   with: { format: cyclonedx-json, output-file: sbom.cdx.json }
-- uses: caisarus/euvd@v0.3.1
+- uses: caisarus/euvd@v0.4.1
   with:
     sbom-path: sbom.cdx.json
     fail-on: exploited
@@ -164,19 +164,39 @@ cra_trigger:
 
 ## Arhitectură & documentație
 
-- [docs/matching.md](docs/matching.md) — strategii de matching & scor de încredere *(engleză)*
-- [docs/cra.md](docs/cra.md) — fluxul CRA Articolul 14, stagiile de termene și modelul
-  onest de amenințări al jurnalului de audit *(engleză)*
-- [docs/euvd-api.md](docs/euvd-api.md) — suprafața API EUVD verificată pe care o folosește tool-ul *(engleză)*
+**Începe de aici**
+
+- [GLOSSARY.ro.md](GLOSSARY.ro.md) — fiecare termen tehnic (SBOM, VEX, CRA, EPSS…)
+  explicat pe înțelesul oricui **(română)**
+- [ARCHITECTURE.md](ARCHITECTURE.md) — cum se leagă piesele între ele, modul cu modul *(engleză)*
 - [README.simple.md](README.simple.md) — aceeași poveste, explicată pe înțelesul unui copil *(engleză)*
-- [GLOSSARY.md](GLOSSARY.md) — fiecare termen tehnic (SBOM, VEX, CRA, EPSS…) explicat simplu *(engleză)*
-- 🚧 vin odată cu milestone-urile lor: `ARCHITECTURE.md`, `docs/deploy.md`
-  (self-hosting), `CONTRIBUTING.md`
+- [GLOSSARY.md](GLOSSARY.md) — glosarul, în engleză
+
+**Cum se comportă fiecare parte** *(engleză)*
+
+- [docs/matching.md](docs/matching.md) — strategii de matching & scor de încredere
+- [docs/cra.md](docs/cra.md) — fluxul CRA Articolul 14, stagiile de termene și modelul
+  onest de amenințări al jurnalului de audit
+- [docs/euvd-api.md](docs/euvd-api.md) — suprafața API EUVD verificată pe care o folosește tool-ul
+- [docs/watch.md](docs/watch.md) — re-matching programat, diff și livrare prin webhook
+- [docs/web.md](docs/web.md) — dashboard-ul, modelul de autentificare și limitele lui documentate
+- [docs/storage.md](docs/storage.md) — baza de date de stare, migrările și backup-urile
+
+**Rulare în producție** *(engleză)*
+
+- [docs/integrations.md](docs/integrations.md) — GitHub Action, template GitLab, Docker
+- [docs/deploy.md](docs/deploy.md) — self-hosting cu Docker Compose și Caddy
+- [docs/accessibility.md](docs/accessibility.md) — gate-ul WCAG 2.1 AA și cum se rulează
+- [docs/release.md](docs/release.md) — politica de versionare și procesul de release
 
 ## Contribuții
 
-Contributorii timpurii sunt foarte bineveniți — `CONTRIBUTING.md` e pe drum; până atunci,
-deschide un issue.
+Contributorii timpurii sunt foarte bineveniți — vezi [CONTRIBUTING.md](CONTRIBUTING.md)
+*(engleză)* pentru setup, rularea testelor și cele două reguli de guvernanță care țin
+tool-ul onest: orice bug real devine un rând în tabelul de adevăr **înainte** ca fix-ul
+să intre, iar orice intrare din tabelul de alias-uri citează o înregistrare EUVD reală.
+
+Raportarea unei vulnerabilități în euvd-watch însuși: [SECURITY.md](SECURITY.md) *(engleză)*.
 
 ## Licență
 

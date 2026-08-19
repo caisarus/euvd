@@ -10,7 +10,8 @@ vulnerability watch and EU Cyber Resilience Act (CRA) reporting toolkit. It inge
 drafts conservative OpenVEX statements, and drafts CRA Article 14 notifications with a
 tamper-evident audit log when an actively exploited vulnerability fires the trigger.
 
-**There is no code yet.** The repo currently contains only:
+**The project is built** (M0–M6 shipped; `0.4.1` is on PyPI and GHCR). Alongside the
+code, these planning documents remain authoritative:
 
 - `plans/implementation_plan.md` — the complete step-by-step build plan (M0–M6 milestones).
   Implement steps **strictly in order**; do not start a step until the previous step's
@@ -18,8 +19,10 @@ tamper-evident audit log when an actively exploited vulnerability fires the trig
 - `plans/test_plan.md` — **authoritative on all testing matters**; when it disagrees with the
   implementation plan on testing, the test plan wins. Testing infrastructure is built
   incrementally alongside the milestones, never as a separate phase.
-- `readme/readme.md` — the user-facing README (becomes `README.md` in the built project),
-  `readme/readme.simple` (kid-friendly version), `readme/glossary` (plain-language glossary).
+- `README.md` — the user-facing README (also the PyPI long description), with
+  `README.ro.md` (Romanian), `README.simple.md` (kid-friendly version), `GLOSSARY.md` and
+  `GLOSSARY.ro.md` (plain-language glossary, EN + RO). All live at the repo root so the
+  README's own relative links resolve on GitHub.
 
 ## Stack and layout (target state, defined in the plan)
 

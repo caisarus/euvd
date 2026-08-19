@@ -211,6 +211,38 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
 - Deliberately not done: feedback_m2 3.4 "smaller items" (cache purge sweep, get_by_cve
   page cap, fixture annotations) — unchanged priority, revisit with M6's storage work.
 
+## Documentation debt closed (2026-08-19) — the 1.0 gate is now empty
+
+- [x] **`README.md` moved to the repo root** (`git mv`, history preserved), with
+      `README.ro.md`, `README.simple.md` and `GLOSSARY.md`. It had been at
+      `readme/readme.md` since the planning-only era, so `gh api repos/caisarus/euvd/readme`
+      returned **404** — the project's GitHub front page was a bare file listing. Updated
+      every reference: `pyproject.toml` `readme =`, `tests/e2e/test_readme_quickstart.py`,
+      CLAUDE.md (whose "There is no code yet" intro was also years stale).
+- [x] **All four dead README links now resolve.** Wrote a link checker over every markdown
+      file at the root and in `docs/`: **22 files, 0 broken relative links.** Also replaced
+      the stale "🚧 coming with their milestones" list with links to all ten shipped
+      `docs/*.md` pages, and bumped the CI snippet's action pin `@v0.3.1` → `@v0.4.1`
+      (harmless either way — `version: ""` installs latest from PyPI — but it read as stale).
+- [x] **`ARCHITECTURE.md`** — pipeline shape (pure core, I/O at the edges), module map by
+      milestone, `http.py` as the only way out, the ten invariants as a table, and a
+      closing section on *why* the boundaries sit where they do.
+- [x] **`CONTRIBUTING.md`** — setup, checks (incl. the single-file coverage-gate trap that
+      looks like a test failure), the non-negotiable rules with their reasons, truth-table
+      governance, the alias-table evidence rule (§17 decision 6), fixture/golden
+      governance, Conventional Commits, good first contributions. Documents the golden-file
+      procedure **as it is** — byte comparison, updated by hand, diff explained in the PR —
+      because the `--update-goldens` flag `test_plan.md` §5 describes was never
+      implemented. Worth a follow-up: implement it or amend the test plan.
+- [x] **`GLOSSARY.ro.md`** — the Romanian glossary, all 43 terms one-to-one with the
+      English one, cross-linked both ways. Register matches the existing RO docs
+      (ecosystem anglicisms kept: finding-uri, tamper-evident, hash-chained).
+- [x] **§4 rows and §18 boxes updated**: the docs-links row and the EN+RO row both go
+      green, DOC-001's "fix/remove dead links" acceptance clause is met, and **§18 is now
+      9 of 9 — nothing in it blocks `1.0.0`.**
+- Remaining Phase 2 item: the asciinema cast (item 4). `docs/vex.md` stays on the backlog
+  as a nice-to-have — it is not a README claim.
+
 ## 1.0 gate work (2026-08-18) — INV-8 + traceability refresh
 
 - [x] **INV-8 now has a test** (`tests/invariants/test_m5_invariants.py`, 5 AST tests) —

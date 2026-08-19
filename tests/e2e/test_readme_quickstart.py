@@ -23,7 +23,7 @@ from euvd_watch.cli import app
 pytestmark = pytest.mark.e2e
 
 REPO = Path(__file__).resolve().parents[2]
-README = REPO / "readme" / "readme.md"
+README = REPO / "README.md"
 DEMO_SBOM = REPO / "examples" / "sboms" / "demo.cdx.json"
 
 BASE = "https://euvdservices.enisa.europa.eu/api"

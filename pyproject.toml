@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "euvd-watch"
 version = "0.4.1"
 description = "EUVD-native software supply-chain vulnerability watch + EU Cyber Resilience Act (CRA) reporting toolkit"
-readme = "readme/readme.md"
+readme = "README.md"
 requires-python = ">=3.11"
 license = "EUPL-1.2"
 authors = [{ name = "euvd-watch contributors" }]

@@ -107,24 +107,33 @@ annotations. Separate commit, before or after 6.2 — not mixed into it.
 
 ## Phase 2 — Documentation debt & 1.0 gaps (can interleave with Phase 1)
 
-Verified missing as of 2026-08-08:
+Verified missing as of 2026-08-08. **Items 1, 2, 3, 5 and 6 closed 2026-08-19; only
+the asciinema cast (4) remains.**
 
-1. **`ARCHITECTURE.md`** — module map mirroring the milestones (X.1). One page,
-   honest, links to the per-module docs; add the web/store layering from 6.1/6.2.
-2. **`CONTRIBUTING.md`** — dev setup, test running, Conventional Commits, the
-   fixture/golden governance (test_plan §5), and the **alias-table governance rule**
-   from §17 decision 6 (every `aliases.yaml` entry cites a real EUVD record id and
-   adds a truth-table row).
-3. **Romanian glossary translation** (`readme/glossary`) — the committed follow-up to
+1. **`ARCHITECTURE.md`** — DONE 2026-08-19. Module map by milestone, the pure-core /
+   I/O-at-the-edges shape, the web/store layering, the ten invariants as a table, and a
+   closing section on *why* the boundaries sit where they do.
+2. **`CONTRIBUTING.md`** — DONE 2026-08-19. Setup, the checks (incl. the single-file
+   coverage-gate trap), the non-negotiable rules, truth-table governance ("every wild bug
+   becomes a row *before* its fix merges"), the **alias-table evidence rule** from §17
+   decision 6, fixture/golden governance, Conventional Commits, and good first
+   contributions. Documents the golden-file procedure **as it actually is** — byte
+   comparison, updated by hand, diff explained in the PR — because the `--update-goldens`
+   flag test_plan §5 describes was never implemented.
+3. **Romanian glossary translation** — DONE 2026-08-19 (`GLOSSARY.ro.md`, all 43 terms,
+   cross-linked with the English one). The committed follow-up to
    the Romanian-docs decision.
 4. **Asciinema recording** embedded in the README (X.2 leftover) — record
    `examples/demo.sh`.
-5. **README traceability sweep** (§18): re-verify every README claim maps to a
-   shipped, tested artifact; the per-command table is already honest — re-check after
-   6.2 flips `web serve` to ✅.
-6. **CRA disclaimer check** (§18): `docs/cra.md` and the web UI must carry "assists
-   preparation and record-keeping; legal validation and submission remain human
-   responsibilities" — the web pages are new surface for it.
+5. **README traceability sweep** (§18) — DONE 2026-08-19. The README moved to the repo
+   root (it had been at `readme/readme.md`, so GitHub served a **404** for the project's
+   front page), its four dead links now resolve, the "🚧 coming with their milestones"
+   list is replaced by links to all ten shipped `docs/*.md` pages, and the CI snippet's
+   action pin moved `@v0.3.1` → `@v0.4.1`. A link checker over all 22 markdown files
+   reports 0 broken relative links.
+6. **CRA disclaimer check** (§18) — DONE, verified 2026-08-17: present in `docs/cra.md`
+   ("it does **not decide** whether something is legally reportable, and it **never
+   submits**") and on both CRA dashboard pages.
 
 ---
 

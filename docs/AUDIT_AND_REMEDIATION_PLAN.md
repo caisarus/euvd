@@ -117,7 +117,8 @@ rejected (`extra="forbid"`), invalid values exit 2 naming the field.
 
 ## 4. README ↔ implementation traceability matrix
 
-Source of truth: `readme/readme.md`. Its Commands table now carries an explicit
+Source of truth: `README.md` (moved to the repo root 2026-08-19). Its Commands table
+carries an explicit
 ✅ / 🧪 beta / 🚧 planned status column, so the "unbuilt features presented without
 status" problem this section originally recorded is closed.
 
@@ -148,8 +149,8 @@ status" problem this section originally recorded is closed.
 | Human-in-the-loop, never submits | POST exists but is confined: `http.py::post_json` ← only `watch/sinks.py::WebhookSink`; `cra/*` contains no URL at all | IMPLEMENTAT ȘI VERIFICAT | the row's old evidence ("no POST anywhere; ApiClient is GET-only") went stale when M5 added webhooks — the guarantee is now structural rather than incidental | **INV-8 AST tests — `tests/invariants/test_m5_invariants.py` (5 tests, each mutation-verified to fail)** | keep prominent ✔ |
 | Hash-chained auditability of every decision | explanation on every Finding/statement + `cra/audit.py` chain | IMPLEMENTAT ȘI VERIFICAT | — | INV-10 explanation assertion, INV-7 tamper matrix | docs/cra.md ✔ |
 | Config file/env/flags | `config.py` | IMPLEMENTAT ȘI VERIFICAT | SEC-002 closed — every numeric bounded (`epss_threshold` 0–1, `cache_ttl_hours` ≥ 0, stage `hours` > 0); no `docs/configuration.md`, reference lives in the README | precedence matrix + out-of-bounds rejection tests | README §Configuration (a dedicated page is optional) |
-| Docs links: ARCHITECTURE.md, GLOSSARY.md, CONTRIBUTING.md, README.simple.md | `docs/matching.md`, `cra.md`, `euvd-api.md`, `watch.md`, `web.md`, `storage.md`, `deploy.md`, `accessibility.md`, `integrations.md`, `release.md` all exist | **DECLARAT, DAR NEIMPLEMENTAT** | ARCHITECTURE.md and CONTRIBUTING.md do not exist; GLOSSARY.md and README.simple.md exist only as `readme/glossary` and `readme/readme.simple`; **and there is no `README.md` at the repo root at all — GitHub serves a 404**, so all four links are broken today | n/a | Phase 2.1/2.2 + README-to-root |
-| "Documentation provided in English and Romanian" | `readme/readme.ro.md` shipped 2026-07-10 | IMPLEMENTAT PARȚIAL | the Romanian glossary translation is still outstanding | n/a | Phase 2.3 |
+| Docs links: ARCHITECTURE.md, GLOSSARY.md, CONTRIBUTING.md, README.simple.md | all four shipped at the repo root 2026-08-19, alongside `README.md`, `README.ro.md`, `GLOSSARY.ro.md` and the ten `docs/*.md` pages | IMPLEMENTAT ȘI VERIFICAT | the README lived at `readme/readme.md`, so GitHub served a 404 for the repo's front page and four of its links were dead; all four targets now exist at the root and **a link checker over all 22 markdown files reports 0 broken relative links** | link check + `tests/e2e/test_readme_quickstart.py` executes the quickstart | — |
+| "Documentation provided in English and Romanian" | `README.ro.md` (2026-07-10) + `GLOSSARY.ro.md` (2026-08-19), cross-linked both ways | IMPLEMENTAT ȘI VERIFICAT | RO glossary covers all 43 terms of the EN one, one-to-one; `docs/*.md` remain English and are marked *(engleză)* in the RO README | n/a | — |
 | EUPL-1.2 license | `LICENSE` + SPDX headers on every source | IMPLEMENTAT ȘI VERIFICAT | — | `tests/unit/test_spdx_headers.py` enforces the headers | — |
 
 ## 5. Feature inventory & status (by milestone)
@@ -642,19 +643,21 @@ owner's 2026-07-10 scope decision** — **plus**, from this audit:
 
 > **Verified 2026-08-18 against `v0.4.1`** — every box below was checked against the
 > code, a full suite run (606 passing, 94.54 % coverage, ruff + mypy strict clean) and
-> the published artifacts, not against memory. Seven of the nine items are done; the
-> two that remain are both documentation debt, and they are now the entire 1.0 gate.
+> the published artifacts, not against memory. **All nine items are now done**
+> (2026-08-19, when the documentation debt closed), so nothing in this section blocks
+> `1.0.0`.
 
-- [ ] Every README claim maps to a shipped, tested artifact (traceability matrix all
-      IMPLEMENTAT ȘI VERIFICAT or removed). — §4 refreshed 2026-08-18; **three rows are
-      still not green**: the docs-links row (ARCHITECTURE.md and CONTRIBUTING.md do not
-      exist, GLOSSARY.md / README.simple.md exist only under `readme/`, and there is no
-      root `README.md` at all — GitHub serves a 404), the EN+RO row (Romanian glossary
-      outstanding), and the `docs/vex.md` gap inside the `vex generate` row.
-- [ ] SEC-001..004, TECH-001..003, DOC-001..002 closed with regression tests. — all
-      closed **except DOC-001**, which is half-done: the README's per-command status
-      column shipped, but its acceptance also requires "fix/remove dead links", and five
-      README links still 404. Closes together with the item above.
+- [x] Every README claim maps to a shipped, tested artifact (traceability matrix all
+      IMPLEMENTAT ȘI VERIFICAT or removed). — closed 2026-08-19: `README.md`,
+      `README.ro.md`, `README.simple.md`, `GLOSSARY.md`, `GLOSSARY.ro.md`,
+      `ARCHITECTURE.md` and `CONTRIBUTING.md` all live at the repo root, every §4 row
+      reads IMPLEMENTAT ȘI VERIFICAT, and a link check over all 22 markdown files reports
+      **0 broken relative links**. `docs/vex.md` is still unwritten but is not a README
+      claim — VEX behaviour is documented in the README, ARCHITECTURE.md and
+      docs/matching.md; it stays on the backlog as a nice-to-have.
+- [x] SEC-001..004, TECH-001..003, DOC-001..002 closed with regression tests. — DOC-001
+      was the last one open; its acceptance clause "fix/remove dead links" is now met, so
+      it closes with the item above.
 - [x] Audit log shipped with the §10 threat-model documentation and tamper matrix green.
       — `cra/audit.py` + `cli.py::cra_verify_log`; threat model and the explicit limits of
       "tamper-evident" in `docs/cra.md`; INV-7 tamper matrix and JSON-line tests green.

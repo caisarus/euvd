@@ -20,14 +20,34 @@ breaking changes (each one listed explicitly below).
   to fail against a deliberate mutation before being kept.
 
 ### Documentation
+- **The README now exists where GitHub looks for it.** It lived at `readme/readme.md`, a
+  leftover from when this repository held only planning documents, so
+  `https://github.com/caisarus/euvd` served a **404** for its own front page and four of
+  the README's links were dead. `README.md`, `README.ro.md`, `README.simple.md` and
+  `GLOSSARY.md` now sit at the repo root (moved with history preserved); a link check over
+  all 22 markdown files reports zero broken relative links. PyPI was unaffected and stays
+  correct.
+- **`ARCHITECTURE.md`** — the module map, by milestone: the pure-core / I/O-at-the-edges
+  shape, what each package owns, the ten invariants, and why the boundaries sit where they
+  do (matcher separate from trigger, state separate from audit log, human decisions
+  separate from machine conclusions, drafting separate from filing).
+- **`CONTRIBUTING.md`** — setup, the checks, and the rules that are not negotiable, each
+  with its reasoning. Includes the truth-table rule (every wild bug becomes a row *before*
+  its fix merges), the alias-table evidence rule (every `aliases.yaml` entry cites a real
+  EUVD record id and adds a truth-table row), and fixture/golden governance.
+- **`GLOSSARY.ro.md`** — the glossary in Romanian, all 43 terms, cross-linked with the
+  English one. The "documentation in English and Romanian" claim is now fully true rather
+  than partly.
+- README housekeeping found by the sweep: the "🚧 coming with their milestones" list is
+  replaced by links to all ten shipped `docs/` pages, and the CI snippet's action pin moves
+  `@v0.3.1` → `@v0.4.1`.
 - The README ↔ implementation traceability matrix (`docs/AUDIT_AND_REMEDIATION_PLAN.md`
   §4) was a 2026-07-10 snapshot describing `watch` as a stub, `web serve` as nonexistent
   and PyPI as unreserved. Every row is re-verified against `v0.4.1` and now cites
   `module::function` rather than line numbers, which had drifted.
 - §18's Definition of Done for `1.0.0` is checked off against evidence rather than
-  memory: seven of the nine items are verified done, and the remaining two are both
-  documentation debt — no root `README.md` (GitHub serves a 404), no `ARCHITECTURE.md`
-  or `CONTRIBUTING.md`, no `docs/vex.md`, and the Romanian glossary.
+  memory. With the documentation debt above closed, **all nine items are done** and
+  nothing in that section blocks `1.0.0`.
 
 ## [0.4.1] — 2026-08-11
 

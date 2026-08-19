@@ -2,6 +2,8 @@
 
 Each entry: what the term means, and what it means **inside euvd-watch**. Sorted by theme, so related terms sit together. If a term you meet in the docs is missing here, that's a documentation bug — please open an issue.
 
+> Versiunea în limba română: [GLOSSARY.ro.md](GLOSSARY.ro.md).
+
 ---
 
 ## 1. Software inventories
