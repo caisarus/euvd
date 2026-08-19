@@ -240,6 +240,17 @@ Roadmap authority: `docs/AUDIT_AND_REMEDIATION_PLAN.md` §14. Owner decisions §
 - [x] **§4 rows and §18 boxes updated**: the docs-links row and the EN+RO row both go
       green, DOC-001's "fix/remove dead links" acceptance clause is met, and **§18 is now
       9 of 9 — nothing in it blocks `1.0.0`.**
+- [x] **Fixed the Image-workflow break this caused** (`docker/Dockerfile:14` did
+      `COPY readme/ readme/` — the wheel build needs pyproject's `readme =` target — and
+      `.dockerignore` allow-listed `!readme/`). CI was green on the same push, so only the
+      Image workflow caught it, in 7 s. **Why my pre-flight grep missed it: I filtered by
+      file extension (`--include="*.py" --include="*.toml" …`), and `Dockerfile` and
+      `.dockerignore` have none.** Search extension-blind when checking whether a path is
+      still referenced. Also added `README.md` to image.yml's PR `paths:` filter — the
+      build depends on it now, so a PR moving it again would otherwise skip the very
+      workflow that catches this. Verified by building the image locally and running all
+      six of the workflow's own assertions (version, mounted-SBOM scan, non-root uid 1000,
+      155 MB < 200 MB, [web] extra reaches the password check, named volume writable).
 - Remaining Phase 2 item: the asciinema cast (item 4). `docs/vex.md` stays on the backlog
   as a nice-to-have — it is not a README claim.
 

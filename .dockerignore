@@ -1,6 +1,7 @@
-# keep the build context tiny: only pyproject.toml, LICENSE, readme/ and src/ are copied
+# keep the build context tiny: only pyproject.toml, LICENSE, README.md and src/ are copied
+# (README.md is the `readme =` target in pyproject.toml, so the wheel build needs it)
 *
 !pyproject.toml
 !LICENSE
-!readme/
+!README.md
 !src/

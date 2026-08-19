@@ -13,6 +13,9 @@ on:
       - ".dockerignore"
       - "src/**"
       - "pyproject.toml"
+      # the wheel build copies README.md (pyproject's `readme =` target), so a change to
+      # its name or location breaks the image - as moving it to the root once did
+      - "README.md"
       - ".github/workflows/image.yml"
 
 permissions:
