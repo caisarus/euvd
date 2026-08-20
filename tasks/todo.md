@@ -5,6 +5,35 @@
 > the CRA Art. 14 applicability date 2026-09-11), publication, NLnet funding, and
 > community mechanics. Execute it phase by phase.
 
+## Toward 1.0.0 (target: tag before 2026-09-11, CRA Art. 14 applicability)
+
+- [x] **`fix/retry-after` merged into main 2026-08-20** (`1dbbaa2` + `b3aff3a`, pushed as
+      `b3aff3a`). The branch was cut 2026-08-11 and parked for CI observation; settled in
+      favour of shipping it *inside* 1.0.0 rather than after, because 1.0.0 is the release
+      that gets the attention and ENISA 429s to shared CI runner IPs are exactly what new
+      users hit first. Rebased (clean — main never touched `http.py` after the branch
+      point), then two merge-prep fixes in `b3aff3a`: the change had no CHANGELOG entry
+      (1.0.0's build fails without one) and its own backoff expression was the one file in
+      the tree `ruff format` would rewrite — the branch predates the hook catching it.
+      **Reviewed for the false-negative class before merging, not assumed:** `RateLimited`
+      subclasses `ApiError`, and every `ApiError` consumer was traced — the paginator does
+      not catch it (a mid-pagination cooldown propagates instead of returning partial pages
+      as complete), `enrich/` degrades to `in_kev=None` which the CRA trigger already
+      classifies INDETERMINATE/exit 3 rather than CLEAR, and a webhook sink failure aborts
+      the watch cycle *before* `_save_watch_snapshot`, so the next cycle re-reports rather
+      than skips. Verified on the merge result, not the branch point: 611 tests (606 + the
+      branch's 5), coverage 94.50%, ruff check + format + mypy strict clean.
+      Known-and-accepted edge, not a blocker: `Retry-After: 0` (or a past HTTP-date) yields
+      a zero-delay retry with no jitter — RFC-correct, deliberately tested, and bounded by
+      `MAX_RETRIES`, but it does remove backoff entirely for that case. Revisit only if a
+      real server is seen doing it.
+- [ ] Cut `1.0.0`: CHANGELOG section from `[Unreleased]`, version in `pyproject.toml` +
+      `__init__.py`, CI green, tag. §18 DoD is 9/9 as of 2026-08-19 — nothing blocks it.
+      Decide rc-or-not (an rc needs its own `chore(release): 1.0.0rc1` commit or the
+      Release workflow's version guard kills it — see the 0.4.1 note below).
+- [ ] Fix the stale path in `docs/AUDIT_AND_REMEDIATION_PLAN.md` §18's last checkbox: it
+      still cites `readme/readme.ro.md`, which moved to the repo root on 2026-08-19.
+
 ## M6 — Self-hostable dashboard (started 2026-08-08; decisions in AUDIT §17)
 
 - [x] Step 6.1 storage consolidation: `web/store.py` — one WAL-mode SQLite file
