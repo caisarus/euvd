@@ -7,6 +7,20 @@ breaking changes (each one listed explicitly below).
 
 ## [Unreleased]
 
+### Changed
+- **The HTTP client honours `Retry-After` instead of guessing at a backoff** (RFC 9110
+  §10.2.3, both the delay-seconds and HTTP-date forms). Retries used to run on a fixed
+  exponential schedule that ignored the server's own answer, and coming back sooner than
+  asked just earns another 429 — relevant in practice, since ENISA has been observed
+  returning 429 to shared CI runner IPs during EU working hours. Three deliberate
+  boundaries: a cooldown longer than 60 s stops the run immediately with the requested
+  wait in the message rather than sleeping through it (a scan that silently hangs for an
+  hour is worse than one that fails with a number you can schedule around); the new
+  `RateLimited` subclasses `ApiError`, so every caller already treats it as "no usable
+  data, fail loudly" and the CLI turns it into exit `2` — being rate limited must never be
+  mistaken for an empty result; and an unparseable header is ignored in favour of the
+  normal backoff, because a malformed value must never be a reason to stop retrying.
+
 ### Added
 - **INV-8 is now enforced, not just promised.** "Nothing is ever submitted or filed
   automatically" was the one invariant of the ten with no test — it had been deferred to

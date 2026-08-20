@@ -338,9 +338,7 @@ class ApiClient:
                 # The server's own number wins when it gave one; our exponential schedule
                 # is only a guess about a service that just told us the answer.
                 backoff = (
-                    retry_after
-                    if retry_after is not None
-                    else (2**attempt) + random.uniform(0, 1)
+                    retry_after if retry_after is not None else (2**attempt) + random.uniform(0, 1)
                 )
                 self._sleep(backoff)
         raise ApiError(f"Request to {shown} failed after {MAX_RETRIES} attempts: {last_error}")
