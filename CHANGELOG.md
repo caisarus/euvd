@@ -7,6 +7,36 @@ breaking changes (each one listed explicitly below).
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-08-20
+
+**The stable release.** From here the CLI contract (commands, flags, exit codes), the
+findings/VEX/CRA JSON schemas, and the config file format are covered by semantic
+versioning: breaking changes require a major bump, and deprecations are announced at least
+one minor version ahead. Nothing in this release changes behaviour you depended on in
+`0.4.1` — it is the same code plus the `Retry-After` fix below, promoted once the last
+Definition-of-Done item closed.
+
+Scope of the `1.0.0` claim: SBOM ingestion, EUVD matching and enrichment, conservative
+OpenVEX drafting, the CRA Article 14 trigger with its audit log, watch mode, and the CI/CD
+integrations. **The dashboard (`web serve`) is present but stays beta** and is explicitly
+outside the stability promise — it goes GA in `1.1`.
+
+Anyone still on a release before `0.4.1` should read that release's note first: those
+versions could report *no findings, with a success exit code*, for a component affected by
+an actively exploited vulnerability.
+
+### Added
+- **INV-8 is now enforced, not just promised.** "Nothing is ever submitted or filed
+  automatically" was the one invariant of the ten with no test — it had been deferred to
+  "M5, when webhooks add POST", and M5 shipped the webhook sink without it.
+  `tests/invariants/test_m5_invariants.py` closes it with five AST tests over the package
+  source: only `GET` and `POST` reach the transport and only from `get_json`/`post_json`;
+  no HTTP verb is called on a client object directly (including a reach-around such as
+  `self._api._client.post(...)`); `post_json` has exactly one caller, `WebhookSink`; the
+  `cra/` module that drafts Article 14 notifications contains no URL to send one to; and
+  no submission endpoint can be introduced through configuration. Each test was verified
+  to fail against a deliberate mutation before being kept.
+
 ### Changed
 - **The HTTP client honours `Retry-After` instead of guessing at a backoff** (RFC 9110
   §10.2.3, both the delay-seconds and HTTP-date forms). Retries used to run on a fixed
@@ -20,18 +50,6 @@ breaking changes (each one listed explicitly below).
   data, fail loudly" and the CLI turns it into exit `2` — being rate limited must never be
   mistaken for an empty result; and an unparseable header is ignored in favour of the
   normal backoff, because a malformed value must never be a reason to stop retrying.
-
-### Added
-- **INV-8 is now enforced, not just promised.** "Nothing is ever submitted or filed
-  automatically" was the one invariant of the ten with no test — it had been deferred to
-  "M5, when webhooks add POST", and M5 shipped the webhook sink without it.
-  `tests/invariants/test_m5_invariants.py` closes it with five AST tests over the package
-  source: only `GET` and `POST` reach the transport and only from `get_json`/`post_json`;
-  no HTTP verb is called on a client object directly (including a reach-around such as
-  `self._api._client.post(...)`); `post_json` has exactly one caller, `WebhookSink`; the
-  `cra/` module that drafts Article 14 notifications contains no URL to send one to; and
-  no submission endpoint can be introduced through configuration. Each test was verified
-  to fail against a deliberate mutation before being kept.
 
 ### Documentation
 - **The README now exists where GitHub looks for it.** It lived at `readme/readme.md`, a

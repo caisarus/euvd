@@ -599,7 +599,7 @@ hash chain cannot bind a fully-privileged attacker; EPSS is probabilistic, KEV i
 membership, neither is proof of exploitation *of you*.
 
 **Open questions — owner decisions received 2026-07-10:**
-1. Romanian documentation — **deliver it.** `readme/readme.ro.md` shipped (English is the
+1. Romanian documentation — **deliver it.** `README.ro.md` shipped (English is the
    reference version on divergence); glossary translation follows in the docs milestone.
 2. `vex generate` conflict exit-code policy — **yes**: `--fail-on-conflict` shipped
    (off by default; exit 1; document still written).
@@ -686,5 +686,6 @@ owner's 2026-07-10 scope decision** — **plus**, from this audit:
       `docs/cra.md` opening note ("it does **not decide** whether something is legally
       reportable, and it **never submits**") plus the disclaimer on both CRA dashboard
       pages.
-- [x] Romanian-docs decision executed: deliver — `readme/readme.ro.md` shipped
-      2026-07-10; glossary translation follows in the docs milestone.
+- [x] Romanian-docs decision executed: deliver — `README.ro.md` shipped 2026-07-10 (as
+      `readme/readme.ro.md`; moved to the repo root 2026-08-19 with the rest of the
+      README set), and the glossary translation `GLOSSARY.ro.md` followed 2026-08-19.
