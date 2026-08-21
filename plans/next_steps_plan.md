@@ -195,19 +195,38 @@ Announcement (agent drafts, **OWNER: submits/posts**, sequenced around 1.0.0 and
 
 ## Phase 5 — Funding
 
-Primary target — **NLnet Foundation / NGI Zero (Commons Fund)**:
+> **Corrected 2026-08-21.** This section originally named **NGI Zero Commons Fund** and
+> said calls run "roughly every two months". Both are now wrong. Commons Fund held its
+> **thirteenth and final call on 2026-06-01**; NLnet paused open calls on 2026-06-12
+> while moving from NGI to the **Open Internet Stack**, and the cadence shifted to the
+> **third day of every odd month**. Kept here rather than deleted because the reasoning
+> below still holds — only the fund name changed.
 
+Primary target — **NLnet Foundation / CodeSupply** (Open Internet Stack):
+
+- **Calls reopen 2026-09-03; first deadline 2026-11-03, 12:00 CEST.** Three successor
+  programmes open together: *Restack* (the general bottom-up FOSS successor to NGI
+  Zero), **CodeSupply**, and *ELFA* (encrypted local-first architecture — not us).
+- **Apply to CodeSupply, not Restack.** CodeSupply funds *software supply chain*
+  tooling specifically — €400k reserved for open calls, grants €5k–€50k — and states
+  three objectives: publish current/correct/comprehensive **software metadata**;
+  establish **democratic access to data sets**; build a **foundational framework** for
+  future data sets. Our EUVD↔purl bridge is objective 1 and 2 nearly verbatim, which is
+  why the draft is shaped around *publishing the mapping as an open data set* rather
+  than around the CLI. Restack is the fallback if CodeSupply's first call slips.
 - **Why it fits, precisely**: EU-funded, funds exactly this profile (small
   open-source infrastructure, €5k–€50k, no equity), the implementation plan already
   name-drops NLnet review criteria (accessibility!), and the pitch writes itself:
   *European vulnerability data (ENISA's EUVD) + European regulation (CRA) + European
-  license (EUPL-1.2) + WCAG-compliant dashboard*. Calls run roughly every two months;
-  **check the current deadline at nlnet.nl immediately**.
-- **Agent prepares**: the application draft — abstract (~1200 chars), "compare with
-  existing efforts" (Phase 4.3 feeds this), budget/milestone breakdown (use the
-  remaining roadmap: 1.1 dashboard GA, alias-table curation program, EUVD API
-  hardening, packaging for distros, sustained maintenance), amount requested, and
-  answers on licensing/governance. Keep it in `plans/funding/nlnet-application.md`.
+  license (EUPL-1.2) + WCAG-compliant dashboard*.
+- **Agent prepares**: the application draft — DONE 2026-08-21,
+  `plans/funding/nlnet-application.md`: every form field answered from the repo, budget
+  broken down by task with an explicit rate (€45k full scope / €24k core variant), the
+  comparison against Trivy/Grype/OSV-Scanner/Dependency-Track/Dependency-Check, and a
+  pre-submission checklist. **[OWNER]** markers flag what only the owner can answer.
+- **The form now requires a generative-AI disclosure** — model, dates, prompts and
+  *unedited output*. The commit that first added the draft file is that unedited output;
+  edit in later commits so the original stays retrievable via `git show`.
 - **OWNER: submits** the form, is the named applicant, handles the interview.
 
 Secondary / parallel:

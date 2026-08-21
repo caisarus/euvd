@@ -2,13 +2,14 @@
 
 **EUVD-native software supply-chain vulnerability watch + EU Cyber Resilience Act (CRA) reporting toolkit.**
 
-> ⚠️ **Status: work in progress.** APIs and structure may change until `1.0.0`.
-> The Commands table below marks what is **✅ available today** versus **🧪 beta**
-> versus **🚧 planned** — milestones M0–M5 (scan, match, VEX, the CRA workflow, `watch`
-> mode, Docker image, GitHub Action, GitLab template, PyPI releases) are implemented
-> and tested. The dashboard (M6) is fully implemented — app, accessibility gate, and a
-> tested deployment guide (`docs/deploy.md`) — and marked **beta** only because its
-> surface may still change before the `1.1` GA.
+> ✅ **Status: stable — `1.0.0` is released.** The CLI contract (commands, flags, exit
+> codes), the findings/VEX/CRA JSON schemas and the config file format are covered by
+> semantic versioning: breaking changes require a major bump, and deprecations are
+> announced at least one minor version ahead. The Commands table below marks what is
+> **✅ available today** versus **🧪 beta**. The one exception to the stability promise
+> is the dashboard (`web serve`): fully implemented — app, accessibility gate, and a
+> tested deployment guide (`docs/deploy.md`) — but **beta**, because its surface may
+> still change before the `1.1` GA.
 
 `euvd-watch` connects software supply-chain transparency to **Europe's own vulnerability infrastructure** and to the concrete reporting duties of the **EU Cyber Resilience Act**.
 

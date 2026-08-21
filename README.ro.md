@@ -2,14 +2,15 @@
 
 **Toolkit nativ EUVD pentru supravegherea vulnerabilităților din lanțul de aprovizionare software + raportare conform EU Cyber Resilience Act (CRA).**
 
-> ⚠️ **Status: în lucru.** API-urile și structura se pot schimba până la `1.0.0`.
+> ✅ **Status: stabil — `1.0.0` este lansat.** Contractul CLI (comenzi, flag-uri, coduri
+> de ieșire), schemele JSON pentru findings/VEX/CRA și formatul fișierului de configurare
+> sunt acoperite de versionare semantică: schimbările incompatibile cer un salt de
+> versiune majoră, iar deprecierile sunt anunțate cu cel puțin o versiune minoră înainte.
 > Tabelul de comenzi de mai jos marchează ce este **✅ disponibil azi** față de **🧪
-> beta** față de **🚧 planificat** — milestone-urile M0–M5 (scan, match, VEX, fluxul
-> CRA, modul `watch`, imaginea Docker, GitHub Action-ul, template-ul GitLab,
-> release-urile PyPI) sunt implementate și testate. Dashboard-ul (M6) este complet
-> implementat — aplicația, gate-ul de accesibilitate și un ghid de desfășurare testat
-> (`docs/deploy.md`) — și marcat **beta** doar pentru că suprafața se mai poate schimba
-> înaintea versiunii `1.1` GA.
+> beta**. Singura excepție de la promisiunea de stabilitate este dashboard-ul
+> (`web serve`): complet implementat — aplicația, gate-ul de accesibilitate și un ghid de
+> desfășurare testat (`docs/deploy.md`) — dar **beta**, pentru că suprafața se mai poate
+> schimba înaintea versiunii `1.1` GA.
 >
 > *Această traducere urmează [README-ul în engleză](README.md); în caz de divergență,
 > versiunea engleză este cea de referință.*

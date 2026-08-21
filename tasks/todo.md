@@ -76,6 +76,38 @@
       findings into the single `module is installed, but missing library stubs or py.typed
       marker` note, which is exactly what every downstream user got until now.
 
+## Phase 5 — NLnet application (draft written 2026-08-21)
+
+- [x] `plans/funding/nlnet-application.md` drafted — every form field answered from the
+      repository, with `[OWNER]` markers on the ones only the owner can answer (contact
+      details, prior involvement, the final amount).
+- [x] **The fund named in `plans/next_steps_plan.md` no longer exists.** NGI Zero Commons
+      Fund held its thirteenth and *final* call on 2026-06-01; NLnet paused open calls on
+      2026-06-12 for the move from NGI to the **Open Internet Stack**, and the deadline
+      cadence shifted from the first day of even months to the **third day of odd months**.
+      Calls reopen **2026-09-03**, first deadline **2026-11-03 12:00 CEST** (the deadline
+      in memory was right; the fund was not). Phase 5 of the plan is corrected in place.
+- [x] **Target is CodeSupply, not Restack** — of the three successor programmes (Restack,
+      CodeSupply, ELFA), CodeSupply is *about* the software supply chain: €400k reserved
+      for open calls, €5k–€50k grants, and three stated objectives (publish correct
+      software **metadata**; **democratic access to data sets**; a **framework** for future
+      data sets). So the draft is built around publishing the EUVD↔purl bridge as a
+      versioned open data set rather than around the CLI — that reframing is what makes it
+      a CodeSupply proposal. Restack is the fallback if CodeSupply's first call slips
+      (its own page still read "coming soon" on 2026-08-21 — re-check before submitting).
+- [x] README + README.ro status banners un-staled: both still said "work in progress, APIs
+      and structure may change until `1.0.0`" on a released 1.0.0. A funding reviewer
+      following the link would have read that first. Now they state the stability contract
+      and keep the dashboard's beta carve-out. (`README.simple.md` never carried a banner.)
+- [ ] **OWNER:** fill the `[OWNER]` fields, answer §5 (prior involvement) yourself, choose
+      the €45 000 or €24 000 scope, and submit. NLnet's form now *requires* a
+      generative-AI disclosure — model, dates, prompts and **unedited output**. The commit
+      that first added the draft file is that unedited output; it stays retrievable via
+      `git show` as long as later edits go in separate commits.
+- [ ] Before submitting: Phase 4.1 (MkDocs site) would let the application's "Website"
+      field point at documentation instead of a repo root, and Phase 4.2's asciinema cast
+      is the strongest attachment. Neither blocks the deadline.
+
 ## M6 — Self-hostable dashboard (started 2026-08-08; decisions in AUDIT §17)
 
 - [x] Step 6.1 storage consolidation: `web/store.py` — one WAL-mode SQLite file
