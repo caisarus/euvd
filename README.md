@@ -164,38 +164,38 @@ cra_trigger:
 
 **Start here**
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) — how the pieces fit together, module by module
-- [README.simple.md](README.simple.md) — the same story, explained so a child can follow it
-- [GLOSSARY.md](GLOSSARY.md) — every technical term (SBOM, VEX, CRA, EPSS…) in plain language
+- [ARCHITECTURE.md](https://github.com/caisarus/euvd/blob/main/ARCHITECTURE.md) — how the pieces fit together, module by module
+- [README.simple.md](https://github.com/caisarus/euvd/blob/main/README.simple.md) — the same story, explained so a child can follow it
+- [GLOSSARY.md](https://github.com/caisarus/euvd/blob/main/GLOSSARY.md) — every technical term (SBOM, VEX, CRA, EPSS…) in plain language
 
 **How each part behaves**
 
-- [docs/matching.md](docs/matching.md) — matching strategies & confidence scoring
-- [docs/cra.md](docs/cra.md) — the CRA Article 14 workflow, deadline stages, and the
+- [docs/matching.md](https://github.com/caisarus/euvd/blob/main/docs/matching.md) — matching strategies & confidence scoring
+- [docs/cra.md](https://github.com/caisarus/euvd/blob/main/docs/cra.md) — the CRA Article 14 workflow, deadline stages, and the
   audit log's honest threat model
-- [docs/euvd-api.md](docs/euvd-api.md) — the verified EUVD API surface this tool uses
-- [docs/watch.md](docs/watch.md) — scheduled re-matching, diffing, and webhook delivery
-- [docs/web.md](docs/web.md) — the dashboard, its auth model, and its documented limits
-- [docs/storage.md](docs/storage.md) — the state database, migrations, and backups
+- [docs/euvd-api.md](https://github.com/caisarus/euvd/blob/main/docs/euvd-api.md) — the verified EUVD API surface this tool uses
+- [docs/watch.md](https://github.com/caisarus/euvd/blob/main/docs/watch.md) — scheduled re-matching, diffing, and webhook delivery
+- [docs/web.md](https://github.com/caisarus/euvd/blob/main/docs/web.md) — the dashboard, its auth model, and its documented limits
+- [docs/storage.md](https://github.com/caisarus/euvd/blob/main/docs/storage.md) — the state database, migrations, and backups
 
 **Running it somewhere**
 
-- [docs/integrations.md](docs/integrations.md) — GitHub Action, GitLab template, Docker
-- [docs/deploy.md](docs/deploy.md) — self-hosting with Docker Compose and Caddy
-- [docs/accessibility.md](docs/accessibility.md) — the WCAG 2.1 AA gate and how it is run
-- [docs/release.md](docs/release.md) — versioning policy and the release process
+- [docs/integrations.md](https://github.com/caisarus/euvd/blob/main/docs/integrations.md) — GitHub Action, GitLab template, Docker
+- [docs/deploy.md](https://github.com/caisarus/euvd/blob/main/docs/deploy.md) — self-hosting with Docker Compose and Caddy
+- [docs/accessibility.md](https://github.com/caisarus/euvd/blob/main/docs/accessibility.md) — the WCAG 2.1 AA gate and how it is run
+- [docs/release.md](https://github.com/caisarus/euvd/blob/main/docs/release.md) — versioning policy and the release process
 
 ## Contributing
 
-Early contributors are very welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the dev
+Early contributors are very welcome — see [CONTRIBUTING.md](https://github.com/caisarus/euvd/blob/main/CONTRIBUTING.md) for the dev
 setup, how to run the tests, and the two governance rules that keep this tool honest:
 every wild bug becomes a truth-table row *before* its fix merges, and every alias-table
 entry cites a real EUVD record.
 
-Reporting a vulnerability in euvd-watch itself: [SECURITY.md](SECURITY.md).
+Reporting a vulnerability in euvd-watch itself: [SECURITY.md](https://github.com/caisarus/euvd/blob/main/SECURITY.md).
 
 ## License
 
-[EUPL-1.2](LICENSE). Documentation provided in English and Romanian —
-see [README.ro.md](README.ro.md) and [GLOSSARY.ro.md](GLOSSARY.ro.md) /
-vezi [README.ro.md](README.ro.md) și [GLOSSARY.ro.md](GLOSSARY.ro.md).
+[EUPL-1.2](https://github.com/caisarus/euvd/blob/main/LICENSE). Documentation provided in English and Romanian —
+see [README.ro.md](https://github.com/caisarus/euvd/blob/main/README.ro.md) and [GLOSSARY.ro.md](https://github.com/caisarus/euvd/blob/main/GLOSSARY.ro.md) /
+vezi [README.ro.md](https://github.com/caisarus/euvd/blob/main/README.ro.md) și [GLOSSARY.ro.md](https://github.com/caisarus/euvd/blob/main/GLOSSARY.ro.md).

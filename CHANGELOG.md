@@ -52,6 +52,13 @@ an actively exploited vulnerability.
   normal backoff, because a malformed value must never be a reason to stop retrying.
 
 ### Documentation
+- **The PyPI project page is now usable, not just the GitHub one.** The README's 20 doc
+  links were relative, which resolves on GitHub but not on PyPI, where the long
+  description is served from a different root — they are now absolute URLs, each one
+  HTTP-checked. The package also had **no project URLs at all**, so the PyPI sidebar
+  offered no Homepage, Source, Issues, Changelog or Security link; `[project.urls]` now
+  supplies all six. Classifiers gained `Development Status :: 5 - Production/Stable`,
+  which is the metadata that states what this version number claims.
 - **The README now exists where GitHub looks for it.** It lived at `readme/readme.md`, a
   leftover from when this repository held only planning documents, so
   `https://github.com/caisarus/euvd` served a **404** for its own front page and four of
