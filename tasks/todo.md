@@ -5,7 +5,7 @@
 > the CRA Art. 14 applicability date 2026-09-11), publication, NLnet funding, and
 > community mechanics. Execute it phase by phase.
 
-## Toward 1.0.0 (target: tag before 2026-09-11, CRA Art. 14 applicability)
+## 1.0.0 — RELEASED 2026-08-21 (21 days ahead of the CRA Art. 14 date)
 
 - [x] **`fix/retry-after` merged into main 2026-08-20** (`1dbbaa2` + `b3aff3a`, pushed as
       `b3aff3a`). The branch was cut 2026-08-11 and parked for CI observation; settled in
@@ -27,12 +27,41 @@
       a zero-delay retry with no jitter — RFC-correct, deliberately tested, and bounded by
       `MAX_RETRIES`, but it does remove backoff entirely for that case. Revisit only if a
       real server is seen doing it.
-- [ ] Cut `1.0.0`: CHANGELOG section from `[Unreleased]`, version in `pyproject.toml` +
-      `__init__.py`, CI green, tag. §18 DoD is 9/9 as of 2026-08-19 — nothing blocks it.
-      Decide rc-or-not (an rc needs its own `chore(release): 1.0.0rc1` commit or the
-      Release workflow's version guard kills it — see the 0.4.1 note below).
-- [ ] Fix the stale path in `docs/AUDIT_AND_REMEDIATION_PLAN.md` §18's last checkbox: it
-      still cites `readme/readme.ro.md`, which moved to the repo root on 2026-08-19.
+- [x] **`1.0.0` RELEASED 2026-08-21** to PyPI + GHCR. `23b2bc6` (rc1) → `eba9d64` (rc2) →
+      `12e17ed` (final), tags `v1.0.0rc1`/`v1.0.0rc2`/`v1.0.0`; CI green on every push,
+      Release and Image workflows green on the tag.
+      **The rc was NOT skippable this time**, contrary to the 0.4.1 precedent: the
+      2026-08-19 doc move changed pyproject's `readme` field from `readme/readme.md` to
+      `README.md`, i.e. the source of the PyPI long description, and PyPI refuses a
+      re-upload of a published version — a broken description would have been frozen onto
+      the 1.0.0 page. rc1 proved the description survived (9930 chars, text/markdown).
+      **Reading rc1's published metadata then found two defects that reading the diff never
+      would have** — neither a regression (0.4.1 shipped both), both fixed in rc2:
+      (1) all 20 doc links in the long description were relative, which resolves on GitHub
+      but not on PyPI, where the same markdown is served from a different root — the
+      2026-08-19 "0 broken links" check was true *for the repo* and said nothing about the
+      PyPI surface; now absolute `blob/main` URLs, all 18 unique targets HTTP-checked 200;
+      (2) the package published **no project URLs at all** (`project_urls`, `home_page`,
+      `docs_url` all null), so the PyPI sidebar had no Homepage/Source/Issues/Changelog/
+      Security link — `[project.urls]` now supplies all six. Classifiers also gained
+      `Development Status :: 5 - Production/Stable`. `Typing :: Typed` deliberately NOT
+      added: no `py.typed` marker ships, so the claim would outrun the artifact.
+      **Verified independently, not via the workflow's own checks:** PyPI latest = 1.0.0
+      (10790-char description, 0 relative links, 6 project URLs, Production/Stable true);
+      clean py3.11 venv `pip install euvd-watch==1.0.0` → `version` prints `1.0.0`, `--help`
+      exits 0; GitHub release `v1.0.0` published (not draft, not prerelease); GHCR `:1.0.0`
+      and `:latest` share the new digest `sha256:12b483f8…bc5dd`, distinct from 0.4.1's
+      `sha256:f613ca8e…3aea54`, anonymous pull works.
+      Gate at each step: 611 tests, coverage 94.50%, ruff + mypy strict clean.
+- [x] Fixed the stale `readme/readme.ro.md` path in `docs/AUDIT_AND_REMEDIATION_PLAN.md`
+      §18's last checkbox and the §17 open-questions list (done in `23b2bc6`). Remaining
+      `readme/readme.md` mentions elsewhere are deliberately historical ("it lived at …").
+- [ ] **Add a `ruff format --check` CI job.** The hook is in `.pre-commit-config.yaml` but
+      no CI job runs it, so drift accumulates silently: 11 files in the tree currently fail
+      it. Found because the retry-after branch's own drift slipped through.
+- [ ] Consider shipping `src/euvd_watch/py.typed` — the package is mypy-strict and fully
+      annotated, so downstream type-checkers currently get nothing they could get. Then the
+      `Typing :: Typed` classifier becomes honest.
 
 ## M6 — Self-hostable dashboard (started 2026-08-08; decisions in AUDIT §17)
 
