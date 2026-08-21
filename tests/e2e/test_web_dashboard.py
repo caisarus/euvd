@@ -36,9 +36,7 @@ ALL_GET_ROUTES = ["/", "/findings", "/cra", "/audit"]
 
 @pytest.fixture
 def settings(tmp_path: Path) -> Settings:
-    s = Settings(
-        state_dir=tmp_path / "state", web=WebConfig(password_hash=hash_password(PASSWORD))
-    )
+    s = Settings(state_dir=tmp_path / "state", web=WebConfig(password_hash=hash_password(PASSWORD)))
     s.organization.name = "Test Org"
     s.organization.contact_email = "sec@test.org"
     s.organization.product_name = "Test Product"
@@ -317,9 +315,7 @@ def test_mark_nothing_to_record_is_a_client_error(settings: Settings) -> None:
 def test_mark_unknown_event_404s(settings: Settings) -> None:
     _seed_demo_scenario(settings)
     client = _client(settings)
-    response = client.post(
-        "/cra/0000000000000000/mark", data={"stage": "early_warning"}, auth=AUTH
-    )
+    response = client.post("/cra/0000000000000000/mark", data={"stage": "early_warning"}, auth=AUTH)
     assert response.status_code == 404
 
 

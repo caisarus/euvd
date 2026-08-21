@@ -68,9 +68,7 @@ def _env(tmp_path: Path, *, with_org: bool = True) -> dict[str, str]:
 
 
 def _check_json(tmp_path: Path) -> Any:
-    result = runner.invoke(
-        app, ["--output", "json", "cra", "check", str(DEMO)], env=_env(tmp_path)
-    )
+    result = runner.invoke(app, ["--output", "json", "cra", "check", str(DEMO)], env=_env(tmp_path))
     return result, (json.loads(result.stdout) if result.stdout else None)
 
 
@@ -182,9 +180,7 @@ def test_check_with_saved_findings_artifact_is_equivalent(tmp_path: Path) -> Non
 def test_draft_without_org_config_exits_two_naming_the_fields(tmp_path: Path) -> None:
     _mock_apis()
     env_no_org = _env(tmp_path, with_org=False)
-    result = runner.invoke(
-        app, ["--output", "json", "cra", "check", str(DEMO)], env=env_no_org
-    )
+    result = runner.invoke(app, ["--output", "json", "cra", "check", str(DEMO)], env=env_no_org)
     event_id = json.loads(result.stdout)["events"][0]["event_id"]
 
     draft = runner.invoke(app, ["cra", "draft", event_id], env=env_no_org)
@@ -238,9 +234,7 @@ def test_cra_check_exits_indeterminate_when_a_required_signal_source_is_unavaila
     a clean all-clear. The finding didn't fire euvd_exploited (not exploited) or EPSS
     (below threshold), and KEV couldn't be checked -> indeterminate -> exit 3, loudly."""
     _mock_apis_kev_unavailable()
-    result = runner.invoke(
-        app, ["--output", "json", "cra", "check", str(DEMO)], env=_env(tmp_path)
-    )
+    result = runner.invoke(app, ["--output", "json", "cra", "check", str(DEMO)], env=_env(tmp_path))
     assert result.exit_code == 3, result.output
     assert "INDETERMINATE" in result.stderr
     assert "cisa_kev" in result.stderr

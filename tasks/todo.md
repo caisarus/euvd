@@ -56,12 +56,25 @@
 - [x] Fixed the stale `readme/readme.ro.md` path in `docs/AUDIT_AND_REMEDIATION_PLAN.md`
       §18's last checkbox and the §17 open-questions list (done in `23b2bc6`). Remaining
       `readme/readme.md` mentions elsewhere are deliberately historical ("it lived at …").
-- [ ] **Add a `ruff format --check` CI job.** The hook is in `.pre-commit-config.yaml` but
-      no CI job runs it, so drift accumulates silently: 11 files in the tree currently fail
-      it. Found because the retry-after branch's own drift slipped through.
-- [ ] Consider shipping `src/euvd_watch/py.typed` — the package is mypy-strict and fully
-      annotated, so downstream type-checkers currently get nothing they could get. Then the
-      `Typing :: Typed` classifier becomes honest.
+- [x] **`ruff format --check` now runs in CI** (2026-08-21). Added as a step in the existing
+      `lint` job rather than a fourth job: same tool, same `pip install -e ".[dev]"`, so a
+      separate runner would have bought a distinct red badge for ~40 s of install on every
+      CI run. The 11 drifted files are reformatted in the same commit — whitespace only,
+      diff read file by file, no behaviour change (the largest was a nested conditional
+      expression in `web/dashboard.py`). **The pin matters more than the job**: `ruff` was
+      `>=0.5` in the `dev` extra, so CI installed whatever was newest while the hook stayed
+      on the `.pre-commit-config.yaml` rev — `ruff format` output can change between
+      releases, so that gap would have turned CI red on untouched code the first time
+      upstream changed the formatter. `dev` now pins `ruff==0.15.20`, the hook's rev.
+- [x] **`src/euvd_watch/py.typed` shipped** (2026-08-21), with the `Typing :: Typed`
+      classifier now that it is honest. Verified against a built wheel in a clean py3.11
+      venv rather than assumed from the source tree: hatchling includes the marker
+      (`euvd_watch/py.typed` present in the wheel), and a downstream `mypy --strict`
+      consumer resolves the real types — it reports `Unexpected keyword argument` and an
+      `Incompatible types in assignment` against `Component`. Mutation-verified in the
+      other direction too: deleting the marker from the installed package turns those two
+      findings into the single `module is installed, but missing library stubs or py.typed
+      marker` note, which is exactly what every downstream user got until now.
 
 ## M6 — Self-hostable dashboard (started 2026-08-08; decisions in AUDIT §17)
 

@@ -110,7 +110,8 @@ def test_webhook_payload_schema(tmp_path: Path) -> None:
 
     api = _client(handler, tmp_path)
     changed = ChangedFinding(
-        previous=_finding("thing", "EUVD-3"), current=_finding("thing", "EUVD-3"),
+        previous=_finding("thing", "EUVD-3"),
+        current=_finding("thing", "EUVD-3"),
         changed_fields=["epss_score"],
     )
     diff = DiffResult(new=[], resolved=[], changed=[changed])

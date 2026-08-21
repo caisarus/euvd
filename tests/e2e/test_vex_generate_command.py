@@ -178,9 +178,12 @@ def test_fail_on_conflict_exits_one_but_still_writes_the_document(
     out = tmp_path / "doc.json"
     result = _generate(
         tmp_path,
-        "--timestamp", TIMESTAMP,
-        "--decisions", str(decisions_path),
-        "--out", str(out),
+        "--timestamp",
+        TIMESTAMP,
+        "--decisions",
+        str(decisions_path),
+        "--out",
+        str(out),
         "--fail-on-conflict",
     )
     assert result.exit_code == 1

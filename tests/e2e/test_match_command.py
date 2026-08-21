@@ -136,9 +136,16 @@ def test_pinned_timestamp_makes_json_output_byte_identical(tmp_path: Path) -> No
     # replays from cache with the same stored_at (--no-enrich just keeps the test lean).
     _mock_euvd([JINJA_RECORD])
     args = [
-        "--output", "json", "match", str(DEMO),
-        "--exploited-only", "--no-enrich", "--fail-on", "none",
-        "--timestamp", "2026-01-01T00:00:00+00:00",
+        "--output",
+        "json",
+        "match",
+        str(DEMO),
+        "--exploited-only",
+        "--no-enrich",
+        "--fail-on",
+        "none",
+        "--timestamp",
+        "2026-01-01T00:00:00+00:00",
     ]
     env = {"EUVD_WATCH_CACHE_DIR": str(tmp_path)}
     first = runner.invoke(app, args, env=env)

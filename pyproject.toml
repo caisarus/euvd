@@ -20,6 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Security",
     "Topic :: Software Development :: Quality Assurance",
+    "Typing :: Typed",
 ]
 dependencies = [
     "typer>=0.12",
@@ -54,7 +55,9 @@ dev = [
     "jsonschema>=4.20",
     "check-jsonschema>=0.28",
     "mypy>=1.10",
-    "ruff>=0.5",
+    # Pinned to the rev in .pre-commit-config.yaml: `ruff format` output can
+    # change between releases, and CI checks it, so the hook and CI must agree.
+    "ruff==0.15.20",
     "pre-commit>=3.7",
     "types-PyYAML",
     "fastapi>=0.115",

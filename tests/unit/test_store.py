@@ -160,9 +160,7 @@ def test_wal_read_does_not_block_on_open_write_transaction(tmp_path: Path) -> No
     writer = sqlite3.connect(tmp_path / DB_FILENAME)
     assert writer.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
     writer.execute("BEGIN IMMEDIATE")
-    writer.execute(
-        "INSERT OR REPLACE INTO watch_snapshots (sbom_key, data) VALUES ('k2', '{}')"
-    )
+    writer.execute("INSERT OR REPLACE INTO watch_snapshots (sbom_key, data) VALUES ('k2', '{}')")
     try:
         # A second connection reads the pre-transaction state without "database is locked".
         assert store.load_watch_snapshot("k1") is not None
@@ -269,13 +267,9 @@ def test_audit_log_refs_upsert_and_list(tmp_path: Path) -> None:
     store = Store(tmp_path)
     store.migrate()
     store.record_audit_log_ref("/state/cra-audit.jsonl", "2026-08-08T12:00:00+00:00")
-    assert store.list_audit_log_refs() == [
-        ("/state/cra-audit.jsonl", "2026-08-08T12:00:00+00:00")
-    ]
+    assert store.list_audit_log_refs() == [("/state/cra-audit.jsonl", "2026-08-08T12:00:00+00:00")]
 
     # Re-registering the same path updates recorded_at, never duplicates the row.
     store.record_audit_log_ref("/state/cra-audit.jsonl", "2026-08-08T13:00:00+00:00")
-    assert store.list_audit_log_refs() == [
-        ("/state/cra-audit.jsonl", "2026-08-08T13:00:00+00:00")
-    ]
+    assert store.list_audit_log_refs() == [("/state/cra-audit.jsonl", "2026-08-08T13:00:00+00:00")]
     store.close()

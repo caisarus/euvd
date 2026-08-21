@@ -134,9 +134,7 @@ def create_app(settings: Settings, *, sbom_path: str, host: str, port: int) -> F
     ) -> Any:
         context = base_context(request, store, active_page)
         context.update({"title": title, "message": message, "hint": hint})
-        return templates.TemplateResponse(
-            request, "error.html", context, status_code=status_code
-        )
+        return templates.TemplateResponse(request, "error.html", context, status_code=status_code)
 
     @app.get("/", name="overview")
     def overview(request: Request, store: Annotated[Store, Depends(get_store)]) -> Any:

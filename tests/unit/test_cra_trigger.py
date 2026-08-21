@@ -35,9 +35,7 @@ def _finding(spec: dict[str, Any]) -> Finding:
 
 
 def _settings(config_spec: dict[str, Any], epss_threshold: float) -> Settings:
-    return Settings(
-        cra_trigger=CraTriggerConfig(**config_spec), epss_threshold=epss_threshold
-    )
+    return Settings(cra_trigger=CraTriggerConfig(**config_spec), epss_threshold=epss_threshold)
 
 
 @pytest.mark.parametrize("case", CASES, ids=[c["id"] for c in CASES])

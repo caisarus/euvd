@@ -7,6 +7,20 @@ breaking changes (each one listed explicitly below).
 
 ## [Unreleased]
 
+### Added
+- **The package now ships a `py.typed` marker** (PEP 561), so the strict annotations that
+  were already there finally reach downstream type-checkers — importing `euvd_watch` in a
+  typed codebase no longer produces `module is installed, but missing library stubs or
+  py.typed marker`. The `Typing :: Typed` classifier is now honest and was added alongside.
+
+### Fixed
+- **`ruff format --check` runs in CI.** The `ruff-format` pre-commit hook was never a gate:
+  a commit made with `--no-verify`, or a branch cut before the hook existed, landed
+  unformatted and nothing noticed — 11 files had drifted by `1.0.0`. They are reformatted
+  here (whitespace only, no behaviour change) and the lint job now checks. `ruff` is pinned
+  in the `dev` extra to the hook's rev so CI and the hook cannot disagree about what
+  "formatted" means.
+
 ## [1.0.0] — 2026-08-20
 
 **The stable release.** From here the CLI contract (commands, flags, exit codes), the

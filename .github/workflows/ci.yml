@@ -24,6 +24,11 @@ jobs:
           python-version: "3.11"
       - run: pip install -e ".[dev]"
       - run: ruff check .
+      # The ruff-format hook in .pre-commit-config.yaml is not a gate: a commit made with
+      # --no-verify, or a branch cut before the hook existed, lands unformatted and nothing
+      # notices (11 files had drifted by 1.0.0). ruff is version-pinned in the dev extra to
+      # the hook's rev so the two cannot disagree about what "formatted" means.
+      - run: ruff format --check .
 
   typecheck:
     runs-on: ubuntu-latest

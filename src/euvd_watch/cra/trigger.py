@@ -224,9 +224,7 @@ def evaluate_run(findings: list[Finding], settings: Settings) -> RunEvaluation:
             )
 
     triggered.sort(key=lambda r: (r.finding.component.dedupe_key, r.finding.record.euvd_id))
-    indeterminate.sort(
-        key=lambda i: (i.finding.component.dedupe_key, i.finding.record.euvd_id)
-    )
+    indeterminate.sort(key=lambda i: (i.finding.component.dedupe_key, i.finding.record.euvd_id))
 
     unavailable: list[str] = []
     if config.cisa_kev and not avail.kev:

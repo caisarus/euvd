@@ -434,8 +434,10 @@ def build_overview(
                 stages=[deadline_bar(s, now, event) for s in statuses],
             )
         )
-    worst_open_state = ClockState.OVERDUE if ClockState.OVERDUE in worst_states else (
-        ClockState.DUE_SOON if worst_states else None
+    worst_open_state = (
+        ClockState.OVERDUE
+        if ClockState.OVERDUE in worst_states
+        else (ClockState.DUE_SOON if worst_states else None)
     )
 
     audit_path = settings.state_dir / "cra-audit.jsonl"
@@ -572,8 +574,11 @@ def build_finding_detail(
 ) -> FindingDetailView | None:
     findings, _generated_at = load_findings(store, sbom_path)
     finding = next(
-        (f for f in findings if comp_hash(f.component.dedupe_key) == comp_hash_value
-         and f.record.euvd_id == euvd_id),
+        (
+            f
+            for f in findings
+            if comp_hash(f.component.dedupe_key) == comp_hash_value and f.record.euvd_id == euvd_id
+        ),
         None,
     )
     if finding is None:

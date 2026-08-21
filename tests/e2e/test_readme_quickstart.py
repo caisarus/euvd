@@ -61,9 +61,7 @@ def _mock_network() -> None:
                 "description": "Seeded quickstart record (matches demo SBOM jinja2).",
                 "aliases": "CVE-2099-0001\n",
                 "exploitedSince": "Jan 1, 2026, 12:00:00 AM",
-                "enisaIdProduct": [
-                    {"product": {"name": "jinja2"}, "product_version": "<3.1.7"}
-                ],
+                "enisaIdProduct": [{"product": {"name": "jinja2"}, "product_version": "<3.1.7"}],
             }
             return httpx.Response(200, json={"items": [record], "total": 1})
         return httpx.Response(200, json={"items": [], "total": 0})
@@ -74,9 +72,7 @@ def _mock_network() -> None:
 
 
 @respx.mock
-def test_readme_quickstart_commands_run(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_readme_quickstart_commands_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _mock_network()
     monkeypatch.chdir(tmp_path)
     shutil.copy(DEMO_SBOM, tmp_path / "sbom.cdx.json")
@@ -94,6 +90,5 @@ def test_readme_quickstart_commands_run(
         # 0 (clean) and 1 (findings/events - expected with the seeded record) are both
         # documented outcomes; 2 means the documented command line no longer exists.
         assert result.exit_code in (0, 1), (
-            f"README quickstart line failed: {command!r}\n"
-            f"exit {result.exit_code}\n{result.output}"
+            f"README quickstart line failed: {command!r}\nexit {result.exit_code}\n{result.output}"
         )
