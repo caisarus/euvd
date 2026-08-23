@@ -2,11 +2,32 @@
 # End-to-end demo of the euvd-watch pipeline (plans/test_plan.md X.2), fully OFFLINE:
 # the HTTP cache is primed from committed fixtures, so no network is needed — which is
 # also why CI can run this script on every PR. Requires: euvd-watch installed
-# (`pip install -e .` from the repo root).
+# (`pip install -e .` from the repo root, or `pip install euvd-watch`).
 #
 #   ./examples/demo.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+# Resolve an interpreter rather than assuming `python` exists. An activated venv provides
+# it, and so does GitHub's setup-python, but a `pipx`/`pip install --user` user has
+# euvd-watch on PATH with no bare `python` at all — Debian and Ubuntu ship only `python3`.
+# Override with PYTHON=... if you need a specific one.
+PYTHON="${PYTHON:-}"
+if [ -z "$PYTHON" ]; then
+  PYTHON="$(command -v python3 || command -v python || true)"
+fi
+if [ -z "$PYTHON" ]; then
+  echo "error: no python3 (or python) on PATH; needed to prime the offline cache" >&2
+  exit 2
+fi
+
+# Fail with a sentence rather than a traceback if the package is not importable — the
+# usual cause is a venv that was created but never activated.
+if ! "$PYTHON" -c "import euvd_watch" 2>/dev/null; then
+  echo "error: euvd_watch is not importable by $PYTHON." >&2
+  echo "       Install it first:  pip install -e '.[dev]'   (and activate your venv)" >&2
+  exit 2
+fi
 
 WORKDIR="$(mktemp -d)"
 trap 'rm -rf "$WORKDIR"' EXIT
@@ -19,7 +40,7 @@ export EUVD_WATCH_TIER2_PRODUCT_SEARCH=false
 SBOM=examples/sboms/demo.cdx.json
 
 echo "==> 0. Prime the HTTP cache from a committed fixture (offline mode)"
-python scripts/prime_cache.py
+"$PYTHON" scripts/prime_cache.py
 
 echo
 echo "==> 1. scan: what is inside the SBOM?"
