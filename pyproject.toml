@@ -45,6 +45,9 @@ Issues = "https://github.com/caisarus/euvd/issues"
 euvd-watch = "euvd_watch.cli:app"
 
 [project.optional-dependencies]
+# Pinned like `ruff`: a Material minor can change the rendered output, and the docs
+# workflow builds with `--strict`, so CI and a local build must agree.
+docs = ["mkdocs-material==9.7.7"]
 web = ["fastapi>=0.115", "uvicorn>=0.30", "python-multipart>=0.0.9"]
 dev = [
     "pytest>=8",

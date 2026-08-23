@@ -1,0 +1,110 @@
+# SPDX-License-Identifier: EUPL-1.2
+#
+# The site is built from a staged tree, not from the repository layout: run
+# `python scripts/build_docs_tree.py` first (or `make docs`), then `mkdocs build`.
+# That script's docstring explains why the markdown cannot simply live in one directory.
+site_name: euvd-watch
+site_description: >-
+  EUVD-native software supply-chain vulnerability watch and EU Cyber Resilience Act
+  reporting toolkit.
+site_url: https://caisarus.github.io/euvd/
+repo_url: https://github.com/caisarus/euvd
+repo_name: caisarus/euvd
+edit_uri: ""
+copyright: Licensed under the EUPL-1.2.
+
+docs_dir: build/docs-site
+site_dir: build/site
+
+# Fail the build on a link to a page that is not staged. The repository's own link check
+# says nothing about this surface — the 1.0.0rc2 PyPI defect was exactly that mistake.
+strict: true
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - toc.follow
+    - search.suggest
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Follow system theme
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Start here:
+      - Explained simply: README.simple.md
+      - Glossary: GLOSSARY.md
+      - În română: README.ro.md
+      - Glosar (RO): GLOSSARY.ro.md
+  - Using it:
+      - CRA Article 14 workflow: docs/cra.md
+      - Watch mode: docs/watch.md
+      - CI/CD integrations: docs/integrations.md
+      - Dashboard: docs/web.md
+      - Deploying: docs/deploy.md
+      - Storage: docs/storage.md
+  - How it works:
+      - Architecture: ARCHITECTURE.md
+      - Matching and confidence: docs/matching.md
+      - The EUVD API, from the wire: docs/euvd-api.md
+      - Accessibility: docs/accessibility.md
+  - Project:
+      - Contributing: CONTRIBUTING.md
+      - Security policy: SECURITY.md
+      - Releasing: docs/release.md
+      - Changelog: CHANGELOG.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/caisarus/euvd
+      name: euvd-watch on GitHub
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/euvd-watch/
+      name: euvd-watch on PyPI

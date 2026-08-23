@@ -1,0 +1,62 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "*.md"
+      - "docs/**"
+      - "mkdocs.yml"
+      - "scripts/build_docs_tree.py"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    paths:
+      - "*.md"
+      - "docs/**"
+      - "mkdocs.yml"
+      - "scripts/build_docs_tree.py"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deployment at a time, and never cancel one in flight — a half-published site is
+# worse than a stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  # Runs on pull requests too, where deployment does not. A broken link fails the build
+  # here rather than after it is already live: `mkdocs build --strict` treats a link to an
+  # unstaged page as an error, which is the check the repository's own link sweep cannot
+  # do — it validates a different root. See tests/unit/test_docs_site.py.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[docs]"
+      - name: Stage the markdown into a tree MkDocs can build
+        run: python scripts/build_docs_tree.py
+      - run: mkdocs build --strict
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/site
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

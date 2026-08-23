@@ -8,6 +8,17 @@ breaking changes (each one listed explicitly below).
 ## [Unreleased]
 
 ### Added
+- **A documentation site**, built with MkDocs Material and published to GitHub Pages at
+  <https://caisarus.github.io/euvd/>. The markdown stays exactly where GitHub and PyPI need
+  it — repo root plus `docs/` — and `scripts/build_docs_tree.py` stages the published subset
+  into a tree MkDocs can build, rewriting links so each of the three surfaces is correct:
+  `README.md` becomes the home page, its absolute `blob/main` links (which PyPI requires)
+  become site-relative, and links into the repository that the site has no page for —
+  `LICENSE`, a test module, a directory — become absolute GitHub URLs. The staging is
+  deterministic, and `tests/unit/test_docs_site.py` checks the site's link surface in the
+  ordinary test suite, independently of the repository's own sweep: that sweep was true for
+  the repo and silent about PyPI, which is how `1.0.0rc1` shipped 20 links that resolved
+  nowhere.
 - **The package now ships a `py.typed` marker** (PEP 561), so the strict annotations that
   were already there finally reach downstream type-checkers — importing `euvd_watch` in a
   typed codebase no longer produces `module is installed, but missing library stubs or
