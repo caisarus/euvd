@@ -65,6 +65,19 @@ CodeSupply pitch needs.
 
 ## Before the funding window opens — by 2026-09-03
 
+### 2b. Apply to the GitHub Secure Open Source Fund · **rolling, do it this month**
+
+- **Who:** the owner. **Where:**
+  <https://github.com/open-source/github-secure-open-source-fund>. **Effort:** an hour.
+- $10 000 per project ($6k during the programme, $2k at 6 months, $2k at 12), plus three
+  weeks of security education and a maintainer cohort. Applications are **rolling**, so
+  there is no deadline and no reason to wait; selected applicants get a virtual interview.
+- Eligibility is "current maintainer of an open-source project with a valid open-source
+  licence, in a GitHub Sponsors region" — Romania qualifies, and **step 3 is the gate**.
+- The fund exists to pay maintainers to reduce security risk in their own projects. Having
+  already found, fixed and disclosed a false negative in yours is the exact story it
+  rewards. Full landscape in `plans/funding/getting-paid.md`.
+
 ### 3. Enable GitHub Sponsors
 
 - **Who:** the owner — it needs bank and tax details. **With:** GitHub, and Stripe Connect.
