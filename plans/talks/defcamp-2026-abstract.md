@@ -1,5 +1,10 @@
 # DefCamp 2026 — talk submission draft
 
+> **DECLINED 2026-08-23 — the owner is not submitting to DefCamp.** Kept, not deleted:
+> the abstract, outline and framing are venue-independent and convert in an afternoon to
+> FOSDEM 2027, the Nordic Software Security Summit, or a written article. See
+> `plans/talks/venue-options.md` for what is actually open.
+
 > **Deadline: wave #2, 2026-08-30** (waves: 15 Jun / **30 Aug** / 15 Oct; def.camp states
 > selection is first-in-first-out, so wave 2 beats wave 3). Conference **19–20 November
 > 2026, Bucharest**. Submit at <https://sessionize.com/defcamp-2026/>.

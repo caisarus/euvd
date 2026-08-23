@@ -46,20 +46,20 @@
   says so.
 - **Then:** send the agent the two GHSA URLs and the draft files become pointers to them.
 
-### 2. Write the speaker bio, then submit to DefCamp · **2026-08-30**
+### 2. ~~DefCamp~~ — declined 2026-08-23. **Nothing replaces it, and nothing has to.**
 
-- **Who:** the owner — biography is not the agent's to invent. Then the DefCamp programme
-  committee reviews; travel is covered for accepted speakers.
-- **Where:** <https://sessionize.com/defcamp-2026/> (Sessionize account + photo).
-- **Prepared:** `plans/talks/defcamp-2026-abstract.md` — title, abstract, a ~90-word
-  version if the field is capped, a 45-minute outline that collapses to 30, takeaways,
-  audience, materials list, and the form values.
-- **Effort:** ~1 hour, most of it the bio.
-- **Detail:** wave 2 closes Sunday, selection is stated first-in-first-out, so this wave
-  beats 15 October materially. Conference 19–20 November, Bucharest. Title *"Provably
-  Safe: EUVD, the CRA Clock, and the False Negative I Shipped"*; track **Web, Software &
-  Infrastructure Security**; **level 300** — their guidance says 100/200 level content is
-  in low demand, so do not let it be filed as 200.
+Speaking was always a Phase 4 *visibility* item. **No deadline, no application and no
+release depends on a talk** — the NLnet form does not ask for one. Removing it removes a
+deadline, not a dependency.
+
+The 2026 stages are mostly shut already (checked 2026-08-23): Open Source Summit EU and
+OpenSSF Community Day EU closed their CfPs in June and July, and the Nordic Software
+Security Summit's closed on 20 August. DefCamp's wave 2 was the last easy door.
+
+If a stage is still wanted, `plans/talks/venue-options.md` has the live picture. The
+higher-value substitute is already in this plan as **step 12**: a slot on an OpenSSF
+working-group call — no CfP, no travel, no stage, and it reaches precisely the people the
+CodeSupply pitch needs.
 
 ---
 

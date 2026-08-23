@@ -130,47 +130,27 @@ its published advisory, in a commit.
 
 ---
 
-# Part 2 — DefCamp submission · deadline 2026-08-30
+# Part 2 — Speaking · **DefCamp declined 2026-08-23**
 
-Wave 2 closes Sunday. def.camp states selection is **first-in-first-out**, so this wave is
-materially better odds than wave 3 on 15 October. Conference is **19–20 November 2026,
-Bucharest**. Travel is covered for accepted speakers.
+**No action, and no deadline.** Speaking was a Phase 4 visibility item; nothing depends on
+it. The NLnet form does not ask for a talk.
 
-## 2.1 Set up Sessionize
+`plans/talks/venue-options.md` has the checked status of every venue. Short version: the
+2026 CfPs are shut (Open Source Summit EU closed in June, OpenSSF Community Day EU in July,
+Nordic Software Security Summit on 20 August), FOSDEM 2027 has not announced anything yet,
+and the EU Open Source Policy Summit is curated rather than open.
 
-Account at <https://sessionize.com/defcamp-2026/>. You will need a **photo** and a **bio**;
-everything else is drafted.
+Two things remain worth doing, neither of them a conference:
 
-## 2.2 Paste from `plans/talks/defcamp-2026-abstract.md`
+- **Ask the Nordic Software Security Summit anyway.** Closed 20 August, but submission is an
+  email to a named person and their topic list is this project's table of contents. Cost of
+  asking is one email; tell the agent and it gets written.
+- **Take a slot on an OpenSSF working-group call** — this is Part 5.2 already. Ten minutes
+  on a public video call, no CfP, no travel, and it reaches the people who decide whether
+  other scanners adopt the EUVD mapping. More useful to the application than DefCamp was.
 
-| Field | Value |
-| --- | --- |
-| Title | Provably Safe: EUVD, the CRA Clock, and the False Negative I Shipped |
-| Abstract | The long version in the draft. If the field is capped, the ~90-word version is right below it. |
-| Track | **Web, Software & Infrastructure Security** — the track that explicitly lists supply chain security |
-| Level | **300.** Their guidance: "Target 300-400 level technical content; 100 and 200 level content is in low demand." Do not file this as 200. |
-| Length | 45 min. The outline collapses to 30 by cutting section 5. |
-| Notes to organisers | The seven-point outline |
-
-## 2.3 The bio — yours to write
-
-60–90 words. If this is your first conference talk, point at artefacts rather than titles.
-Something in this shape, in your own words and only what is true:
-
-> Maintainer of euvd-watch, an EUPL-licensed toolkit connecting SBOMs to ENISA's EU
-> Vulnerability Database and the CRA's Article 14 reporting duty. Released 1.0.0 in
-> August 2026; published two security advisories against his own earlier releases.
-
-## 2.4 Two honesty checks before November
-
-1. The abstract says almost nothing open reads the EUVD. True as far as we have checked and
-   the repo's long-standing claim — but it is exactly what someone challenges from the
-   floor, and the ecosystem may move. Re-verify against Trivy, Grype, OSV-Scanner and
-   Dependency-Track before you are on stage.
-2. **Do not cut the confession.** The false negative is the strongest thing in the
-   submission and the reason it is a 300-level talk rather than a product walkthrough.
-
----
+The drafted abstract and bio are kept, not deleted: both are venue-independent and convert
+in an afternoon.
 
 # Part 3 — Before the funding window opens · by 2026-09-03
 
