@@ -165,6 +165,9 @@ cra_trigger:
 
 ## Arhitectură & documentație
 
+📖 **Tot ce urmează poate fi citit, căutat și navigat și la
+<https://caisarus.github.io/euvd/>.**
+
 **Începe de aici**
 
 - [GLOSSARY.ro.md](GLOSSARY.ro.md) — fiecare termen tehnic (SBOM, VEX, CRA, EPSS…)

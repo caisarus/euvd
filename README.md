@@ -163,6 +163,9 @@ cra_trigger:
 
 ## Architecture & docs
 
+📖 **Everything below is also browsable, searchable and cross-linked at
+<https://caisarus.github.io/euvd/>.**
+
 **Start here**
 
 - [ARCHITECTURE.md](https://github.com/caisarus/euvd/blob/main/ARCHITECTURE.md) — how the pieces fit together, module by module

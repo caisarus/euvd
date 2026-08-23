@@ -83,9 +83,10 @@ technical content, not the project — a GitHub link reads as an advert and gets
 regulars. The submission is therefore the **EUVD API write-up**, which needs to exist at a
 real URL that is not a repository file.
 
-> **Blocks this post:** the MkDocs documentation site (Phase 4.1). It is on my list as
-> "non-blocking" — it is not; it blocks the strongest post of the week. Say the word and I
-> will build it before 11 September.
+> **Unblocked 2026-08-23.** The documentation site is live at
+> <https://caisarus.github.io/euvd/>, so the submission link is
+> **<https://caisarus.github.io/euvd/docs/euvd-api/>** — a documentation page, not a
+> repository file. All 24 internal links were checked against the deployed site.
 
 **Title:**
 

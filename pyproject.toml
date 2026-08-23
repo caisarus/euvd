@@ -36,7 +36,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/caisarus/euvd"
 Source = "https://github.com/caisarus/euvd"
-Documentation = "https://github.com/caisarus/euvd/blob/main/README.md"
+Documentation = "https://caisarus.github.io/euvd/"
 Changelog = "https://github.com/caisarus/euvd/blob/main/CHANGELOG.md"
 Issues = "https://github.com/caisarus/euvd/issues"
 "Security policy" = "https://github.com/caisarus/euvd/blob/main/SECURITY.md"

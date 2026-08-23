@@ -96,9 +96,14 @@ CEST**.
 
 ## Owed by the agent
 
-In deadline order: the **DefCamp abstract/bio/outline** (8 days out — ask first), the
-**Show HN post + Reddit variants** (before 09-11), the **ENISA letter** (once the contact
-route is known). Further out and application-improving rather than blocking: the **MkDocs
-site** (so the application's "website" field points at documentation, not a repo root) and
-the **asciinema cast** of `examples/demo.sh` (the strongest attachment a reviewer absorbs
-in ninety seconds).
+**Delivered 2026-08-23:** the DefCamp submission (`plans/talks/defcamp-2026-abstract.md`),
+the six launch posts (`plans/announcements/launch-posts.md`), and the **documentation site,
+now live at <https://caisarus.github.io/euvd/>** — which turned out to gate the r/netsec
+post rather than being the optional item this file first called it.
+
+**Still owed:** the **ENISA letter**, blocked on an unknown contact route. Optional: the
+**asciinema cast** of `examples/demo.sh` (the strongest attachment a reviewer absorbs in
+ninety seconds).
+
+**Now available to you:** step 12's application "website" field should point at
+<https://caisarus.github.io/euvd/>, not at the repository root.
