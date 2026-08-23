@@ -67,10 +67,12 @@ its page suggests; the answers below need only the abstract and the budget re-po
 
 ## 3. Website / wiki
 
-`https://github.com/caisarus/euvd`
+`https://caisarus.github.io/euvd/`
 
-> Should be the documentation site once Phase 4.1 (MkDocs on GitHub Pages) is live —
-> a docs site reads better to a reviewer than a repo root. Not a blocker.
+> Updated 2026-08-23: the documentation site is live, so this field points at
+> documentation rather than a repository root — which reads better to a reviewer. The
+> source repository is `https://github.com/caisarus/euvd` and is linked from every page of
+> the site; put it in the abstract or an attachment if the form has no second URL field.
 
 ## 4. Abstract
 
@@ -306,8 +308,11 @@ consulting) around a tool that stays fully open — never a licence change.
 Suggested, all ≤50 MB, in accepted formats (HTML, PDF, ODF, plain text):
 
 - `docs/euvd-api.md` as PDF — the strongest single piece of evidence that this work is
-  grounded in the real data source rather than in a proposal.
-- `docs/matching.md` as PDF — the confidence model and its invariants.
+  grounded in the real data source rather than in a proposal. Also live at
+  <https://caisarus.github.io/euvd/docs/euvd-api/>; attach the PDF anyway, because an
+  attachment survives a reviewer reading offline.
+- `docs/matching.md` as PDF — the confidence model and its invariants. Live at
+  <https://caisarus.github.io/euvd/docs/matching/>.
 - Optionally the asciinema cast rendered to an HTML page (Phase 4.2) — a reviewer who
   can watch the tool work in 90 seconds is worth several paragraphs.
 
@@ -347,7 +352,7 @@ unedited output; edit in later commits so the original stays retrievable.
 - [ ] Choose the €45 000 or the €24 000 scope; delete the other.
 - [ ] Re-check the "other funding sources" paragraph in §7 is still true (GitHub Sponsors,
       any sponsorship, any revenue).
-- [ ] Documentation site live, so §3 can point at docs rather than a repo (Phase 4.1).
+- [x] Documentation site live (2026-08-23) — §3 now points at <https://caisarus.github.io/euvd/>.
 - [ ] README's "work in progress / may change until 1.0.0" banner removed — a reviewer
       who follows the link must not read that the project is pre-1.0 (fixed 2026-08-21).
 - [ ] Generative-AI disclosure completed with the real prompts and the unedited draft.
