@@ -1,109 +1,215 @@
-# Owner action plan — what only the owner can do
+# Owner action plan — rev 2
 
-> Written 2026-08-22, after `1.0.0` shipped. Deadlines read that day from `nlnet.nl` and
-> `def.camp`. Also published as a private artifact for reading:
+> Revised 2026-08-23. Deadlines read 22–23 August from `nlnet.nl`, `def.camp` and
+> `sessionize.com`. Also published for reading:
 > <https://claude.ai/code/artifact/f0574c8c-3af0-4831-8069-5422064db12c>
 >
-> Ordered **by deadline, not by topic**. Everything here leaves the repository — an
-> advisory, an application, a post, an email — so the project's own rule applies to the
-> project itself: the agent drafts, the owner sends.
+> Ordered **by deadline, not by topic**. Everything here leaves the repository, so the
+> project's own rule applies to the project itself: the agent drafts, the owner sends.
+> Each item names **who**, **where**, **what is prepared**, and **effort**.
 
-**Hard dates:** DefCamp CfP round 2 **2026-08-30** · CRA Art. 14 applicable
-**2026-09-11** · NLnet calls open **2026-09-03** · NLnet deadline **2026-11-03 12:00
-CEST**.
+**Hard dates:** DefCamp CfP wave 2 **2026-08-30** (7 days) · NLnet calls open
+**2026-09-03** · CRA Art. 14 applicable **2026-09-11** (19 days) · NLnet deadline
+**2026-11-03 12:00 CEST** (72 days).
 
-## This week
+## Cleared since rev 1 — nothing here needs the owner
 
-1. **Publish the two GHSA advisories.** *With: GitHub, no one else.* Drafts have sat in
-   `docs/advisories/` since 2026-08-13; every release `< 0.4.1` is affected and nobody
-   running an old version finds out until a GHSA is live. Paste at
-   `github.com/caisarus/euvd/security/advisories/new`. Two owner decisions: **request
-   CVEs?** (GitHub is a CNA — one checkbox; makes them findable outside GitHub and reads
-   well to a funder, but creates permanent public records) and **GHSA or release note?**
-   Recommend GHSA for both — the webhook-credential one especially, because upgrading
-   does *not* fix it (users must **rotate**), and an advisory is the only channel that
-   says so. Afterwards each draft file is replaced with its published GHSA link — say
-   when they are live and the agent commits that.
-2. **DefCamp CfP, round 2 — closes 2026-08-30.** *With: DefCamp programme committee via
-   `sessionize.com/defcamp-2026`.* Conference is 2026-11-19/20 in Bucharest; rounds are
-   15 Jun / **30 Aug** / 15 Oct and selection is stated to be first-in-first-out, so
-   round 2 beats round 3 materially. Fits their Governance & Compliance track.
-   **BLOCKED ON THE AGENT: no abstract drafted yet** — the one deadline where the
-   artefact is still owed.
+- **Documentation site live** — <https://caisarus.github.io/euvd/>. All 24 internal links
+  verified against the deployed pages. Unblocked step 8 and upgraded the application's
+  website field.
+- **DefCamp submission drafted** — `plans/talks/defcamp-2026-abstract.md`. Only the bio
+  is missing.
+- **All six launch posts drafted** — `plans/announcements/launch-posts.md`.
+- **NLnet application updated** — §3 website field now points at the docs site; §11
+  attachments carry their live URLs.
 
-## Before 2026-09-03
+---
 
-3. **Enable GitHub Sponsors + `FUNDING.yml`.** *With: GitHub, Stripe for payouts.* Needs
-   bank/tax details, so start before you are also writing an application. **Caution:** if
-   enabled, the NLnet draft's "other funding sources" answer (§7) stops being true — it
-   currently states flatly that there is none. Tell the agent and it updates §7.
-4. **Choose the NLnet ask: €45 000 / 750 h or €24 000 / 400 h.** *With: yourself.* Both
-   costed at €60/h with a task breakdown. **Recommendation: the smaller one** — entirely
-   on CodeSupply's theme (data set + measured accuracy + ENISA work), where the larger
-   carries packaging and translation that plausibly happen unfunded anyway.
-5. **Write §5 "prior involvement" yourself.** *With: yourself — cannot be drafted.* NLnet
-   reads it closely and it is about you. If euvd-watch is your first substantial
-   open-source project, say so plainly; the draft lists what to point at instead of a CV.
+## This week — by Sunday 2026-08-30
 
-## The announcement window, 2026-09-03 → 09-18
+### 1. Publish the two security advisories · **OVERDUE**
 
-6. **Confirm CodeSupply's call actually opened (2026-09-03).** *With: nlnet.nl, two
-   minutes.* Its own page still read "coming soon" on 2026-08-21. If it did not open, the
-   fallback is **Restack**; the agent re-points the abstract and budget, the rest of the
-   answers survive.
-7. **Post, in the week Article 14 lands (2026-09-11).** *With: Hacker News, r/netsec,
-   r/Python, r/devops, Mastodon, LinkedIn.* Show HN once, then stay in the thread all day.
-   r/netsec is strict about self-promotion — the submission must be the technical
-   write-up, and the EUVD API findings are that write-up. r/Python and r/devops get the
-   CI/CD angle, not the compliance one. **BLOCKED ON THE AGENT: posts not drafted yet.**
-8. **Awesome-list PRs.** *With: list maintainers.* awesome-sbom,
-   awesome-supply-chain-security, any CRA list that exists by then. One-line PRs; quiet
-   durable traffic long after a Show HN scrolls away.
+- **Who:** the owner alone — advisories can only be filed by a repository admin.
+- **Where:** <https://github.com/caisarus/euvd/security/advisories/new>
+- **Prepared:** `docs/advisories/draft-ghsa-01-silent-false-negatives.md` and
+  `draft-ghsa-02-webhook-url-in-logs.md`, each opening with a table that maps straight
+  onto the form (ecosystem `pip`, package `euvd-watch`, affected `< 0.4.1`, patched
+  `0.4.1`, suggested CVSS vector, CWEs) plus a paste-ready body.
+- **Effort:** ~30 minutes for both.
+- **Why now:** drafted 2026-08-13 and still unpublished. Every release before `0.4.1` is
+  affected and GitHub cannot alert anyone running one until a GHSA is live.
+- **Two owner decisions:** (a) **request CVEs?** GitHub is a CNA, so it is a checkbox on
+  the same form — yes makes them findable outside GitHub and reads well to a funder, and
+  also creates permanent public records against the project's name. (b) **GHSA or release
+  note?** Recommend GHSA for both; the webhook one especially, because upgrading does not
+  fix it (users must **rotate the credential**) and an advisory is the only channel that
+  says so.
+- **Then:** send the agent the two GHSA URLs and the draft files become pointers to them.
 
-## September–October — relationships that strengthen the application
+### 2. Write the speaker bio, then submit to DefCamp · **2026-08-30**
 
-9. **Send ENISA the EUVD API feedback.** *With: ENISA's EUVD team.* The
-   highest-leverage relationship the project has and the one the application leans on
-   hardest; `docs/euvd-api.md` is already the dated record. Sent as structured feedback
-   rather than complaint, it makes you known to the people running the data source
-   *before* you cite it in a funding application. **UNVERIFIED: the contact route** — the
-   EUVD site returned an application error on 2026-08-22. Find the current address/form,
-   then the agent drafts the letter.
-10. **Introduce the data set, not the tool.** *With: OpenSSF SBOM Everywhere and
-    Vulnerability Disclosure WGs, CycloneDX Slack, OWASP Romania.* Frame the EUVD↔purl
-    mapping as a *data contribution* other scanners consume — that framing is what makes
-    it a CodeSupply proposal, and it is far more welcome in those rooms than a tool
-    announcement.
-11. **Mint a Zenodo DOI.** *With: Zenodo, via the GitHub integration.* Switch it on, cut
-    a release, the DOI appears. Worth having on the application before submitting.
+- **Who:** the owner — biography is not the agent's to invent. Then the DefCamp programme
+  committee reviews; travel is covered for accepted speakers.
+- **Where:** <https://sessionize.com/defcamp-2026/> (Sessionize account + photo).
+- **Prepared:** `plans/talks/defcamp-2026-abstract.md` — title, abstract, a ~90-word
+  version if the field is capped, a 45-minute outline that collapses to 30, takeaways,
+  audience, materials list, and the form values.
+- **Effort:** ~1 hour, most of it the bio.
+- **Detail:** wave 2 closes Sunday, selection is stated first-in-first-out, so this wave
+  beats 15 October materially. Conference 19–20 November, Bucharest. Title *"Provably
+  Safe: EUVD, the CRA Clock, and the False Negative I Shipped"*; track **Web, Software &
+  Infrastructure Security**; **level 300** — their guidance says 100/200 level content is
+  in low demand, so do not let it be filed as 200.
 
-## By 2026-11-03, 12:00 CEST
+---
 
-12. **Submit the CodeSupply application.** *With: NLnet Foundation — you are the named
-    applicant.* Walk the checklist at the bottom of `plans/funding/nlnet-application.md`
-    first. Submit days early; NLnet does not extend and the deadline is **noon**.
-    **The form demands a generative-AI disclosure** — model, dates, prompts and
-    **unedited output**. The answer is yes, drafted 2026-08-21; commit `e9ade07` is
-    deliberately that unedited output (`git show e9ade07`), and §12 of the draft has
-    suggested wording to adjust to whatever you actually changed.
-13. **Watch for the FOSDEM 2027 security devroom CfP.** *With: devroom organisers.* Early
-    February, Brussels; each devroom runs its own call, typically opening in autumn and
-    closing in November. **2027 dates not yet published** — a watch item, not a deadline.
-14. **Take the NLnet interview yourself, if shortlisted.** *With: NLnet reviewers.* They
-    probe the technical claims — the confidence model, why `not_affected` needs
-    machine-checkable proof, why a false negative is the failure that matters.
-    `docs/matching.md` and `ARCHITECTURE.md` are the reread.
+## Before the funding window opens — by 2026-09-03
 
-## Owed by the agent
+### 3. Enable GitHub Sponsors
 
-**Delivered 2026-08-23:** the DefCamp submission (`plans/talks/defcamp-2026-abstract.md`),
-the six launch posts (`plans/announcements/launch-posts.md`), and the **documentation site,
-now live at <https://caisarus.github.io/euvd/>** — which turned out to gate the r/netsec
-post rather than being the optional item this file first called it.
+- **Who:** the owner — it needs bank and tax details. **With:** GitHub, and Stripe Connect.
+- **Where:** <https://github.com/sponsors>, then a `.github/FUNDING.yml` the agent commits.
+- **Effort:** 20 minutes plus GitHub's verification wait — start early, it is not instant.
+- **CAUTION:** this **falsifies the application**. §7 states flatly that the project has no
+  other funding, past or present, and NLnet asks directly. Tell the agent the moment it is
+  enabled and that paragraph gets rewritten.
 
-**Still owed:** the **ENISA letter**, blocked on an unknown contact route. Optional: the
-**asciinema cast** of `examples/demo.sh` (the strongest attachment a reviewer absorbs in
-ninety seconds).
+### 4. Decide the amount, delete the other scope
 
-**Now available to you:** step 12's application "website" field should point at
-<https://caisarus.github.io/euvd/>, not at the repository root.
+- **Who:** the owner alone — it is the owner's time being costed.
+- **Where:** `plans/funding/nlnet-application.md` §6 and §7.
+- **Options:** **€45 000 / 750 h** (data set, measured accuracy, dashboard 1.1 GA, ENISA
+  work, distro packaging, docs and translation, maintenance) or **€24 000 / 400 h** (data
+  set, accuracy, ENISA work only). Both at €60/h with a task breakdown.
+- **Recommendation: the smaller one.** A first application entirely on CodeSupply's stated
+  theme reads stronger than a larger one carrying items that plausibly happen unfunded.
+
+### 5. Write §5 — "have you been involved before?"
+
+- **Who:** the owner. The one section the agent genuinely cannot draft.
+- **Where:** `plans/funding/nlnet-application.md` §5. **Effort:** ~30 minutes.
+- **Detail:** NLnet reads it closely and it is about the person. If euvd-watch is the
+  owner's first substantial open-source project, saying so plainly beats padding — the
+  draft lists what to point at instead of a CV.
+
+### 6. Fill the remaining `[OWNER]` fields
+
+- **Who:** the owner. **Where:** `plans/funding/nlnet-application.md` §1. **Effort:** 5 min.
+- Name, email, phone, country, optional PGP key. **Organisation:** natural persons are
+  eligible — leave blank or write "independent developer". Do not invent an entity.
+
+---
+
+## Launch week — 2026-09-03 → 09-18
+
+### 7. Confirm CodeSupply's call opened · **2026-09-03**
+
+- **Who:** the owner checks, then tells the agent. **Where:** <https://nlnet.nl/propose/>
+  and <https://nlnet.nl/codesupply/>. **Effort:** 2 minutes.
+- CodeSupply is the right fund (€400k reserved for open calls, €5k–€50k grants, aimed at
+  software supply-chain tooling) but its page still read "coming soon" on 2026-08-21.
+- **If it did not open:** fall back to **Restack**; the agent re-points the abstract and
+  budget, every other answer survives.
+
+### 8. Post to r/netsec, Mastodon, LinkedIn, r/devops · **2026-09-11**
+
+- **Who:** the owner posts and answers replies. **Where:** r/netsec, r/devops, fosstodon,
+  LinkedIn. **Prepared:** `plans/announcements/launch-posts.md` §2, §4, §5, §6.
+- **Effort:** ~1 hour to post, then stay reachable.
+- **r/netsec submits the write-up, not the project** — that community reads a repo link as
+  an advert. Submit <https://caisarus.github.io/euvd/docs/euvd-api/>.
+- **CHECK FIRST:** Reddit blocks automated fetching, so the formats come from established
+  convention, not from today's sidebar. Read the live rules of each subreddit. A removed
+  post wastes the exact news cycle the timing exists to catch.
+
+### 9. Show HN · **Tuesday 2026-09-15**, ~14:00–16:00 UTC
+
+- **Who:** the owner, with the day free. **Where:**
+  <https://news.ycombinator.com/submit>. **Prepared:** `launch-posts.md` §1 — the title
+  and the first comment.
+- **Effort:** 10 minutes to post, then ~8 hours in the thread.
+- 2026-09-11 is a Friday, the worst day for a Show HN, which is why this is split out.
+  Submit the repo URL, then immediately post the prepared comment — that is the convention
+  and it is where the pitch goes.
+
+### 10. r/Python, then the awesome-list PRs · week of 2026-09-21
+
+- **Who:** the owner submits; list maintainers merge. **Where:** r/Python with *Showcase*
+  flair; awesome-sbom, awesome-supply-chain-security, any CRA list that exists.
+  **Prepared:** `launch-posts.md` §3. **Effort:** ~30 minutes each.
+- r/Python comes a week later so the set does not read as a campaign.
+
+---
+
+## Relationships that strengthen the application — September–October
+
+### 11. Find ENISA's contact route — then the agent writes the letter
+
+- **Who:** the owner finds the address, the agent drafts, the owner sends.
+  **With:** ENISA — the EUVD team.
+- **Where:** <https://euvd.enisa.europa.eu/> feedback form, or ENISA's general contact.
+  **Effort:** ~10 minutes to find it.
+- **BLOCKED:** euvd.enisa.europa.eu returned an application error on 2026-08-22 and the
+  agent will not invent an address for a European agency. The letter follows the same day
+  the route is known.
+- Highest-leverage relationship the project has, and the one the application leans on
+  hardest. <https://caisarus.github.io/euvd/docs/euvd-api/> is already the dated record.
+
+### 12. Introduce the data set to the standards communities
+
+- **Who:** the owner — these are conversations, not submissions.
+  **With:** OpenSSF (SBOM Everywhere, Vulnerability Disclosure WGs), CycloneDX, OWASP
+  Romania. **Where:** OpenSSF public WG calls and Slack, CycloneDX Slack, the local chapter.
+- **Effort:** ~1 hour a week for a few weeks.
+- Bring the EUVD↔purl mapping as a **data contribution**, not a tool announcement. That
+  framing is what makes it a CodeSupply proposal and is far more welcome in those rooms.
+
+### 13. Mint a Zenodo DOI
+
+- **Who:** the owner authorises; Zenodo does the rest. **Where:**
+  <https://zenodo.org/account/settings/github/> — enable the repo, then cut a release
+  (the agent can tag it). **Effort:** ~15 minutes.
+- Makes the project citable, worth having on the application before submitting.
+
+---
+
+## The submission — by 2026-11-03, 12:00 CEST
+
+### 14. Submit the CodeSupply application
+
+- **Who:** the owner is the named applicant — NLnet funds people, not drafts.
+  **Where:** <https://nlnet.nl/propose/>. **Prepared:**
+  `plans/funding/nlnet-application.md`, every field answered. **Effort:** ~2 hours if
+  steps 3–6 are done.
+- Walk the checklist at the bottom of the draft first. **Submit days early — the deadline
+  is noon, not midnight, and NLnet does not extend.**
+- **The AI disclosure is required and must not be improvised:** model, dates, prompts and
+  **unedited output**. The answer is yes, drafted 2026-08-21; commit `e9ade07` is
+  deliberately that unedited output (`git show e9ade07`). Suggested wording is §12.
+
+### 15. Watch for the FOSDEM 2027 devroom calls
+
+- **Who:** the owner, when they appear. **With:** individual devroom organisers.
+  **Where:** <https://fosdem.org/> — each devroom runs its own call on its own timetable.
+- Early February, Brussels; calls typically open in autumn and close in November.
+  **Nothing published for 2027 yet** — a watch item, not a deadline. The DefCamp abstract
+  adapts in an afternoon.
+
+### 16. Take the NLnet interview, if shortlisted
+
+- **Who:** the owner. They are assessing the person, which is the point.
+- **Prep:** <https://caisarus.github.io/euvd/docs/matching/> and
+  <https://caisarus.github.io/euvd/ARCHITECTURE/>. Expect them to probe the confidence
+  model, why `not_affected` requires machine-checkable proof, and why a false negative is
+  the failure that matters.
+
+---
+
+## Still the agent's
+
+- **The ENISA letter** — written the day the contact route is known (step 11).
+- **The asciinema recording** of `examples/demo.sh` — optional, but the strongest
+  attachment a reviewer absorbs in ninety seconds.
+- **Advisory link commits** — on receipt of the two GHSA URLs (step 1).
+- **§7 rewrite** — the moment GitHub Sponsors goes live (step 3).
+- **A release tag** — whenever the Zenodo switch is flipped (step 13).
